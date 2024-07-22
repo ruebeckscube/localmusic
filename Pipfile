@@ -6,6 +6,9 @@ name = "pypi"
 [packages]
 django = "*"
 python-lsp-server = "*"
+psycopg2-binary = "*"
+pillow = "*"
+requests = "*"
 
 [dev-packages]
 
