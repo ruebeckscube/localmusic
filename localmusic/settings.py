@@ -133,3 +133,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
+# Spotify API credentials
+SPOTIFY_CLIENT_ID="44a79d4ec79f4091b8fc0028ae2a2107"
+SPOTIFY_CLIENT_SECRET="bbe8a9bae3574e0aab11712363745370"
+
+
+# Memcache
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
+        "LOCATION": "127.0.0.1:11211",
+    }
+}

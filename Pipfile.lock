@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f534471e72e92a793a8e07bde2224b5f8d42fc7658642b17b37a79073a92f6c3"
+            "sha256": "bc3ce22ef42f0ff0e8fe4b8253b92a6f57928a0ffb1068f49da15ef9c97dea8b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -342,6 +342,15 @@
             "index": "pypi",
             "markers": "python_version >= '3.7'",
             "version": "==2.9.9"
+        },
+        "pymemcache": {
+            "hashes": [
+                "sha256:27bf9bd1bbc1e20f83633208620d56de50f14185055e49504f4f5e94e94aff94",
+                "sha256:f507bc20e0dc8d562f8df9d872107a278df049fa496805c1431b926f3ddd0eab"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.7'",
+            "version": "==4.0.0"
         },
         "python-lsp-jsonrpc": {
             "hashes": [

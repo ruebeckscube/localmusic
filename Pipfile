@@ -9,6 +9,7 @@ python-lsp-server = "*"
 psycopg2-binary = "*"
 pillow = "*"
 requests = "*"
+pymemcache = "*"
 
 [dev-packages]
 
