@@ -1,0 +1,15 @@
+<div class="flex justify-end h-10 space-x-4">
+    <a class="justify-self-start grow" href="{% url 'findshows:home' %}">Chicago Local Music</a>
+    {% if user.is_authenticated %}
+        {% if user.userprofile.managed_artists.all|length > 0 %}
+            <a href="{% url 'findshows:managed_artist_list' %}">Artist profile</a>
+        {% endif %}
+        <a href="{% url 'findshows:user_settings' %}">Settings</a>
+        <form id="logout-form" method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit">Logout</button>
+        </form>
+    {% else %}
+        <a href="{% url 'login' %}?next={{ request.path }}">Login</a>
+    {% endif %}
+</div>

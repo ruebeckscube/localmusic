@@ -56,7 +56,7 @@ ROOT_URLCONF = 'localmusic.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -146,3 +146,11 @@ CACHES = {
         "LOCATION": "127.0.0.1:11211",
     }
 }
+
+
+LOGIN_REDIRECT_URL = "/"
+LOGIN_URL = "login"
+LOGOUT_REDIRECT_URL = "/"
+
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

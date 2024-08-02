@@ -1,60 +1,53 @@
-{% extends "./base.html" %}
+<div id = spotify-artist-chooser
+     x-data="{
+          show_search: false,
+          search_text: '',
+          selected_spotify_artists: {{ widget.value }},
 
-
-{% block content %}
-    <div id = spotify-artist-chooser
-         x-data="{
-              show_search: false,
-              search_text: '',
-              selected_spotify_artists: [],
-
-              open() {
-                if (this.show_search) return
-                this.show_search = true
-              },
-              close(focusAfter) {
-                if (! this.show_search) return
-                this.show_search = false
-                focusAfter && focusAfter.focus()
-              }
-              }"
-         @keydown.escape.prevent.stop="close()"
-         @focusin.window="! $refs.spotify-search-plus-dropdown.contains($event.target) && close()"
-    >      <!-- TODO:  this last line isn't working-->
-        <div class="flex flex-wrap">
-            <template x-for="spotify_artist in selected_spotify_artists" :key="spotify_artist.id">
-                <div class="flex">
-                    <div class="h-16 w-16">
-                        <img class= "h-full w-full object-cover rounded-full"
-                             :src='spotify_artist.img_url'>
-                    </div>
-                    <div x-text='spotify_artist.name'></div>
-                    <div x-text='spotify_artist.id'></div>
+          open() {
+          if (this.show_search) return
+          this.show_search = true
+          },
+          close(focusAfter) {
+          if (! this.show_search) return
+          this.show_search = false
+          focusAfter && focusAfter.focus()
+          }
+          }"
+     @keydown.escape.prevent.stop="close()"
+     @focusin.window="! $refs.spotify-search-plus-dropdown.contains($event.target) && close()"
+>      <!-- TODO:  this last line isn't working?-->
+    <div class="flex flex-wrap">
+        <template x-for="(spotify_artist, index) in selected_spotify_artists" :key="index">
+            <div class="flex">
+                <div class="h-16 w-16">
+                    <img class= "h-full w-full object-cover rounded-full"
+                         :src='spotify_artist.img_url'>
                 </div>
-            </template>
-        </div>
-        <form method="post">
-            {% csrf_token %}
-            <div x-ref="spotify-search-plus-dropdown"
-                 @focusin="open()"
-                 @click.outside="close()"
-            >
-                <input class="form-control" type="search"
-                       name="spotify-search" placeholder="Search Spotify artists..."
-                       x-model="search_text"
-                       hx-post="{% url 'findshows:spotify_artist_search_results' %}"
-                       hx-trigger="keyup changed delay:500ms, click from:#search-results"
-                       hx-target="#search-results"
-                >
-
-                <ul id="search-results"
-                    class="absolute"
-                    x-show="show_search"
-                    @click="close()"
-                    style="display: none;"
-                >
-                </ul>
+                <div x-text='spotify_artist.name'></div>
             </div>
-        </form>
+        </template>
     </div>
-{% endblock %}
+    <input type="{{widget.type}}" name="{{widget.name}}" :value="JSON.stringify(selected_spotify_artists)">
+
+    <div x-ref="spotify-search-plus-dropdown"
+         @focusin="open()"
+         @click.outside="close()"
+    >
+            <input class="form-control" type="search"
+                   name="spotify-search" placeholder="Search Spotify artists..."
+                   x-model="search_text"
+                   hx-post="{% url 'findshows:spotify_artist_search_results' %}"
+                   hx-trigger="keyup changed delay:500ms, click from:#search-results"
+                   hx-target="#search-results"
+            >
+
+            <ul id="search-results"
+                class="absolute"
+                x-show="show_search"
+                @click="close()"
+                style="display: none;"
+            >
+            </ul>
+        </div>
+</div>

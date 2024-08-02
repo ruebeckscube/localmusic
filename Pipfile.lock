@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "bc3ce22ef42f0ff0e8fe4b8253b92a6f57928a0ffb1068f49da15ef9c97dea8b"
+            "sha256": "2ce2dbd1a146b86bfbc7dfe679b04330fe250b4ecee4e828fcd9b344e210c892"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -136,6 +136,23 @@
             "index": "pypi",
             "markers": "python_version >= '3.10'",
             "version": "==5.0.7"
+        },
+        "django-stubs": {
+            "hashes": [
+                "sha256:78e3764488fdfd2695f12502136548ec22f8d4b1780541a835042b8238d11514",
+                "sha256:c2502f5ecbae50c68f9a86d52b5b2447d8648fd205036dad0ccb41e19a445927"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.8'",
+            "version": "==5.0.4"
+        },
+        "django-stubs-ext": {
+            "hashes": [
+                "sha256:85da065224204774208be29c7d02b4482d5a69218a728465c2fbe41725fdc819",
+                "sha256:910cbaff3d1e8e806a5c27d5ddd4088535aae8371ea921b7fd680fdfa5f14e30"
+            ],
+            "markers": "python_version >= '3.8'",
+            "version": "==5.0.4"
         },
         "docstring-to-markdown": {
             "hashes": [
@@ -385,6 +402,22 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==0.5.1"
+        },
+        "types-pyyaml": {
+            "hashes": [
+                "sha256:cf7b31ae67e0c5b2919c703d2affc415485099d3fe6666a6912f040fd05cb67f",
+                "sha256:e5becec598f3aa3a2ddf671de4a75fa1c6856fbf73b2840286c9d50fae2d5d48"
+            ],
+            "markers": "python_version >= '3.8'",
+            "version": "==6.0.12.20240724"
+        },
+        "typing-extensions": {
+            "hashes": [
+                "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d",
+                "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"
+            ],
+            "markers": "python_version >= '3.8'",
+            "version": "==4.12.2"
         },
         "ujson": {
             "hashes": [

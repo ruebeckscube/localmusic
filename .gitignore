@@ -2,3 +2,6 @@
 /media/
 /localmusic/__pycache__/
 /findshows/__pycache__/*.pyc
+/.DS_Store
+/findshows/.DS_Store
+.DS_Store

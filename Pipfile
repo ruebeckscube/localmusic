@@ -10,6 +10,7 @@ psycopg2-binary = "*"
 pillow = "*"
 requests = "*"
 pymemcache = "*"
+django-stubs = "*"
 
 [dev-packages]
 

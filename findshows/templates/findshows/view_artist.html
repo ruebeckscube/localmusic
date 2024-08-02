@@ -1,7 +1,10 @@
-{% extends "./base.html" %}
+{% extends "localmusic/base.html" %}
 
 {% block content %}
-    <div class="flex flex-row flex-wrap w-full">
+            {% if can_edit %}
+                <a class="text-center" href={% url "findshows:edit_artist" artist.pk %}> Edit </a>
+            {% endif %}
+            <div class="flex flex-row flex-wrap w-full">
         <div class="basis-2 grow flex flex-col content-center justify-around">
             <h1 class="text-8xl text-left text-stone-600">
                 {{artist.name}}
@@ -82,17 +85,13 @@
 
 
     <div class="flex flex-row flex-wrap w-full">
-        <div class="w-1/2">
-            <iframe id="ytplayer" type="text/html" width="640" height="360"
-                    src="https://www.youtube.com/embed/P7iNcYc7Joo?autoplay=0&origin=http://example.com"
-                    frameborder="0"></iframe>
-        </div>
-
-        <div class="w-1/2">
-            <iframe id="ytplayer" type="text/html" width="640" height="360"
-                    src="https://www.youtube.com/embed/kC1bSJELPaQ?autoplay=0&origin=http://example.com"
-                    frameborder="0"></iframe>
-        </div>
+        {% for youtube_id in artist.youtube_ids %}
+            <div class="w-1/2">
+                <iframe id="ytplayer" type="text/html" width="640" height="360"
+                        src="https://www.youtube.com/embed/{{ youtube_id }}?autoplay=0&origin=http://example.com"
+                        frameborder="0"></iframe>
+            </div>
+        {% endfor %}
     </div>
 
     <div name="upcoming-shows" class="w-full">

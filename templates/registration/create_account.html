@@ -1,0 +1,39 @@
+{% extends "localmusic/base.html" %}
+
+{% block content %}
+
+    <form method="post" action="{% url 'create_account' %}">
+        {% csrf_token %}
+
+        <table>
+            {% for field in user_form %}
+                <tr>
+                    <td> {{ field.errors }} </td>
+                    <td> {{ field.label_tag }} </td>
+                    <td> {{ field }} </td>
+                </tr>
+            {% endfor %}
+        </table>
+
+        {% for field in profile_form %}
+            <div>
+                {{ field.label_tag }}
+            </div>
+            <div>
+                {{ field }}
+            </div>
+        {% endfor %}
+
+        <div>
+            Send info about making an artist page and listing shows?
+            <input type="checkbox" name="sendartistinfo">
+        </div>
+
+        <div>
+            <input type="submit" value="createaccount">
+            <input type="hidden" name="next" value="{{ next }}">
+        </div>
+
+    </form>
+
+{% endblock %}

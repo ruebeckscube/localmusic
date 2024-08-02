@@ -1,0 +1,15 @@
+{% extends "localmusic/base.html" %}
+
+{% block content %}
+
+<h1>Select one of your artist pages to view:</h1>
+
+<ul>
+{% for artist in artists %}
+    <li>
+        <a href={% url "findshows:view_artist" artist.pk %}>{{artist.name}}</a>
+    </li>
+{% endfor %}
+</ul>
+
+{% endblock %}

@@ -1,9 +1,12 @@
-from django.db import models
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 import urllib.request
 import re
 
-# Create your models here.
+from django.db import models
+from django.contrib.auth.models import User
+
+from findshows import spotify
+
 
 def empty_list():
     return []
@@ -28,32 +31,48 @@ class Artist(models.Model):
     }
 
     name=models.CharField()
-    profile_picture=models.ImageField()
-    bio=models.TextField()
+    profile_picture=models.ImageField(blank=True)
+    bio=models.TextField(blank=True)
+    local=models.BooleanField()
+    temp_email=models.EmailField(blank=True)
 
     # Here we store the artist's raw input for listening links. Either an album
-    # link or a line-separated list of track links (up to 3).
+    # link or a line-separated list of track links (up to 3). ALSO includes Youtube Links.
     # See below for test values
+    # TODO validation on these and youtube links
     listen_links=models.TextField(blank=True)
     # We also store the parsed info we need, updated whenever listen_links is updated:
     listen_platform=models.CharField(editable=False, max_length=2,
                                      choices=LISTEN_PLATFORMS, default=NOLISTEN)
     listen_type=models.CharField(editable=False, max_length=2,
                                  choices=LISTEN_TYPES, default=NOLISTEN)
-    listen_ids=models.JSONField(editable=False, default=empty_list)
+    listen_ids=models.JSONField(editable=False, default=list)
 
-    # Pairs of (name, url)
-    socials_links=models.JSONField(default=empty_list)
+    youtube_links=models.TextField(blank=True)
+    youtube_ids=models.JSONField(editable=False, default=list, blank=True)
 
-    # List of Youtube links
-    # https://www.youtube.com/watch?v=GoV0cPdA4io
-    youtube_ids=models.JSONField(default=empty_list)
+    # List of tuples [ (display_name, url), ... ]
+    socials_links=models.JSONField(default=list, blank=True)
 
+    # A list of spotify_artist dicts we use for spotify things:
+    # [ {'id': <spotify id>,
+    #    'name': <artist name>,
+    #    'img_url': <url to artist's Spotify image
+    #    },
+    #    ...
+    # ]
+    similar_spotify_artists=models.JSONField(default=list, blank=True)
+    # Properties for algorithm matching
+    # Structured as spotify.relatedness_score wants:
+    # { artist1_spotify_id:
+    #     [related_artist1_spotify_id,
+    #      related_artist2_spotify_id,
+    #      ...],
+    #   artist2_spotify_id:
+    #     [...]
+    # }
+    similar_spotify_artists_and_relateds=models.JSONField(default=dict, blank=True)
 
-    # # Future properties for algorithm matching
-    # genre=
-    # similar_local_artists= (links to other Artists in db)
-    # similar_natl_artists= (links to spotify profiles, something)
 
     def _update_listen_links(self):
         # TODO figure out how this works with apple music/switching based on user pref
@@ -71,9 +90,23 @@ class Artist(models.Model):
         self.listen_ids = listen_ids
 
 
+    def _update_youtube_links(self):
+        urls = str.split(str(self.youtube_links),"\n")
+        self.youtube_ids = [parse_qs(urlparse(url).query)['v'][0] for url in urls]
+        print(self.youtube_ids)
+
+
     def save(self, *args, **kwargs):
         self._update_listen_links()
+        self._update_youtube_links()
+        self.similar_spotify_artists_and_relateds={
+            artist['id'] : spotify.get_related_spotify_artists(artist['id'])
+            for artist in self.similar_spotify_artists
+        }
         return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
 
     # Test values for listen links:
     #
@@ -94,6 +127,8 @@ class Artist(models.Model):
     # https://soundcloud.com/measuringmarigolds/was-it-worth-the-kiss-demo
     # https://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo
     # https://soundcloud.com/measuringmarigolds/wax-wane-demo
+    #
+    # https://www.youtube.com/watch?v=kC1bSJELPaQ&embeds_referring_origin=http%3A%2F%2Fexample.com&source_ve_path=MjM4NTE
 
 def _id_from_bandcamp_url(url, listen_type):
     match listen_type:
@@ -148,3 +183,77 @@ def _parse_listen_ids(parsed_urls, urls, listen_platform, listen_type):
         case Artist.SOUNDCLOUD:
             return [p.path for p in parsed_urls]
     return []
+
+
+class UserProfile(models.Model):
+    user=models.OneToOneField(User, on_delete=models.CASCADE)
+    # TODO email subscription preferences
+
+    # Properties for algorithm matching
+    # A list of spotify_artist dicts we use for spotify things:
+    # [ {'id': <spotify id>,
+    #    'name': <artist name>,
+    #    'img_url': <url to artist's Spotify image
+    #    },
+    #    ...
+    # ]
+    favorite_spotify_artists=models.JSONField(default=list, blank=True)
+    # Structured as spotify.relatedness_score wants:
+    # { artist1_spotify_id:
+    #     [related_artist1_spotify_id,
+    #      related_artist2_spotify_id,
+    #      ...],
+    #   artist2_spotify_id:
+    #     [...]
+    # }
+    favorite_spotify_artists_and_relateds=models.JSONField(editable=False, default=dict, blank=True)
+
+    followed_artists=models.ManyToManyField(Artist, related_name="followers")
+    managed_artists=models.ManyToManyField(Artist, related_name="managing_users")
+    weekly_email=models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        self.favorite_spotify_artists_and_relateds={
+            artist['id'] : spotify.get_related_spotify_artists(artist['id'])
+            for artist in self.favorite_spotify_artists
+        }
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return str(self.user)
+
+
+class Ages(models.TextChoices):
+    ALL_AGES = "AA", "All ages"
+    SEVENTEEN = "17", "17+"
+    EIGHTEEN = "18", "18+"
+    TWENTYONE = "21", "21+"
+
+
+class Venue(models.Model):
+    name=models.CharField()
+    # For now, folks will put "DM for address" for house venues.
+    address=models.CharField()
+    ages=models.CharField(max_length=2, choices=Ages)
+
+    def __str__(self):
+        return self.name
+
+
+class Concert(models.Model):
+    poster=models.ImageField()
+    time=models.DateTimeField()
+    venue=models.ForeignKey(Venue, on_delete=models.CASCADE)
+    ages=models.CharField(max_length=2, choices=Ages)
+    artists=models.ManyToManyField(Artist, through="SetOrder")
+
+    def __str__(self):
+        return ', '.join((str(a) for a in self.artists.all())) + ' at ' + str(self.venue) + ' ' + str(self.time.date())
+
+
+class SetOrder(models.Model):
+    class Meta:
+        unique_together = (("concert", "order_number"),)
+    concert=models.ForeignKey(Concert, on_delete=models.CASCADE)
+    artist=models.ForeignKey(Artist, on_delete=models.CASCADE)
+    order_number=models.IntegerField()

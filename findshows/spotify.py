@@ -7,6 +7,7 @@ from django.core.cache import cache
 
 def _get_spotify_auth_headers():
     # TODO handle failure
+    # TODO make sure there's not a security issue storing an access token in the cache
     token = cache.get("spotify_access_token")
     if token is None:
         data = {'grant_type': 'client_credentials'}
@@ -25,8 +26,6 @@ def _get_spotify_auth_headers():
 
 def search_spotify_artists(query):
     # TODO make sure there's not a security issue with plugging user input into API URL
-    # TODO make sure there's not a security issue storing an access token in the cache
-    # TODO add the spotify logo to the webpage (per attribution requirements)
     params = {"q": query, "type": "artist", "limit": 6}
     headers = _get_spotify_auth_headers()
     r = requests.get("https://api.spotify.com/v1/search", params, headers=headers)
