@@ -1,32 +1,5 @@
-<div id = spotify-artist-chooser
-     x-data="{
-          show_search: false,
-          search_text: '',
-          selected_spotify_artists: {{ widget.value }},
-
-          open_dropdown() {
-          if (this.show_search) return
-          this.show_search = true
-          },
-
-          close_dropdown(focusAfter) {
-          if (! this.show_search) return
-          this.show_search = false
-          focusAfter && focusAfter.focus()
-          },
-
-          add_artist(id, name, img_url) {
-          if (this.selected_spotify_artists.length < {{ widget.max_artists }} && !this.selected_spotify_artists.some(a => a.id === id)) {
-          this.selected_spotify_artists.push({'id':id, 'name':name, 'img_url':img_url})
-          this.search_text = ''
-          }
-          },
-
-          remove_artist(index) {
-          this.selected_spotify_artists.splice(index, 1)
-          }
-
-          }"
+<div id = "spotify-artist-chooser"
+     x-data="spotify_artist_chooser"
      @keydown.escape.prevent.stop="close_dropdown()"
      {# @focusin.window="! $refs.spotify-search-plus-dropdown.contains($event.target) && close_dropdown()" #}
 >        {# TODO:  this last line isn't working? #}
@@ -65,3 +38,36 @@
             </ul>
         </div>
 </div>
+
+<script>
+ document.addEventListener('alpine:init', () => {
+     Alpine.data('spotify_artist_chooser', () => ({
+         show_search: false,
+         search_text: '',
+         selected_spotify_artists: {{ widget.value |safe }},
+
+         open_dropdown() {
+             if (this.show_search) return;
+             this.show_search = true;
+         },
+
+         close_dropdown(focusAfter) {
+             if (! this.show_search) return;
+             this.show_search = false;
+             focusAfter && focusAfter.focus();
+         },
+
+         add_artist(id, name, img_url) {
+             if (this.selected_spotify_artists.length < {{ widget.max_artists }} && !this.selected_spotify_artists.some(a => a.id === id)) {
+                 this.selected_spotify_artists.push({'id':id, 'name':name, 'img_url':img_url});
+                 this.search_text = '';
+             }
+         },
+
+         remove_artist(index) {
+             this.selected_spotify_artists.splice(index, 1);
+         }
+
+     }))
+ })
+</script>
