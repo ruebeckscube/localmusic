@@ -33,8 +33,18 @@ class UserCreationFormE(UserCreationForm):
         return user
 
 
-class SpotifyArtistSearchWidget(HiddenInput):
+class SpotifyArtistSearchWidget(Input):
     template_name="findshows/spotify_artist_search.html"
+    input_type="hidden"
+
+    def __init__(self, max_artists=3, **kwargs):
+        super().__init__(**kwargs)
+        self.max_artists = max_artists
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['widget']['max_artists'] = self.max_artists
+        return context
 
 
 class SocialsLinksWidget(Input):

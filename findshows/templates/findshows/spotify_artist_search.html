@@ -4,19 +4,32 @@
           search_text: '',
           selected_spotify_artists: {{ widget.value }},
 
-          open() {
+          open_dropdown() {
           if (this.show_search) return
           this.show_search = true
           },
-          close(focusAfter) {
+
+          close_dropdown(focusAfter) {
           if (! this.show_search) return
           this.show_search = false
           focusAfter && focusAfter.focus()
+          },
+
+          add_artist(id, name, img_url) {
+          if (this.selected_spotify_artists.length < {{ widget.max_artists }} && !this.selected_spotify_artists.some(a => a.id === id)) {
+          this.selected_spotify_artists.push({'id':id, 'name':name, 'img_url':img_url})
+          this.search_text = ''
           }
+          },
+
+          remove_artist(index) {
+          this.selected_spotify_artists.splice(index, 1)
+          }
+
           }"
-     @keydown.escape.prevent.stop="close()"
-     @focusin.window="! $refs.spotify-search-plus-dropdown.contains($event.target) && close()"
->      <!-- TODO:  this last line isn't working?-->
+     @keydown.escape.prevent.stop="close_dropdown()"
+     {# @focusin.window="! $refs.spotify-search-plus-dropdown.contains($event.target) && close_dropdown()" #}
+>        {# TODO:  this last line isn't working? #}
     <div class="flex flex-wrap">
         <template x-for="(spotify_artist, index) in selected_spotify_artists" :key="index">
             <div class="flex">
@@ -24,6 +37,7 @@
                     <img class= "h-full w-full object-cover rounded-full"
                          :src='spotify_artist.img_url'>
                 </div>
+                <div @click="remove_artist(index)"> x </div>
                 <div x-text='spotify_artist.name'></div>
             </div>
         </template>
@@ -31,8 +45,8 @@
     <input type="{{widget.type}}" name="{{widget.name}}" :value="JSON.stringify(selected_spotify_artists)">
 
     <div x-ref="spotify-search-plus-dropdown"
-         @focusin="open()"
-         @click.outside="close()"
+         @focusin="open_dropdown()"
+         @click.outside="close_dropdown()"
     >
             <input class="form-control" type="search"
                    name="spotify-search" placeholder="Search Spotify artists..."
@@ -45,7 +59,7 @@
             <ul id="search-results"
                 class="absolute"
                 x-show="show_search"
-                @click="close()"
+                @click="close_dropdown()"
                 style="display: none;"
             >
             </ul>

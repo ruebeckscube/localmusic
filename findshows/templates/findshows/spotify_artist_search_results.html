@@ -2,13 +2,7 @@
     <li class="odd:bg-white even:bg-slate-50 hover:bg-slate-200">
         <button class="w-full text-left"
                 type="button"
-                @click="selected_spotify_artists.push({
-                       'id':'{{spotify_artist.id}}',
-                       'name':'{{spotify_artist.name}}',
-                       'img_url':'{{spotify_artist.image.url}}'
-                       });
-                       search_text = ''
-                       "
+                @click="add_artist('{{spotify_artist.id}}', '{{spotify_artist.name}}', '{{spotify_artist.image.url}}')"
         >
             <div class="flex">
                 <div class="h-16 w-16">
