@@ -42,7 +42,10 @@ class SocialsLinksWidget(Input):
     input_type="text"
 
     def value_from_datadict(self, data, files, name):
-        return json.dumps(list(zip(data.getlist(name + '_display_name'), data.getlist(name + '_url'))))
+        l = list(zip(data.getlist(name + '_display_name'), data.getlist(name + '_url')))
+        while ('','') in l:
+            l.remove(('',''))
+        return json.dumps(l)
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)

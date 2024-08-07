@@ -4,13 +4,73 @@ import re
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import URLValidator
+from django.core.exceptions import ValidationError
 
 from findshows import spotify
 
 
+# TODO remove this when you reset database
 def empty_list():
     return []
 
+
+class LabeledURLsValidator(URLValidator):
+    # TODO issue's probably not actually in this chunk of code, but whenever we
+    # raise an Error here, it gets displayed on the Edit Artist page as "Enter a
+    # valid JSON."
+    def __call__(self, value):
+        if type(value) is not list:
+            raise ValidationError("Internal parsing error. Please report.", code=self.code, params={"value": value})
+        for tup in value:
+            if len(tup) != 2:
+                raise ValidationError("Internal parsing error. Please report.", code=self.code, params={"value": value})
+            if not tup[0]:
+                raise ValidationError("Display name is required.", code=self.code, params={"value": value})
+            super().__call__(tup[1])
+
+
+class MultiURLValidator(URLValidator):
+
+    YOUTUBE = "YT"
+    LISTEN = "LSN"
+
+    def __init__(self, listen_or_youtube, max_links, **kwargs):
+        super().__init__(**kwargs)
+        self.listen_or_youtube = listen_or_youtube
+        self.max_links = max_links
+
+
+    def __call__(self, value):
+        urls = [url.strip() for url in str.split(value.strip(),"\n")]
+        if len(urls) > self.max_links:
+            raise ValidationError("Please enter at most " + str(self.max_links) + " links.", code=self.code, params={"value": value})
+        for url in urls:
+            super().__call__(url)
+        parsed_urls = [urlparse(url) for url in urls]
+
+        match self.listen_or_youtube:
+            case self.YOUTUBE:
+                if any(_parse_youtube_id(pu) == "" for pu in parsed_urls):
+                    raise ValidationError("Invalid Youtube URLs. Make sure they look like the examples.", code=self.code, params={"value": value})
+            case self.LISTEN:
+                listen_platforms = [_parse_listen_platform(pu) for pu in parsed_urls]
+                if any(lp == Artist.NOLISTEN for lp in listen_platforms):
+                    raise ValidationError("Links must be from one of the supported domains.", code=self.code, params={"value": value})
+                if any(lp != listen_platforms[0] for lp in listen_platforms):
+                    raise ValidationError("Links must be from the same domain.", code=self.code, params={"value": value})
+
+                listen_types = [_parse_listen_type(pu, listen_platforms[0]) for pu in parsed_urls]
+                if any(lt == Artist.NOLISTEN for lt in listen_types):
+                    raise ValidationError("Link not formatted correctly. Make sure it looks like the examples", code=self.code, params={"value": value})
+                if len(urls) > 1 and any(lt == Artist.ALBUM for lt in listen_types):
+                    raise ValidationError("If multiple links are provided, they must all be song links.", code=self.code, params={"value": value})
+
+                # don't need to parse IDs, everything that's checkable has been checked. Actual
+                # player may fail if IDs don't exist, but we'll let that error trickle up
+
+
+# TODO set some sensible max_lengths
 class Artist(models.Model):
     DSP = "SP"
     BANDCAMP = "BC"
@@ -39,20 +99,18 @@ class Artist(models.Model):
     # Here we store the artist's raw input for listening links. Either an album
     # link or a line-separated list of track links (up to 3). ALSO includes Youtube Links.
     # See below for test values
-    # TODO validation on these and youtube links
-    listen_links=models.TextField(blank=True)
-    # We also store the parsed info we need, updated whenever listen_links is updated:
+    listen_links=models.TextField(blank=True, validators=[MultiURLValidator(MultiURLValidator.LISTEN, 3),])
     listen_platform=models.CharField(editable=False, max_length=2,
                                      choices=LISTEN_PLATFORMS, default=NOLISTEN)
     listen_type=models.CharField(editable=False, max_length=2,
                                  choices=LISTEN_TYPES, default=NOLISTEN)
     listen_ids=models.JSONField(editable=False, default=list)
 
-    youtube_links=models.TextField(blank=True)
+    youtube_links=models.TextField(blank=True, validators=[MultiURLValidator(MultiURLValidator.YOUTUBE, 2),])
     youtube_ids=models.JSONField(editable=False, default=list, blank=True)
 
     # List of tuples [ (display_name, url), ... ]
-    socials_links=models.JSONField(default=list, blank=True)
+    socials_links=models.JSONField(default=list, blank=True, validators=[LabeledURLsValidator(),])
 
     # A list of spotify_artist dicts we use for spotify things:
     # [ {'id': <spotify id>,
@@ -62,7 +120,6 @@ class Artist(models.Model):
     #    ...
     # ]
     similar_spotify_artists=models.JSONField(default=list, blank=True)
-    # Properties for algorithm matching
     # Structured as spotify.relatedness_score wants:
     # { artist1_spotify_id:
     #     [related_artist1_spotify_id,
@@ -76,24 +133,27 @@ class Artist(models.Model):
 
     def _update_listen_links(self):
         # TODO figure out how this works with apple music/switching based on user pref
-        urls = str.split(str(self.listen_links),"\n")
-        if len(urls)==0:
+        if self.listen_links == '':
+            self.listen_platform = Artist.NOLISTEN
+            self.listen_type = Artist.NOLISTEN
+            self.listen_ids = []
             return
 
-        parsed_urls = [urlparse(url) for url in urls]
-        listen_platform = _parse_listen_platform(parsed_urls[0])
-        listen_type = _parse_listen_type(parsed_urls[0], listen_platform)
-        listen_ids = _parse_listen_ids(parsed_urls, urls, listen_platform, listen_type)
+        urls = [url.strip() for url in str.split(str(self.listen_links).strip(),"\n")]
 
-        self.listen_platform = listen_platform
-        self.listen_type = listen_type
-        self.listen_ids = listen_ids
+        parsed_urls = [urlparse(url) for url in urls]
+        self.listen_platform = _parse_listen_platform(parsed_urls[0])
+        self.listen_type = _parse_listen_type(parsed_urls[0], self.listen_platform)
+        self.listen_ids = _parse_listen_ids(parsed_urls, urls, self.listen_platform, self.listen_type)
 
 
     def _update_youtube_links(self):
-        urls = str.split(str(self.youtube_links),"\n")
-        self.youtube_ids = [parse_qs(urlparse(url).query)['v'][0] for url in urls]
-        print(self.youtube_ids)
+        if self.youtube_links == '':
+            self.youtube_ids = []
+            return
+
+        urls = [url.strip() for url in str.split(str(self.youtube_links).strip(),"\n")]
+        self.youtube_ids = [_parse_youtube_id(urlparse(url)) for url in urls]
 
 
     def save(self, *args, **kwargs):
@@ -129,6 +189,7 @@ class Artist(models.Model):
     # https://soundcloud.com/measuringmarigolds/wax-wane-demo
     #
     # https://www.youtube.com/watch?v=kC1bSJELPaQ&embeds_referring_origin=http%3A%2F%2Fexample.com&source_ve_path=MjM4NTE
+    # https://youtu.be/kC1bSJELPaQ?si=ShmObXpVfek30gRF
 
 def _id_from_bandcamp_url(url, listen_type):
     match listen_type:
@@ -140,36 +201,37 @@ def _id_from_bandcamp_url(url, listen_type):
         with urllib.request.urlopen(url) as response:
             html = str(response.read())
             return re.findall(re_string, html)[-1][9:]  # 9 is length of both "album id" and "track id"
-    except Exception as err:
-        print("Error getting album/track ID from Bandcamp link.")
-        print("Full error:")
-        print(err)
-        # TODO: communicate issue happened
+    except Exception: # includes any list indexing errors
+        return ""
 
 
 def _parse_listen_platform(parsed_url):
-    if "spotify" in parsed_url.netloc:
-        return Artist.DSP
-    elif "bandcamp" in parsed_url.netloc:
-        return Artist.BANDCAMP
-    elif "soundcloud" in parsed_url.netloc:
-        return Artist.SOUNDCLOUD
-    else:
-        return Artist.NOLISTEN
+    match parsed_url.netloc:
+        case "open.spotify.com":
+            return Artist.DSP
+        case "soundcloud.com":
+            return Artist.SOUNDCLOUD
+        case pu if pu[-12:] == "bandcamp.com":
+            return Artist.BANDCAMP
+        case _:
+            return Artist.NOLISTEN
 
 
 def _parse_listen_type(parsed_url, listen_platform):
     match listen_platform:
         case Artist.DSP | Artist.BANDCAMP: # Weird coincidence they're the same
+            if len(parsed_url.path.split('/')) != 3:
+                return Artist.NOLISTEN
             match parsed_url.path.split('/')[1]:
                 case 'album':
                     return Artist.ALBUM
                 case 'track':
                     return Artist.TRACK
         case Artist.SOUNDCLOUD:
-            if parsed_url.path.split('/')[2] == "sets":
+            path_list = parsed_url.path.split('/')
+            if len(path_list) == 4 and path_list[2] == "sets":
                 return Artist.ALBUM
-            else:
+            if len(path_list) == 3:
                 return Artist.TRACK
     return Artist.NOLISTEN
 
@@ -183,6 +245,19 @@ def _parse_listen_ids(parsed_urls, urls, listen_platform, listen_type):
         case Artist.SOUNDCLOUD:
             return [p.path for p in parsed_urls]
     return []
+
+
+def _parse_youtube_id(parsed_url):
+    match parsed_url.netloc:
+        case "www.youtube.com":
+            qs = parse_qs(parsed_url.query)
+            if 'v' in qs and len(qs['v']) == 1:
+                return qs['v'][0]
+        case "youtu.be":
+            path_list = parsed_url.path.split('/')
+            if len(path_list) == 2:
+                return path_list[1]
+    return ""
 
 
 class UserProfile(models.Model):
