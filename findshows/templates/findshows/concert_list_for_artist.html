@@ -1,0 +1,13 @@
+{% extends "localmusic/base.html" %}
+
+{% block content %}
+    {% for concert in concerts %}
+        <div>
+            <a href="{% url 'findshows:edit_concert' concert.pk %}"> {{ concert }}</a>
+        </div>
+    {% endfor %}
+
+    <div>
+        <a href="{% url 'findshows:create_concert' %}"> Create new show listing</a>
+    </div>
+{% endblock %}

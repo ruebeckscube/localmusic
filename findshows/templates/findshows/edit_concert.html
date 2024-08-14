@@ -1,0 +1,50 @@
+{% extends "localmusic/base.html" %}
+
+{% block content %}
+    <form method="post"
+          {% if pk %}
+          action="{% url 'findshows:edit_concert' pk %}"
+          {% else %}
+          action="{% url 'findshows:create_concert' %}"
+          {% endif %}
+    >
+        {% csrf_token %}
+        <div>
+            <div>
+                {{ form.non_field_errors }}
+            </div>
+            <div class="flex flex-row flex-none w-full h-full">
+                <div class="w-1/2 flex flex-col">
+                    <div class= "flex flex-col">
+                        {{ form.date.as_field_group }}
+                    </div>
+                    <div class= "flex flex-col">
+                        {{ form.start_time.as_field_group }}
+                    </div>
+                    <div class= "flex flex-col">
+                        {{ form.end_time.as_field_group }}
+                    </div>
+                    <div class= "flex flex-col">
+                        {{ form.venue.as_field_group }}
+                    </div>
+                    <div class= "flex flex-col">
+                        {{ form.ages.as_field_group }}
+                    </div>
+                    <div class= "flex flex-col">
+                        {{ form.poster.as_field_group }}
+                    </div>
+                </div>
+                <div class="w-1/2 flex flex-col">
+                    to-do this will be artist bit
+                    <div class= "flex flex-col">
+                        {{ form.artists.as_field_group }}
+                    </div>
+                    <div>
+                        <input type="submit" value="save">
+                    </div>
+                </div>
+
+            </div>
+    </form>
+
+{% endblock %}

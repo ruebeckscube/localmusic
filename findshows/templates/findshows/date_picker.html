@@ -1,0 +1,186 @@
+{# Modified from https://www.creative-tim.com/twcomponents/component/datepicker-with-tailwindcss-and-alpinejs #}
+{# TODO: make sure it's okay to use this? can't for the life of me figure out the license situation #}
+
+<div class="h-40 w-full flex items-center justify-center bg-gray-200 ">
+    <style>
+     [x-cloak] {
+         display: none;
+     }
+    </style>
+
+    <div class="antialiased sans-serif">
+        {# TODO get rid of this and get our tailwind setup working #}
+    <div x-data="datePickerData()" x-init="[initDate('{{ widget.value }}'), incrementCalDisplay(0)]" x-cloak>
+          <div class="container mx-auto px-4 py-2 md:py-10">
+              <div class="mb-5 w-64">
+
+                  <label for="datepicker" class="font-bold mb-1 text-gray-700 block">Select Date</label>
+                  <div class="relative">
+                      <input type="hidden" name={{ widget.name }} :value="getWidgetReturnVal()">
+                      <input
+                          type="text"
+                          @click="showDatepicker = !showDatepicker"
+                          :value="getDisplayDate()"
+                          @keydown.escape="showDatepicker = false"
+                          class="w-full pl-4 pr-10 py-3 leading-none rounded-lg shadow-sm focus:outline-none focus:shadow-outline text-gray-600 font-medium"
+                          placeholder="Select date"
+                          readonly>
+
+                          <div class="absolute top-0 right-0 px-3 py-2">
+                              <svg class="h-6 w-6 text-gray-400"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                              </svg>
+                          </div>
+
+                          <div
+                              class="bg-white mt-12 rounded-lg shadow p-4 absolute top-0 left-0"
+                              style="width: 17rem"
+                              x-show.transition="showDatepicker"
+                              @click.away="showDatepicker = false">
+
+                              <div class="flex justify-between items-center mb-2">
+                                  <div>
+                                      <span x-text="MONTH_NAMES[calMonth-1]" class="text-lg font-bold text-gray-800"></span>
+                                      <span x-text="calYear" class="ml-1 text-lg text-gray-600 font-normal"></span>
+                                  </div>
+                                  <div>
+                                      <button
+                                          type="button"
+                                          class="transition ease-in-out duration-100 inline-flex cursor-pointer hover:bg-gray-200 p-1 rounded-full"
+                                          @click="incrementCalDisplay(-1)">
+                                          <svg class="h-6 w-6 text-gray-500 inline-flex"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                          </svg>
+                                      </button>
+                                      <button
+                                          type="button"
+                                          class="transition ease-in-out duration-100 inline-flex cursor-pointer hover:bg-gray-200 p-1 rounded-full"
+                                          @click="incrementCalDisplay(1)">
+                                          <svg class="h-6 w-6 text-gray-500 inline-flex"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                          </svg>
+                                      </button>
+                                  </div>
+                              </div>
+
+                              <div class="flex flex-wrap mb-3 -mx-1">
+                                  <template x-for="(day, index) in DAYS" :key="index">
+                                      <div style="width: 14.26%" class="px-1">
+                                          <div
+                                              x-text="day"
+                                              class="text-gray-800 font-medium text-center text-xs"></div>
+                                      </div>
+                                  </template>
+                              </div>
+                              <div class="grid grid-cols-7 grid-flow-row -mx-1">
+                                  <template x-for="i in NumSpacesBeforeDays">
+                                      <div
+                                          class="text-center border p-1 border-transparent text-sm"
+                                      ></div>
+                                  </template>
+                                  <template x-for="date in numDaysInMonth">
+                                      <div class="px-1 mb-1">
+                                          <div {# TODO figure out date centering #}
+                                              @click="onDateClick(date)"
+                                              x-text="date"
+                                              class="h-7 w-7 cursor-pointer text-center text-sm leading-none rounded-full leading-loose transition ease-in-out duration-100"
+                                              :class="{'bg-blue-500 text-white': isSelected(date),
+                                                      'text-gray-700 hover:bg-blue-200': !isSelected(date),
+                                                      'outline outline-blue-500 outline-1': isToday(date)}"
+                                          ></div>
+                                      </div>
+                                  </template>
+                              </div>
+                          </div>
+
+                  </div>
+              </div>
+
+          </div>
+      </div>
+
+      <script>
+       const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+       const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+       function datePickerData() {
+           return {
+               showDatepicker: false,
+               selectedDate: '',
+               selectedMonth: '',
+               selectedYear: '',
+
+               // We're using month indexed from 1, javascript Date stuff expects it indexed from 0
+               calMonth: '',
+               calYear: '',
+               numDaysInMonth: 0,
+               NumSpacesBeforeDays: 0,
+               days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+
+               initDate(initialWidgetVal) {
+                   if (initialWidgetVal) {
+                       [this.selectedYear, this.selectedMonth, this.selectedDate] = initialWidgetVal.split('-').map((x) => parseInt(x))
+
+                       this.calMonth = this.selectedMonth;
+                       this.calYear = this.selectedYear;
+                   }
+                   else {
+                       let today = new Date();
+                       this.calMonth = today.getMonth() + 1;
+                       this.calYear = today.getFullYear();
+                   }
+
+               },
+
+               getDisplayDate() {
+                   if (this.selectedYear==='' || this.selectedMonth==='' || this.selectedDate==='') {
+                       return ''
+                   }
+                   d = new Date(this.selectedYear, this.selectedMonth - 1, this.selectedDate);
+                   return d.toDateString()
+               },
+
+               getWidgetReturnVal() {
+                   if (this.selectedYear==='' || this.selectedMonth==='' || this.selectedDate==='') {
+                       return ''
+                   }
+                   return [this.selectedYear, this.selectedMonth, this.selectedDate].join('-')
+               },
+
+               isToday(date) {
+                   const today = new Date();
+                   return (date === today.getDate() &&
+                           this.calMonth === today.getMonth() + 1 &&
+                           this.calYear === today.getFullYear())
+               },
+
+               isSelected(date) {
+                   return (date === this.selectedDate &&
+                           this.calMonth === this.selectedMonth &&
+                           this.calYear === this.selectedYear)
+               },
+
+               onDateClick(date) {
+                   this.selectedYear = this.calYear;
+                   this.selectedMonth = this.calMonth;
+                   this.selectedDate = date;
+
+                   this.showDatepicker = false;
+               },
+
+               incrementCalDisplay(incr) {
+                   monthIndexedZero = this.calMonth - 1;
+                   monthIndexedZero += incr;
+                   this.calYear += Math.floor(monthIndexedZero / 12);
+                   monthIndexedZero = ((monthIndexedZero % 12) + 12) % 12; // get true modulo from Javascript's remainder operator
+                   this.calMonth = monthIndexedZero + 1;
+
+                   this.numDaysInMonth = new Date(this.calYear, this.calMonth, 0).getDate();
+                   this.NumSpacesBeforeDays = new Date(this.calYear, this.calMonth - 1).getDay();
+               }
+
+           }
+       }
+      </script>
+  </div>
+</div>

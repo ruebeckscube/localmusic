@@ -1,5 +1,5 @@
 <div id = "spotify-artist-chooser"
-     x-data="spotify_artist_chooser"
+     x-data="spotify_artist_chooser_data({{ widget.value }}, {{ widget.max_artists }})"
      @keydown.escape.prevent.stop="close_dropdown()"
      {# @focusin.window="! $refs.spotify-search-plus-dropdown.contains($event.target) && close_dropdown()" #}
 >        {# TODO:  this last line isn't working? #}
@@ -15,7 +15,7 @@
             </div>
         </template>
     </div>
-    <input type="{{widget.type}}" name="{{widget.name}}" :value="JSON.stringify(selected_spotify_artists)">
+    <input type="hidden" name="{{widget.name}}" :value="JSON.stringify(selected_spotify_artists)">
 
     <div x-ref="spotify-search-plus-dropdown"
          @focusin="open_dropdown()"
@@ -40,11 +40,11 @@
 </div>
 
 <script>
- document.addEventListener('alpine:init', () => {
-     Alpine.data('spotify_artist_chooser', () => ({
+ function spotify_artist_chooser_data(selected_spotify_artists, max_artists) {
+     return {
          show_search: false,
          search_text: '',
-         selected_spotify_artists: {{ widget.value |safe }},
+         selected_spotify_artists: selected_spotify_artists,
 
          open_dropdown() {
              if (this.show_search) return;
@@ -58,7 +58,7 @@
          },
 
          add_artist(id, name, img_url) {
-             if (this.selected_spotify_artists.length < {{ widget.max_artists }} && !this.selected_spotify_artists.some(a => a.id === id)) {
+             if (this.selected_spotify_artists.length < max_artists && !this.selected_spotify_artists.some(a => a.id === id)) {
                  this.selected_spotify_artists.push({'id':id, 'name':name, 'img_url':img_url});
                  this.search_text = '';
              }
@@ -67,7 +67,6 @@
          remove_artist(index) {
              this.selected_spotify_artists.splice(index, 1);
          }
-
-     }))
- })
+     }
+ }
 </script>

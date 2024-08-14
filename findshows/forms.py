@@ -1,11 +1,9 @@
-import json
-
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from django.forms.widgets import ClearableFileInput, FileInput, HiddenInput, Input
 
-from findshows.models import Artist, UserProfile
+from findshows.models import Artist, Concert, UserProfile
+from findshows.widgets import DatePickerWidget, SocialsLinksWidget, SpotifyArtistSearchWidget
 
 
 class UserCreationFormE(UserCreationForm):
@@ -33,37 +31,6 @@ class UserCreationFormE(UserCreationForm):
         return user
 
 
-class SpotifyArtistSearchWidget(Input):
-    template_name="findshows/spotify_artist_search.html"
-    input_type="hidden"
-
-    def __init__(self, max_artists=3, **kwargs):
-        super().__init__(**kwargs)
-        self.max_artists = max_artists
-
-    def get_context(self, name, value, attrs):
-        context = super().get_context(name, value, attrs)
-        context['widget']['max_artists'] = self.max_artists
-        return context
-
-
-class SocialsLinksWidget(Input):
-    template_name="findshows/socials_links_widget.html"
-    input_type="text"
-
-    def value_from_datadict(self, data, files, name):
-        l = list(zip(data.getlist(name + '_display_name'), data.getlist(name + '_url')))
-        while ('','') in l:
-            l.remove(('',''))
-        return json.dumps(l)
-
-    def get_context(self, name, value, attrs):
-        context = super().get_context(name, value, attrs)
-        l = json.loads(value)
-        context['widget']['socials_links'] = l + [('','')] * (3 - len(l))
-        return context
-
-
 class UserProfileCreationForm(forms.ModelForm):
     class Meta:
         model=UserProfile
@@ -78,3 +45,13 @@ class ArtistEditForm(forms.ModelForm):
         fields=("name", "profile_picture", "bio", "youtube_links", "socials_links", "listen_links", "similar_spotify_artists")
         widgets={"similar_spotify_artists": SpotifyArtistSearchWidget,
                  "socials_links": SocialsLinksWidget}
+
+
+class ConcertForm(forms.ModelForm):
+    date = forms.DateField(
+        widget=DatePickerWidget,
+        input_formats=('%Y-%m-%d',))
+
+    class Meta:
+        model=Concert
+        fields=("poster", "date", "start_time", "end_time", "venue", "ages", "artists")

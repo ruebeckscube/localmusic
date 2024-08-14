@@ -317,13 +317,15 @@ class Venue(models.Model):
 
 class Concert(models.Model):
     poster=models.ImageField()
-    time=models.DateTimeField()
+    date=models.DateField()
+    start_time=models.TimeField()
+    end_time=models.TimeField(blank=True)
     venue=models.ForeignKey(Venue, on_delete=models.CASCADE)
     ages=models.CharField(max_length=2, choices=Ages)
     artists=models.ManyToManyField(Artist, through="SetOrder")
 
     def __str__(self):
-        return ', '.join((str(a) for a in self.artists.all())) + ' at ' + str(self.venue) + ' ' + str(self.time.date())
+        return ', '.join((str(a) for a in self.artists.all())) + ' at ' + str(self.venue) + ' ' + str(self.date)
 
 
 class SetOrder(models.Model):

@@ -2,6 +2,7 @@
     <a class="justify-self-start grow" href="{% url 'findshows:home' %}">Chicago Local Music</a>
     {% if user.is_authenticated %}
         {% if user.userprofile.managed_artists.all|length > 0 %}
+            <a href="{% url 'findshows:my_concert_list' %}">My shows</a>
             <a href="{% url 'findshows:managed_artist_list' %}">Artist profile</a>
         {% endif %}
         <a href="{% url 'findshows:user_settings' %}">Settings</a>
