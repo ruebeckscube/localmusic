@@ -36,3 +36,9 @@ class SocialsLinksWidget(Input):
 
 class DatePickerWidget(Input):
     template_name="findshows/date_picker.html"
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        if context['widget']['value'] is None:
+            context['widget']['value'] = ''
+        return context

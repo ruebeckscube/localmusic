@@ -283,7 +283,7 @@ class UserProfile(models.Model):
     # }
     favorite_spotify_artists_and_relateds=models.JSONField(editable=False, default=dict, blank=True)
 
-    followed_artists=models.ManyToManyField(Artist, related_name="followers")
+    followed_artists=models.ManyToManyField(Artist, related_name="followers", blank=True)
     managed_artists=models.ManyToManyField(Artist, related_name="managing_users")
     weekly_email=models.BooleanField(default=True)
 
@@ -318,8 +318,9 @@ class Venue(models.Model):
 class Concert(models.Model):
     poster=models.ImageField()
     date=models.DateField()
+    doors_time=models.TimeField(blank=True, null=True)
     start_time=models.TimeField()
-    end_time=models.TimeField(blank=True)
+    end_time=models.TimeField(blank=True, null=True)
     venue=models.ForeignKey(Venue, on_delete=models.CASCADE)
     ages=models.CharField(max_length=2, choices=Ages)
     artists=models.ManyToManyField(Artist, through="SetOrder")

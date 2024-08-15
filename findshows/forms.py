@@ -54,4 +54,4 @@ class ConcertForm(forms.ModelForm):
 
     class Meta:
         model=Concert
-        fields=("poster", "date", "start_time", "end_time", "venue", "ages", "artists")
+        fields=("poster", "date", "doors_time", "start_time", "end_time", "venue", "ages", "artists")

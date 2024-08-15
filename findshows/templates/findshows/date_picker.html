@@ -63,33 +63,27 @@
                                   </div>
                               </div>
 
-                              <div class="flex flex-wrap mb-3 -mx-1">
-                                  <template x-for="(day, index) in DAYS" :key="index">
-                                      <div style="width: 14.26%" class="px-1">
-                                          <div
-                                              x-text="day"
-                                              class="text-gray-800 font-medium text-center text-xs"></div>
-                                      </div>
-                                  </template>
-                              </div>
                               <div class="grid grid-cols-7 grid-flow-row -mx-1">
-                                  <template x-for="i in NumSpacesBeforeDays">
-                                      <div
-                                          class="text-center border p-1 border-transparent text-sm"
-                                      ></div>
-                                  </template>
-                                  <template x-for="date in numDaysInMonth">
+                                <template x-for="day in DAYS">
+                                    <div class="mb-1">
+                                        <div x-text="day" class="text-gray-800 font-medium text-center text-xs"></div>
+                                    </div>
+                                </template>
+                                <template x-for="i in NumSpacesBeforeDays">
+                                    <div ></div>
+                                </template>
+                                <template x-for="date in numDaysInMonth">
                                       <div class="px-1 mb-1">
                                           <div {# TODO figure out date centering #}
                                               @click="onDateClick(date)"
                                               x-text="date"
-                                              class="h-7 w-7 cursor-pointer text-center text-sm leading-none rounded-full leading-loose transition ease-in-out duration-100"
+                                              class="cursor-pointer text-center text-sm rounded-full leading-loose transition ease-in-out duration-100"
                                               :class="{'bg-blue-500 text-white': isSelected(date),
                                                       'text-gray-700 hover:bg-blue-200': !isSelected(date),
                                                       'outline outline-blue-500 outline-1': isToday(date)}"
                                           ></div>
                                       </div>
-                                  </template>
+                                </template>
                               </div>
                           </div>
 
