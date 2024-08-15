@@ -9,7 +9,6 @@
     </style>
 
     <div class="antialiased sans-serif">
-        {# TODO get rid of this and get our tailwind setup working #}
     <div x-data="datePickerData()" x-init="[initDate('{{ widget.value }}'), incrementCalDisplay(0)]" x-cloak>
           <div class="container mx-auto px-4 py-2 md:py-10">
               <div class="mb-5 w-64">
@@ -74,7 +73,7 @@
                                 </template>
                                 <template x-for="date in numDaysInMonth">
                                       <div class="px-1 mb-1">
-                                          <div {# TODO figure out date centering #}
+                                          <div
                                               @click="onDateClick(date)"
                                               x-text="date"
                                               class="cursor-pointer text-center text-sm rounded-full leading-loose transition ease-in-out duration-100"
