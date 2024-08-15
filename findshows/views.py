@@ -19,7 +19,7 @@ from .spotify import search_spotify_artists
 #################
 
 def home(request):
-    return render(request, "findshows/home.html")
+    return render(request, "findshows/pages/home.html")
 
 def user_settings(request):
     return HttpResponse("This will be settings")
@@ -67,14 +67,14 @@ def managed_artist_list(request):
     artists=request.user.userprofile.managed_artists.all()
     if len(artists)==1:
         return redirect(reverse('findshows:view_artist', args=[artists[0].pk]))
-    return render(request, "findshows/managed_artist_list.html", context = {
+    return render(request, "findshows/pages/managed_artist_list.html", context = {
         "artists": artists,
     })
 
 
 class ArtistView(generic.DetailView):
     model = Artist
-    template_name = "findshows/view_artist.html"
+    template_name = "findshows/pages/view_artist.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -100,7 +100,7 @@ def edit_artist(request, pk):
     context = {'form': form,
                'pk': pk }
 
-    return render(request, 'findshows/edit_artist.html', context)
+    return render(request, 'findshows/pages/edit_artist.html', context)
 
 
 #####################
@@ -126,14 +126,14 @@ def edit_concert(request, pk=None):
     context = {'form': form,
                'pk': pk}
 
-    return render(request, 'findshows/edit_concert.html', context)
+    return render(request, 'findshows/pages/edit_concert.html', context)
 
 
 @user_passes_test(is_artist_account)
 def my_concert_list(request):
     artists=request.user.userprofile.managed_artists.all()
     concerts=[ c for a in artists for c in a.concert_set.all()]
-    return render(request, "findshows/concert_list_for_artist.html", context = {
+    return render(request, "findshows/pages/concert_list_for_artist.html", context = {
         "concerts": concerts,
     })
 
@@ -141,9 +141,6 @@ def my_concert_list(request):
 #########################
 ## Spotify search tool ##
 #########################
-
-def spotify_artist_search(request):
-    return render(request, "findshows/spotify_artist_search.html")
 
 
 def spotify_artist_search_results(request):
@@ -159,6 +156,6 @@ def spotify_artist_search_results(request):
                 artist['image'] = image
                 continue
     # TODO maybe filter images for smallest resolution > display value
-    return render(request, "findshows/spotify_artist_search_results.html", {
+    return render(request, "findshows/htmx/spotify_artist_search_results.html", {
         "spotify_artists": search_results
     })

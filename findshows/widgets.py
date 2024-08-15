@@ -4,7 +4,7 @@ from django.forms.widgets import Input
 
 
 class SpotifyArtistSearchWidget(Input):
-    template_name="findshows/spotify_artist_search.html"
+    template_name="findshows/widgets/spotify_artist_search.html"
     input_type="hidden"
 
     def __init__(self, max_artists=3, **kwargs):
@@ -18,7 +18,7 @@ class SpotifyArtistSearchWidget(Input):
 
 
 class SocialsLinksWidget(Input):
-    template_name="findshows/socials_links_widget.html"
+    template_name="findshows/widgets/socials_links_widget.html"
     input_type="text"
 
     def value_from_datadict(self, data, files, name):
@@ -35,7 +35,7 @@ class SocialsLinksWidget(Input):
 
 
 class DatePickerWidget(Input):
-    template_name="findshows/date_picker.html"
+    template_name="findshows/widgets/date_picker.html"
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
