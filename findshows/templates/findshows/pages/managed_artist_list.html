@@ -7,7 +7,9 @@
 <ul>
 {% for artist in artists %}
     <li>
-        <a href={% url "findshows:view_artist" artist.pk %}>{{artist.name}}</a>
+        {{artist.name}}
+        <a href={% url "findshows:view_artist" artist.pk %}>View</a>
+        <a href={% url "findshows:edit_artist" artist.pk %}>Edit</a>
     </li>
 {% endfor %}
 </ul>

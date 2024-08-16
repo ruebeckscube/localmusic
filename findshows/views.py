@@ -132,7 +132,7 @@ def edit_concert(request, pk=None):
 @user_passes_test(is_artist_account)
 def my_concert_list(request):
     artists=request.user.userprofile.managed_artists.all()
-    concerts=[ c for a in artists for c in a.concert_set.all()]
+    concerts=set(c for a in artists for c in a.concert_set.all()) # Set removes duplicates
     return render(request, "findshows/pages/concert_list_for_artist.html", context = {
         "concerts": concerts,
     })
