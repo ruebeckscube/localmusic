@@ -54,9 +54,9 @@ class TimePickerWidget(Input):
     template_name="findshows/widgets/time_picker.html"
 
     def value_from_datadict(self, data, files, name):
-        print(data)
+        if data[name+"_hour"] == "" and data[name+"_minutes"] == "":
+            return ""
         hour = int(data[name+"_hour"]) + 12*(data[name+"_ampm"]=="pm")
-        print(str(hour) + ":" + data[name+"_minutes"] )
         return str(hour) + ":" + data[name+"_minutes"]  # any issues filter thru to validation
 
     def get_context(self, name, value, attrs):
@@ -64,7 +64,7 @@ class TimePickerWidget(Input):
         if not context['widget']['value']:
             return context
         l = context['widget']['value'].split(':')
-        if len(l) < 1:
+        if len(l) < 2:
             return context
 
         context['hour'], context['minutes'] = int(l[0]), l[1]

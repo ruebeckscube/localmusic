@@ -941,6 +941,10 @@ video {
   text-align: right;
 }
 
+.align-middle {
+  vertical-align: middle;
+}
+
 .text-8xl {
   font-size: 6rem;
   line-height: 1;

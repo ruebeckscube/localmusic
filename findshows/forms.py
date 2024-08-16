@@ -49,9 +49,9 @@ class ArtistEditForm(forms.ModelForm):
 
 class ConcertForm(forms.ModelForm):
     date = DatePickerField()
-    doors_time = TimePickerField()
+    doors_time = TimePickerField(required=False)
     start_time = TimePickerField()
-    end_time = TimePickerField()
+    end_time = TimePickerField(required=False)
 
     class Meta:
         model=Concert
