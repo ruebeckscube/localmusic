@@ -1,0 +1,42 @@
+{% load findshows_tags %}
+
+<div class="flex w-full justify-between rounded-lg mb-4 bg-gray-100 shadow-md">
+    <div class="flex w-full">
+        <div class="flex align-center w-1/4 p-1">
+            <img src="{{concert.poster.url}}" alt="Concert poster"
+                 class="rounded-lg object-contain" />
+        </div>
+        <div class="grid grid-cols-3 w-3/4 items-center">
+            {% for artist in concert.artists.all %}
+                <div class="font-bold text-stone-700 text-lg text-right mr-3">
+                    {{artist.name}}
+                </div>
+                <div class="col-span-2">
+                    {% preview_player artist True %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="flex flex-col outline outline-1 outline-slate-500 rounded-lg p-1 m-1 w-1/4">
+        <div>
+            {{concert.date}}
+        </div>
+        <div>
+            Doors {{concert.doors_time}}
+        </div>
+        <div>
+            Music {{concert.start_time}}
+        </div>
+        {% if concert.end_time %}
+        <div>
+            Ends {{concert.end_time}}
+        </div>
+        {% endif %}
+        <div>
+            {{concert.venue}}
+        </div>
+        <div>
+            {{concert.get_ages_display}}
+        </div>
+    </div>
+</div>

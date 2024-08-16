@@ -1,0 +1,52 @@
+<div class="flex flex-col content-center">
+    {% if artist.listen_type == artist.ALBUM %}
+        {% if artist.listen_platform == artist.DSP %}
+            <iframe class="w-full"
+                    height="{{ mini|yesno:"80px,400px" }}"
+                    src="https://open.spotify.com/embed/album/{{ artist.listen_ids.0 }}?&theme=0"
+                    frameBorder="0"
+                    allowfullscreen=""
+                    allow="clipboard-write; encrypted-media"
+                    loading="lazy"></iframe>
+        {% elif artist.listen_platform == artist.BANDCAMP %}
+            <iframe class="w-full"
+                    height="{{ mini|yesno:"56px,400px" }}"
+                    src="https://bandcamp.com/EmbeddedPlayer/album={{ artist.listen_ids.0 }}/size={{ mini|yesno:"small,large" }}/bgcol=ffffff/linkcol=0687f5/{% if not mini %}artwork=small{% endif %}/transparent=true/"
+                    seamless>
+            </iframe>
+        {% elif artist.listen_platform == artist.SOUNDCLOUD %}
+            <iframe class="w-full"
+                    height="{{ mini|yesno:"56px,400px" }}"
+                    src="https://w.soundcloud.com/player/?url=https://soundcloud.com{{ artist.listen_ids.0 }}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true"></iframe>
+        {% endif %}
+
+
+
+    {% elif artist.listen_type == artist.TRACK %}
+            {% if artist.listen_platform == artist.DSP %}
+                {% for id in listen_ids %}
+                    <iframe class="w-full max-h-20"
+                            src="https://open.spotify.com/embed/track/{{ id }}"
+                            frameBorder="0"
+                            allowfullscreen=""
+                            allow="clipboard-write; encrypted-media"
+                            loading="lazy"></iframe>
+                {% endfor %}
+            {% elif artist.listen_platform == artist.BANDCAMP %}
+                {% for id in listen_ids %}
+                    <iframe class="w-full {% if mini %} max-h-14 {% endif %}"
+                            height="{{ mini|yesno:"56px,130px" }}"
+                            src="https://bandcamp.com/EmbeddedPlayer/track={{ id }}/size={{ mini|yesno:"small,medium" }}/bgcol=ffffff/linkcol=0687f5/transparent=true/"
+                            seamless>
+                    </iframe>
+                {% endfor %}
+            {% elif artist.listen_platform == artist.SOUNDCLOUD %}
+                {% for id in listen_ids %}
+                    <iframe class="w-full"
+                            height="130px"
+                            src="https://w.soundcloud.com/player/?url=https://soundcloud.com{{ id }}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true"></iframe>
+                {% endfor %}
+            {% endif %}
+    {% endif %}
+
+</div>

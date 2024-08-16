@@ -1,13 +1,21 @@
 {% extends "localmusic/base.html" %}
 
 {% block content %}
-    {% for concert in concerts %}
-        <div>
-            <a href="{% url 'findshows:edit_concert' concert.pk %}"> {{ concert }}</a>
-        </div>
-    {% endfor %}
-
     <div>
         <a href="{% url 'findshows:create_concert' %}"> Create new show listing</a>
     </div>
+
+    <div class="flex flex-col w-full align-middle">
+        {% for concert in concerts %}
+            <div class="flex">
+                <div class="w-5/6">
+                    {% include "findshows/partials/concert_card.html" %}
+                </div>
+                <div class = "w-1/6 grid content-center">
+                    <a href="{% url 'findshows:edit_concert' concert.pk %}"> Edit </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
 {% endblock %}

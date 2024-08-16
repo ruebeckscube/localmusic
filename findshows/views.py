@@ -159,3 +159,15 @@ def spotify_artist_search_results(request):
     return render(request, "findshows/htmx/spotify_artist_search_results.html", {
         "spotify_artists": search_results
     })
+
+
+
+#######################
+## Main Search page ###
+#######################
+
+def find_shows_search(request):
+    concerts = Concert.objects.all()
+    return render(request, "findshows/pages/find_shows_search.html", context = {
+        "concerts":concerts,
+    })
