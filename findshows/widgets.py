@@ -1,4 +1,5 @@
 import json
+from django.forms.fields import DateField, TimeField
 
 from django.forms.widgets import Input
 
@@ -42,3 +43,40 @@ class DatePickerWidget(Input):
         if context['widget']['value'] is None:
             context['widget']['value'] = ''
         return context
+
+
+class DatePickerField(DateField):
+    widget=DatePickerWidget
+    input_formats=('%Y-%m-%d',) # Just to be sure localization doesn't mess things up
+
+
+class TimePickerWidget(Input):
+    template_name="findshows/widgets/time_picker.html"
+
+    def value_from_datadict(self, data, files, name):
+        print(data)
+        hour = int(data[name+"_hour"]) + 12*(data[name+"_ampm"]=="pm")
+        print(str(hour) + ":" + data[name+"_minutes"] )
+        return str(hour) + ":" + data[name+"_minutes"]  # any issues filter thru to validation
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        if not context['widget']['value']:
+            return context
+        l = context['widget']['value'].split(':')
+        if len(l) < 1:
+            return context
+
+        context['hour'], context['minutes'] = int(l[0]), l[1]
+        if context['hour'] > 12:
+            context['hour'] -= 12
+            context['ampm'] = 'pm'
+        else:
+            context['ampm'] = 'am'
+
+        return context
+
+
+class TimePickerField(TimeField):
+    widget=TimePickerWidget
+    input_formats=('%H:%M',) # Just to be sure localization doesn't mess things up

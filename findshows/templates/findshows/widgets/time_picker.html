@@ -1,0 +1,35 @@
+<div class="flex">
+    <input name="{{widget.name}}_hour"
+           value="{{hour}}"
+           x-mask="99" placeholder="07"
+           required="{{widget.required}}"
+           class="w-5 text-right"
+    >
+    :
+    <input name="{{widget.name}}_minutes"
+           value="{{minutes}}"
+           x-mask="99" placeholder="00"
+           required="{{widget.required}}"
+           class="w-5 text-right"
+    >
+    <div class="flex rounded-xl bg-gray-200 ml-2">
+        <div>
+            <input type="radio" name="{{widget.name}}_ampm"
+                   value="am" id="{{widget.name}}_am"
+                   {% if ampm == 'am' %} checked {% endif %}
+                   class="peer hidden" />
+            <label for="{{widget.name}}_am"
+                   class="block cursor-pointer select-none p-1 rounded-xl text-xs text-center peer-checked:bg-blue-500 peer-checked:font-bold peer-checked:text-white">
+                AM</label>
+            </div>
+        <div>
+            <input type="radio" name="{{widget.name}}_ampm"
+                   value="pm" id="{{widget.name}}_pm"
+                   {% if ampm == 'pm' or not ampm %} checked {% endif %}
+                   class="peer hidden" />
+            <label for="{{widget.name}}_pm"
+                   class="block cursor-pointer select-none p-1 rounded-xl text-xs text-center peer-checked:bg-blue-500 peer-checked:font-bold peer-checked:text-white">
+                PM</label>
+        </div>
+    </div>
+</div>

@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
 from findshows.models import Artist, Concert, UserProfile
-from findshows.widgets import DatePickerWidget, SocialsLinksWidget, SpotifyArtistSearchWidget
+from findshows.widgets import DatePickerField, DatePickerWidget, SocialsLinksWidget, SpotifyArtistSearchWidget, TimePickerField
 
 
 class UserCreationFormE(UserCreationForm):
@@ -48,9 +48,10 @@ class ArtistEditForm(forms.ModelForm):
 
 
 class ConcertForm(forms.ModelForm):
-    date = forms.DateField(
-        widget=DatePickerWidget,
-        input_formats=('%Y-%m-%d',))
+    date = DatePickerField()
+    doors_time = TimePickerField()
+    start_time = TimePickerField()
+    end_time = TimePickerField()
 
     class Meta:
         model=Concert
