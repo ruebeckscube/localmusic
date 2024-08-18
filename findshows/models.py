@@ -310,6 +310,7 @@ class Venue(models.Model):
     # For now, folks will put "DM for address" for house venues.
     address=models.CharField()
     ages=models.CharField(max_length=2, choices=Ages)
+    website=models.URLField()
 
     def __str__(self):
         return self.name
@@ -324,9 +325,18 @@ class Concert(models.Model):
     venue=models.ForeignKey(Venue, on_delete=models.CASCADE)
     ages=models.CharField(max_length=2, choices=Ages)
     artists=models.ManyToManyField(Artist, through="SetOrder")
+    ticket_link=models.URLField(blank=True)
 
+
+    def relevance_score(self, artists_and_relateds):
+        return sum(spotify.relatedness_score(artists_and_relateds, a.similar_spotify_artists_and_relateds)
+                   for a in self.artists.all()
+                   )/len(self.artists.all())
+
+    
     def __str__(self):
         return ', '.join((str(a) for a in self.artists.all())) + ' at ' + str(self.venue) + ' ' + str(self.date)
+
 
 
 class SetOrder(models.Model):

@@ -2,41 +2,47 @@
 
 <div class="flex w-full justify-between rounded-lg mb-4 bg-gray-100 shadow-md">
     <div class="flex w-full">
-        <div class="flex align-center w-1/4 p-1">
+        <div class="flex align-center w-1/4 m-2">
             <img src="{{concert.poster.url}}" alt="Concert poster"
-                 class="rounded-lg object-contain" />
+                 class="object-contain" />
         </div>
-        <div class="grid grid-cols-3 w-3/4 items-center">
+        <div class="grid grid-cols-3 w-3/4 my-1 items-center">
             {% for artist in concert.artists.all %}
                 <div class="font-bold text-stone-700 text-lg text-right mr-3">
-                    {{artist.name}}
+                    <a href="{% url "findshows:view_artist" artist.pk %}"> {{artist.name}} </a>
                 </div>
-                <div class="col-span-2">
+                <div class="col-span-2 my-1">
                     {% preview_player artist True %}
                 </div>
             {% endfor %}
         </div>
     </div>
-    <div class="flex flex-col outline outline-1 outline-slate-500 rounded-lg p-1 m-1 w-1/4">
-        <div>
-            {{concert.date}}
+    <div class="flex flex-col justify-around bg-slate-600 text-white text-center rounded-lg p-1 m-2 w-1/4">
+        <div class="flex flex-col">
+            <div>
+                <a href="{{ concert.venue.website }}">{{concert.venue.name}}</a> ({{concert.get_ages_display}})
+            </div>
+            <div>
+                {{concert.date}}
+            </div>
         </div>
-        <div>
-            Doors {{concert.doors_time}}
+        <div class="flex flex-col">
+            <div>
+                Doors {{concert.doors_time}}
+            </div>
+            <div>
+                Music {{concert.start_time}}
+            </div>
+            {% if concert.end_time %}
+                <div>
+                    Ends {{concert.end_time}}
+                </div>
+            {% endif %}
         </div>
-        <div>
-            Music {{concert.start_time}}
-        </div>
-        {% if concert.end_time %}
-        <div>
-            Ends {{concert.end_time}}
-        </div>
+        {% if concert.ticket_link %}
+            <div>
+                <a href="{{ concert.ticket_link }}">Tickets</a>
+            </div>
         {% endif %}
-        <div>
-            {{concert.venue}}
-        </div>
-        <div>
-            {{concert.get_ages_display}}
-        </div>
     </div>
 </div>

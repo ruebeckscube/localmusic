@@ -55,4 +55,9 @@ class ConcertForm(forms.ModelForm):
 
     class Meta:
         model=Concert
-        fields=("poster", "date", "doors_time", "start_time", "end_time", "venue", "ages", "artists")
+        fields=("poster", "date", "doors_time", "start_time", "end_time", "venue", "ages", "artists", "ticket_link")
+
+
+class ShowFinderForm(forms.Form):
+    date = DatePickerField()
+    spotify_artists = forms.fields.JSONField(widget=SpotifyArtistSearchWidget, initial=list)

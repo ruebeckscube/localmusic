@@ -10,8 +10,9 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 
 
 from .models import Artist, Concert
-from .forms import ArtistEditForm, ConcertForm, UserCreationFormE, UserProfileCreationForm
+from .forms import ArtistEditForm, ConcertForm, ShowFinderForm, UserCreationFormE, UserProfileCreationForm
 from .spotify import search_spotify_artists
+from findshows import spotify
 
 
 #################
@@ -144,7 +145,6 @@ def my_concert_list(request):
 
 
 def spotify_artist_search_results(request):
-    # TODO prevent adding duplicate artist
     query = request.POST['spotify-search']
     if not query:
         return HttpResponse(b'')
@@ -155,7 +155,6 @@ def spotify_artist_search_results(request):
             if image['height'] > 64 and image['width'] > 64:
                 artist['image'] = image
                 continue
-    # TODO maybe filter images for smallest resolution > display value
     return render(request, "findshows/htmx/spotify_artist_search_results.html", {
         "spotify_artists": search_results
     })
@@ -166,8 +165,30 @@ def spotify_artist_search_results(request):
 ## Main Search page ###
 #######################
 
-def find_shows_search(request):
-    concerts = Concert.objects.all()
-    return render(request, "findshows/pages/find_shows_search.html", context = {
-        "concerts":concerts,
+def concert_search(request):
+    search_form = ShowFinderForm()
+
+    return render(request, "findshows/pages/concert_search.html", context = {
+        "search_form": search_form,
+    })
+
+
+def concert_search_results(request):
+    # TODO: display scores per individual artist somehow (colors for score ranges? idk)
+    if request.POST:
+        search_form = ShowFinderForm(request.POST)
+    else:
+        search_form = ShowFinderForm()
+
+    if search_form.is_valid():
+        artists_and_relateds = { a['id']: spotify.get_related_spotify_artists(a['id'])
+                                 for a in search_form.cleaned_data['spotify_artists']}
+        concerts = sorted(Concert.objects.filter(date=search_form.cleaned_data['date']),
+                          key=lambda c: c.relevance_score(artists_and_relateds),
+                          reverse=True)
+    else:
+        concerts = []
+
+    return render(request, "findshows/htmx/concert_search_results.html", context = {
+        "concerts": concerts,
     })

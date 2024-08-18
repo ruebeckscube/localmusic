@@ -1,0 +1,10 @@
+{{scores}}
+{% for concert in concerts  %}
+    {% include "../partials/concert_card.html" %}
+    {% empty %}
+    <div class="flex h-full flex-col justify-around text-center text-gray-500">
+        <div>
+            Enter a search to get started!
+        </div>
+    </div>
+{% endfor %}

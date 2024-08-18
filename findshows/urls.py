@@ -15,8 +15,8 @@ urlpatterns = [
     path("concert/<int:pk>/edit", views.edit_concert, name="edit_concert"),
     path("concert/create", views.edit_concert, name="create_concert"),
 
-    path("search", views.find_shows_search, name="find_shows_search"),
+    path("search", views.concert_search, name="concert_search"),
+    path("htmx/concert_search_results/", views.concert_search_results, name="concert_search_results"),
 
     path("htmx/spotify_artist_search_results/", views.spotify_artist_search_results, name="spotify_artist_search_results"),
-
 ]
