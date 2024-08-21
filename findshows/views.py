@@ -20,7 +20,14 @@ from findshows import spotify
 #################
 
 def home(request):
-    return render(request, "findshows/pages/home.html")
+    if request.POST:
+        search_form = ShowFinderForm(request.POST)
+    else:
+        search_form = ShowFinderForm()
+
+    return render(request, "findshows/pages/home.html", context={
+        "search_form": search_form
+    })
 
 def user_settings(request):
     return HttpResponse("This will be settings")
@@ -166,7 +173,10 @@ def spotify_artist_search_results(request):
 #######################
 
 def concert_search(request):
-    search_form = ShowFinderForm()
+    if request.POST:
+        search_form = ShowFinderForm(request.POST)
+    else:
+        search_form = ShowFinderForm()
 
     return render(request, "findshows/pages/concert_search.html", context = {
         "search_form": search_form,

@@ -21,7 +21,7 @@
          @focusin="open_dropdown()"
          @click.outside="close_dropdown()"
     >
-            <input class="form-control" type="search"
+            <input class="" type="search"
                    name="spotify-search" placeholder="Search Spotify artists..."
                    x-model="search_text"
                    hx-post="{% url 'findshows:spotify_artist_search_results' %}"
