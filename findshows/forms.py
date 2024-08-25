@@ -2,8 +2,8 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-from findshows.models import Artist, Concert, UserProfile
-from findshows.widgets import DatePickerField, DatePickerWidget, SocialsLinksWidget, SpotifyArtistSearchWidget, TimePickerField
+from findshows.models import Artist, Concert, UserProfile, Venue
+from findshows.widgets import DatePickerField, SocialsLinksWidget, SpotifyArtistSearchWidget, TimePickerField, VenuePickerWidget
 
 
 class UserCreationFormE(UserCreationForm):
@@ -56,6 +56,16 @@ class ConcertForm(forms.ModelForm):
     class Meta:
         model=Concert
         fields=("poster", "date", "doors_time", "start_time", "end_time", "venue", "ages", "artists", "ticket_link")
+        widgets={"venue": VenuePickerWidget}
+
+
+class VenueForm(forms.ModelForm):
+    prefix = "venue"
+    use_required_attribute = False
+
+    class Meta:
+        model=Venue
+        fields=("name", "address", "ages", "website")
 
 
 class ShowFinderForm(forms.Form):

@@ -1,16 +1,18 @@
+from operator import and_
+from functools import reduce
+import json
+
 from django.contrib.auth import login
 from django.core.mail import send_mail
 from django.urls import reverse
-
 from django.views import generic
-from django.http import HttpResponse, QueryDict
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Q
 
-
-
-from .models import Artist, Concert
-from .forms import ArtistEditForm, ConcertForm, ShowFinderForm, UserCreationFormE, UserProfileCreationForm
+from .models import Artist, Concert, Venue
+from .forms import ArtistEditForm, ConcertForm, ShowFinderForm, UserCreationFormE, UserProfileCreationForm, VenueForm
 from .spotify import search_spotify_artists
 from findshows import spotify
 
@@ -117,6 +119,7 @@ def edit_artist(request, pk):
 
 @login_required
 def edit_concert(request, pk=None):
+    print('in the view')
     if pk is None:
         concert = Concert()
     else:
@@ -128,6 +131,7 @@ def edit_concert(request, pk=None):
     else:
         form = ConcertForm(request.POST, instance=concert)
         if form.is_valid():
+            print("it's valid")
             form.save()
             return redirect(reverse('findshows:my_concert_list'))
 
@@ -135,6 +139,39 @@ def edit_concert(request, pk=None):
                'pk': pk}
 
     return render(request, 'findshows/pages/edit_concert.html', context)
+
+
+def venue_search_results(request):
+    keywords = request.POST['venue-search'].split()
+    if not keywords:
+        return HttpResponse("")
+
+    search_results = Venue.objects.filter(
+        reduce(and_, (Q(name__icontains=k) for k in keywords))
+    )[:5]
+    return render(request, "findshows/htmx/venue_search_results.html", {
+        "venues": search_results
+    })
+
+
+def create_venue(request):
+    venue_form = VenueForm(request.POST)
+    valid = venue_form.is_valid()
+    if valid:
+        venue = venue_form.save()
+        venue_form = VenueForm()
+
+    response = render(request, "findshows/htmx/venue_form.html", {
+        "venue_form": venue_form,
+    })
+
+    if valid:
+        response.headers['HX-Trigger'] = json.dumps({
+            "successfully-created-venue": {
+                "created_venue_name": venue.name,
+                "created_venue_id": venue.id}})
+
+    return response
 
 
 @user_passes_test(is_artist_account)

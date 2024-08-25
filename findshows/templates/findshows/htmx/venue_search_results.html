@@ -1,0 +1,14 @@
+{% for venue in venues %}
+    <li class="odd:bg-white even:bg-slate-50 hover:bg-slate-200">
+        <button class="w-full text-left"
+                type="button"
+                @click="select_venue('{{venue.name|escapejs}}', '{{venue.id}}')"
+        >
+            <div class="flex">
+                <div>
+                    {{venue.name}}
+                </div>
+            </div>
+        </button>
+    </li>
+{% endfor %}

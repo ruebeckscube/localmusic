@@ -3,6 +3,9 @@ from django.forms.fields import DateField, TimeField
 
 from django.forms.widgets import Input
 
+from findshows.models import Venue
+import findshows.forms
+
 
 class SpotifyArtistSearchWidget(Input):
     template_name="findshows/widgets/spotify_artist_search.html"
@@ -80,3 +83,13 @@ class TimePickerWidget(Input):
 class TimePickerField(TimeField):
     widget=TimePickerWidget
     input_formats=('%H:%M',) # Just to be sure localization doesn't mess things up
+
+
+class VenuePickerWidget(Input):
+    template_name="findshows/widgets/venue_select.html"
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['widget']['venue_name'] = Venue.objects.get(pk=context['widget']['value'])
+        context['venue_form'] = findshows.forms.VenueForm()
+        return context

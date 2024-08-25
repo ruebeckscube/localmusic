@@ -1,0 +1,130 @@
+{# modal based on https://alpinetoolbox.com/examples/modal #}
+
+<style>
+ [x-cloak] {
+     display: none;
+ }
+</style>
+
+<div class="bg-gray-100 flex items-center justify-center"
+     x-data="venue_picker_data('{{widget.value|escapejs}}', '{{widget.venue_name|escapejs}}')"
+     @keydown.escape="close_modal()"
+     {# x-on:htmx:after-swap="console.log('event received')"  #}
+     x-cloak>
+
+    <div class="flex p-4 h-full items-center">
+
+        <input type="hidden" name="{{widget.name}}" :value="selected_venue_id">
+
+        <div x-ref="spotify-search-plus-dropdown"
+             @focusin="open_dropdown()"
+             @click.outside="close_dropdown()"
+        >
+            <input class="" type="search"
+                   name="venue-search" placeholder="Select a venue..."
+                   x-model="search_text"
+                   hx-post="{% url 'findshows:venue_search_results' %}"
+                   hx-trigger="keyup changed delay:500ms, click from:#search-results"
+                   hx-target="#venue-search-results"
+            >
+
+            <ul id="venue-search-results"
+                class="absolute"
+                x-show="show_search"
+                @click="close_dropdown()"
+                style="display: none;"
+            >
+            </ul>
+        </div>
+
+        <button type="button" class="bg-transparent border border-gray-500 hover:border-indigo-500 text-gray-500 hover:text-indigo-500 font-bold py-2 px-4 rounded-full" @click="open_modal()">Create new</button>
+
+        <!--Overlay-->
+        <div class="overflow-auto" style="background-color: rgba(0,0,0,0.5)" x-show="show_modal" :class="{ 'absolute inset-0 z-10 flex items-center justify-center': show_modal }">
+            <!--Dialog-->
+            <div class="bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg py-4 text-left px-6" x-show="show_modal" @click.away="close_modal()">
+
+                <!--Title-->
+                <div class="flex justify-between items-center pb-3">
+                    <p class="text-2xl font-bold">New Venue</p>
+                    <div class="cursor-pointer z-50" @click="close_modal()">
+                        <svg class="fill-current text-black" width="18" height="18" viewBox="0 0 18 18">
+                            <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- content -->
+                <div id="venue-form" class= "flex flex-col">
+                    {% include "../htmx/venue_form.html" %}
+                </div>
+
+                <!--Footer-->
+                <div class="flex justify-end pt-2">
+                    <button type="button" class="px-4  p-3 bg-transparent rounded-lg text-indigo-500 hover:bg-gray-100 hover:text-indigo-400" @click="close_modal()">Close</button>
+                    <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
+                            hx-post="{% url 'findshows:create_venue' %}"
+                            hx-trigger="click"
+                            hx-target="#venue-form"
+                            @successfully-created-venue="on_venue_create"
+                    >Create</button>
+                </div>
+
+
+            </div>
+            <!--/Dialog -->
+        </div><!-- /Overlay -->
+    </div>
+
+</div>
+
+<script>
+ function venue_picker_data(initial_venue_id, initial_venue_name) {
+     return {
+         show_modal: false,
+         show_search: false,
+         search_text: initial_venue_name,
+
+         selected_venue_name: initial_venue_name,
+         selected_venue_id: initial_venue_id,
+
+         created_venue_name: '',
+         created_venue_id: '',
+
+         open_dropdown() {
+             if (this.show_search) return;
+             this.show_search = true;
+         },
+
+         close_dropdown(focusAfter) {
+             if (! this.show_search) return;
+             this.show_search = false;
+             if (this.selected_venue_name) {
+                 this.search_text = this.selected_venue_name;
+             }
+             focusAfter && focusAfter.focus();
+         },
+
+         select_venue(venue_name, venue_id) {
+             this.search_text = venue_name;
+             this.selected_venue_name = venue_name;
+             this.selected_venue_id = venue_id;
+         },
+
+         open_modal() {
+             this.show_modal = true;
+         },
+
+         on_venue_create(event) {
+             this.selected_venue_name = event.detail.created_venue_name;
+             this.selected_venue_id = event.detail.created_venue_id;
+             this.search_text = this.selected_venue_name;
+             this.close_modal()
+         },
+
+         close_modal() {
+             this.show_modal = false;
+         },
+     }
+ }
+</script>
