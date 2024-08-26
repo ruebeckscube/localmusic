@@ -2,12 +2,6 @@
 {# TODO: make sure it's okay to use this? can't for the life of me figure out the license situation #}
 
 <div class="max-w-60 flex items-center justify-center bg-gray-200 rounded-lg">
-    <style>
-     [x-cloak] {
-         display: none;
-     }
-    </style>
-
     <div class="antialiased sans-serif">
     <div x-data="datePickerData()" x-init="[initDate('{{ widget.value }}'), incrementCalDisplay(0)]" x-cloak>
           <div class="container mx-auto px-4 py-2">

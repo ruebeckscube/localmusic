@@ -1,11 +1,5 @@
 {# modal based on https://alpinetoolbox.com/examples/modal #}
 
-<style>
- [x-cloak] {
-     display: none;
- }
-</style>
-
 <div class="bg-gray-100 flex items-center justify-center"
      x-data="venue_picker_data('{{widget.value|escapejs}}', '{{widget.venue_name|escapejs}}')"
      @keydown.escape="close_modal()"
