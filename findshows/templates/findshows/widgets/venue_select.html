@@ -3,7 +3,6 @@
 <div class="bg-gray-100 flex items-center justify-center"
      x-data="venue_picker_data('{{widget.value|escapejs}}', '{{widget.venue_name|escapejs}}')"
      @keydown.escape="close_modal()"
-     {# x-on:htmx:after-swap="console.log('event received')"  #}
      x-cloak>
 
     <div class="flex p-4 h-full items-center">
@@ -17,8 +16,8 @@
             <input class="" type="search"
                    name="venue-search" placeholder="Select a venue..."
                    x-model="search_text"
-                   hx-post="{% url 'findshows:venue_search_results' %}"
-                   hx-trigger="keyup changed delay:500ms, click from:#search-results"
+                   hx-get="{% url 'findshows:venue_search_results' %}"
+                   hx-trigger="keyup changed delay:500ms"
                    hx-target="#venue-search-results"
             >
 

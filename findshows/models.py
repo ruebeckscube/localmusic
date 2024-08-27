@@ -333,6 +333,9 @@ class Concert(models.Model):
                    for a in self.artists.all()
                    )/len(self.artists.all())
 
+    @property
+    def sorted_artists(self):
+        return self.artists.order_by('set_order')
     
     def __str__(self):
         return ', '.join((str(a) for a in self.artists.all())) + ' at ' + str(self.venue) + ' ' + str(self.date)
@@ -341,7 +344,8 @@ class Concert(models.Model):
 
 class SetOrder(models.Model):
     class Meta:
+        ordering = ('order_number',)
         unique_together = (("concert", "order_number"),)
     concert=models.ForeignKey(Concert, on_delete=models.CASCADE)
-    artist=models.ForeignKey(Artist, on_delete=models.CASCADE)
+    artist=models.ForeignKey(Artist, on_delete=models.CASCADE, related_name="set_order")
     order_number=models.IntegerField()

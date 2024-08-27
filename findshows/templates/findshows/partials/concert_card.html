@@ -7,7 +7,7 @@
                  class="object-contain" />
         </div>
         <div class="grid grid-cols-3 w-3/4 my-1 items-center">
-            {% for artist in concert.artists.all %}
+            {% for artist in concert.sorted_artists %}
                 <div class="font-bold text-stone-700 text-lg text-right mr-3">
                     <a href="{% url "findshows:view_artist" artist.pk %}"> {{artist.name}} </a>
                 </div>

@@ -119,7 +119,6 @@ def edit_artist(request, pk):
 
 @login_required
 def edit_concert(request, pk=None):
-    print('in the view')
     if pk is None:
         concert = Concert()
     else:
@@ -131,7 +130,6 @@ def edit_concert(request, pk=None):
     else:
         form = ConcertForm(request.POST, instance=concert)
         if form.is_valid():
-            print("it's valid")
             form.save()
             return redirect(reverse('findshows:my_concert_list'))
 
@@ -142,10 +140,10 @@ def edit_concert(request, pk=None):
 
 
 def venue_search_results(request):
-    keywords = request.POST['venue-search'].split()
-    if not keywords:
+    if not (request.GET and request.GET["venue-search"]):
         return HttpResponse("")
 
+    keywords = request.GET['venue-search'].split()
     search_results = Venue.objects.filter(
         reduce(and_, (Q(name__icontains=k) for k in keywords))
     )[:5]
@@ -174,6 +172,21 @@ def create_venue(request):
     return response
 
 
+def artist_search_results(request):
+    if not (request.GET and request.GET["artist-search"] and request.GET["idx"]):
+        return HttpResponse("")
+
+    keywords = request.GET["artist-search"].split()
+    idx = int(request.GET["idx"])
+
+    search_results = Artist.objects.filter(
+        reduce(and_, (Q(name__icontains=k) for k in keywords))
+    )[:5]
+    return render(request, "findshows/htmx/artist_search_results.html", {
+        "artists": search_results,
+        "idx": idx
+    })
+
 @user_passes_test(is_artist_account)
 def my_concert_list(request):
     artists=request.user.userprofile.managed_artists.all()
@@ -189,11 +202,12 @@ def my_concert_list(request):
 
 
 def spotify_artist_search_results(request):
-    query = request.POST['spotify-search']
+    query = request.GET['spotify-search']
     if not query:
         return HttpResponse(b'')
 
     search_results = search_spotify_artists(query)
+    # TODO: get selected artist IDs and exclude them from results
     for artist in search_results:
         for image in reversed(artist['images']):
             if image['height'] > 64 and image['width'] > 64:

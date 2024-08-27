@@ -1,0 +1,173 @@
+{# modal based on https://alpinetoolbox.com/examples/modal #}
+
+<div class="bg-gray-100 flex flex-col items-center justify-center"
+     x-data="bill_data()"
+     x-init="bill_init({{widget.value}})" {# don't need |escapejs because it's already encoded as JSON? #}
+     @keydown.escape="close_modal()"
+     x-cloak>
+
+    <div class="flex w-full p-4 h-full items-center">
+
+        <input type="hidden" name="{{widget.name}}" :value="JSON.stringify(bill_order)">
+
+        <ol id="bill-editor" class="w-full">
+            <template x-for="(artist, idx) in bill_order" :key="idx">
+                <li class="flex w-full justify-between my-2"
+                    x-init="$nextTick(() => htmx.process($el))"> {# necessary for any HTMX in an x-for #}
+                    <div @focusin="open_dropdown(artist)"
+                         @click.outside="close_dropdown(artist)"
+                    >
+                        <input class="" type="search"
+                               id="artist-search-field"
+                               name="artist-search" placeholder="Select an artist..."
+                               x-model="artist.search_text"
+                               hx-get="{% url 'findshows:artist_search_results' %}"
+                               :hx-vals="JSON.stringify({'idx': idx})"
+                               hx-trigger="keyup changed delay:500ms"
+                               hx-target="next #artist-search-results"
+                        >
+                        <ul id="artist-search-results"
+                            class="absolute"
+                            x-show="artist.show_search"
+                            @click="close_dropdown(artist)"
+                            style="display: none;"
+                        >
+                        </ul>
+                    </div>
+
+                    <div class="flex justify-around">
+                        <button type="button" @click="move_artist(idx, -1)">
+                            Up {# TODO replace these with arrow svgs #}
+                        </button>
+                        <button type="button" @click="move_artist(idx, 1)">
+                            Down
+                        </button>
+                        <button type="button" @click="remove_artist(idx)">
+                            Remove
+                        </button>
+                    </div>
+                </li>
+            </template>
+            <li @click="add_artist()"> Add set</li>
+        </ol>
+    </div>
+
+    {% comment %}
+    <button type="button" class="bg-transparent border border-gray-500 hover:border-indigo-500 text-gray-500 hover:text-indigo-500 font-bold py-2 px-4 rounded-full" @click="open_modal()">
+        Invite artist
+    </button>
+
+    <!--Overlay-->
+    <div class="overflow-auto" style="background-color: rgba(0,0,0,0.5)" x-show="show_modal" :class="{ 'absolute inset-0 z-10 flex items-center justify-center': show_modal }">
+        <!--Dialog-->
+        <div class="bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg py-4 text-left px-6" x-show="show_modal" @click.away="close_modal()">
+
+            <!--Title-->
+            <div class="flex justify-between items-center pb-3">
+                <p class="text-2xl font-bold">Invite artist</p>
+                <div class="cursor-pointer z-50" @click="close_modal()">
+                    <svg class="fill-current text-black" width="18" height="18" viewBox="0 0 18 18">
+                        <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- content -->
+            <div id="venue-form" class= "flex flex-col">
+                {% include "../htmx/venue_form.html" %}
+            </div>
+
+            <!--Footer-->
+            <div class="flex justify-end pt-2">
+                <button type="button" class="px-4  p-3 bg-transparent rounded-lg text-indigo-500 hover:bg-gray-100 hover:text-indigo-400" @click="close_modal()">Close</button>
+                <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
+                        hx-post="{% url 'findshows:create_venue' %}"
+                        hx-trigger="click"
+                        hx-target="#venue-form"
+                        @successfully-created-venue="on_venue_create"
+                >Create</button>
+            </div>
+
+
+        </div>
+        <!--/Dialog -->
+    </div><!-- /Overlay -->
+    {% endcomment %}
+</div>
+
+<script>
+ function bill_data() {
+     return {
+         show_modal: false,
+         show_search: false,
+         search_text: '',
+         bill_order: [],
+
+         bill_init(initial_widget_val) {
+             this.bill_order = initial_widget_val;
+             for (artist of this.bill_order) {
+                 artist.show_search = false;
+                 artist.search_text = artist.name;
+             }
+         },
+
+         open_dropdown(artist) {
+             if (artist.show_search) return;
+             artist.show_search = true;
+         },
+
+         close_dropdown(artist, focusAfter) {
+             if (! artist.show_search) return;
+             artist.show_search = false;
+             if (artist.name) {
+                 artist.search_text = artist.name;
+             }
+             focusAfter && focusAfter.focus();
+         },
+
+         select_artist(idx, selected_name, selected_id) {
+             this.bill_order[idx].search_text = selected_name;
+             this.bill_order[idx].name = selected_name;
+             this.bill_order[idx].id = selected_id;
+         },
+
+         move_artist(idx, incr) {
+             if (idx + incr > this.bill_order.length - 1 || idx + incr < 0) return;
+             [this.bill_order[idx], this.bill_order[idx + incr]] = [this.bill_order[idx + incr], this.bill_order[idx]];
+         },
+
+         add_artist() {
+             this.bill_order.push({
+                 'search_text': '',
+                 'name': '',
+                 'id': '',
+                 'show_search': false
+             });
+         },
+
+         remove_artist(idx) {
+             this.bill_order.splice(idx, 1)
+         },
+
+         open_modal() {
+             this.show_modal = true;
+         },
+
+         on_venue_create(event) {
+             this.selected_venue_name = event.detail.created_venue_name;
+             this.selected_venue_id = event.detail.created_venue_id;
+             this.search_text = this.selected_venue_name;
+             this.close_modal();
+         },
+
+         close_modal() {
+             this.show_modal = false;
+         },
+
+
+         get_widget_value() {
+             return ""
+         },
+     }
+ }
+</script>

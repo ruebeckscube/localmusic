@@ -760,6 +760,10 @@ video {
   height: 100vh;
 }
 
+.h-4 {
+  height: 1rem;
+}
+
 .max-h-14 {
   max-height: 3.5rem;
 }
@@ -830,6 +834,14 @@ video {
 
 .w-11\/12 {
   width: 91.666667%;
+}
+
+.w-10 {
+  width: 2.5rem;
+}
+
+.w-4 {
+  width: 1rem;
 }
 
 .max-w-64 {
@@ -906,6 +918,10 @@ video {
   grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
+.grid-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .flex-row {
   flex-direction: row;
 }
@@ -940,6 +956,14 @@ video {
 
 .justify-around {
   justify-content: space-around;
+}
+
+.gap-3 {
+  gap: 0.75rem;
+}
+
+.gap-2 {
+  gap: 0.5rem;
 }
 
 .space-x-4 > :not([hidden]) ~ :not([hidden]) {
@@ -1038,6 +1062,10 @@ video {
   fill: currentColor;
 }
 
+.stroke-red-950 {
+  stroke: #450a0a;
+}
+
 .object-contain {
   -o-object-fit: contain;
      object-fit: contain;
@@ -1129,6 +1157,10 @@ video {
 
 .align-middle {
   vertical-align: middle;
+}
+
+.align-bottom {
+  vertical-align: bottom;
 }
 
 .text-8xl {

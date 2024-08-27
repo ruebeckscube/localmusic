@@ -1,9 +1,11 @@
+import json
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.forms.fields import JSONField
 
 from findshows.models import Artist, Concert, UserProfile, Venue
-from findshows.widgets import DatePickerField, SocialsLinksWidget, SpotifyArtistSearchWidget, TimePickerField, VenuePickerWidget
+from findshows.widgets import BillWidget, DatePickerField, SocialsLinksWidget, SpotifyArtistSearchWidget, TimePickerField, VenuePickerWidget
 
 
 class UserCreationFormE(UserCreationForm):
@@ -52,11 +54,32 @@ class ConcertForm(forms.ModelForm):
     doors_time = TimePickerField(required=False)
     start_time = TimePickerField()
     end_time = TimePickerField(required=False)
+    bill = JSONField(widget=BillWidget) # NOT a model field, we parse this and save to the artists field through the SetOrder through-model
 
     class Meta:
         model=Concert
-        fields=("poster", "date", "doors_time", "start_time", "end_time", "venue", "ages", "artists", "ticket_link")
+        fields=("poster", "date", "doors_time", "start_time", "end_time", "venue", "ages", "ticket_link")
         widgets={"venue": VenuePickerWidget}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance:
+            self.fields['bill'].initial = [{'id': a.pk, 'name': a.name}
+                                           for a in self.instance.sorted_artists]
+        else:
+            self.fields['bill'].initial = []
+
+
+    def save(self, commit = True):
+        concert = super().save(commit=False)
+
+        concert.artists.clear()
+        for idx, artist_dict in enumerate(self.cleaned_data['bill']):  # Assuming all new artist records have been saved
+            concert.artists.add(artist_dict['id'], through_defaults = {'order_number': idx})
+
+        if commit:
+            concert.save()
+        return concert
 
 
 class VenueForm(forms.ModelForm):
