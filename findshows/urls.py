@@ -21,5 +21,6 @@ urlpatterns = [
     path("htmx/spotify_artist_search_results/", views.spotify_artist_search_results, name="spotify_artist_search_results"),
     path("htmx/venue_search_results/", views.venue_search_results, name="venue_search_results"),
     path("htmx/create_venue/", views.create_venue, name="create_venue"),
+    path("htmx/create_temp_artist/", views.create_temp_artist, name="create_temp_artist"),
     path("htmx/artist_search_results/", views.artist_search_results, name="artist_search_results"),
 ]

@@ -52,7 +52,6 @@
         </ol>
     </div>
 
-    {% comment %}
     <button type="button" class="bg-transparent border border-gray-500 hover:border-indigo-500 text-gray-500 hover:text-indigo-500 font-bold py-2 px-4 rounded-full" @click="open_modal()">
         Invite artist
     </button>
@@ -73,18 +72,18 @@
             </div>
 
             <!-- content -->
-            <div id="venue-form" class= "flex flex-col">
-                {% include "../htmx/venue_form.html" %}
+            <div id="temp-artist-form" class= "flex flex-col">
+                {% include "../htmx/temp_artist_form.html" %}
             </div>
 
             <!--Footer-->
             <div class="flex justify-end pt-2">
                 <button type="button" class="px-4  p-3 bg-transparent rounded-lg text-indigo-500 hover:bg-gray-100 hover:text-indigo-400" @click="close_modal()">Close</button>
                 <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
-                        hx-post="{% url 'findshows:create_venue' %}"
+                        hx-post="{% url 'findshows:create_temp_artist' %}"
                         hx-trigger="click"
-                        hx-target="#venue-form"
-                        @successfully-created-venue="on_venue_create"
+                        hx-target="#temp-artist-form"
+                        @successfully-created-temp-artist="on_temp_artist_create"
                 >Create</button>
             </div>
 
@@ -92,7 +91,6 @@
         </div>
         <!--/Dialog -->
     </div><!-- /Overlay -->
-    {% endcomment %}
 </div>
 
 <script>
@@ -136,37 +134,45 @@
              [this.bill_order[idx], this.bill_order[idx + incr]] = [this.bill_order[idx + incr], this.bill_order[idx]];
          },
 
-         add_artist() {
-             this.bill_order.push({
-                 'search_text': '',
-                 'name': '',
-                 'id': '',
+         artist_from_args(name, id) {
+             return {
+                 'search_text': name,
+                 'name': name,
+                 'id': id,
                  'show_search': false
-             });
+             }
+         },
+
+         add_artist(artist) {
+             artist = artist || this.artist_from_args('','')
+             this.bill_order.push(artist);
          },
 
          remove_artist(idx) {
-             this.bill_order.splice(idx, 1)
+             this.bill_order.splice(idx, 1);
          },
 
          open_modal() {
              this.show_modal = true;
          },
 
-         on_venue_create(event) {
-             this.selected_venue_name = event.detail.created_venue_name;
-             this.selected_venue_id = event.detail.created_venue_id;
-             this.search_text = this.selected_venue_name;
+         on_temp_artist_create(event) {
+             new_artist = this.artist_from_args(event.detail.created_temp_artist_name,
+                                                event.detail.created_temp_artist_id)
+
+             empty_idx = this.bill_order.findIndex(artist => artist.id === "");
+             if (empty_idx === -1) {
+                 this.add_artist(new_artist);
+             }
+             else {
+                 this.bill_order[empty_idx] = new_artist
+             }
+
              this.close_modal();
          },
 
          close_modal() {
              this.show_modal = false;
-         },
-
-
-         get_widget_value() {
-             return ""
          },
      }
  }

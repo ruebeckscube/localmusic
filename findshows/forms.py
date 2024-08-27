@@ -3,6 +3,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.forms.fields import JSONField
+from findshows import email
 
 from findshows.models import Artist, Concert, UserProfile, Venue
 from findshows.widgets import BillWidget, DatePickerField, SocialsLinksWidget, SpotifyArtistSearchWidget, TimePickerField, VenuePickerWidget
@@ -89,6 +90,28 @@ class VenueForm(forms.ModelForm):
     class Meta:
         model=Venue
         fields=("name", "address", "ages", "website")
+
+
+class TempArtistForm(forms.ModelForm):
+    prefix = "temp_artist"
+    use_required_attribute = False
+
+    class Meta:
+        model=Artist
+        fields=("name", "local", "temp_email")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['temp_email'].required = True
+
+    def save(self, commit = True):
+        artist = super().save(commit=False)
+        # TODO: handle failed email and send basically validation error back to user?
+        email.invite_artist(artist)
+
+        if commit:
+            artist.save()
+        return artist
 
 
 class ShowFinderForm(forms.Form):

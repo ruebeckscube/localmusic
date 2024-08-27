@@ -12,7 +12,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
 
 from .models import Artist, Concert, Venue
-from .forms import ArtistEditForm, ConcertForm, ShowFinderForm, UserCreationFormE, UserProfileCreationForm, VenueForm
+from .forms import ArtistEditForm, ConcertForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileCreationForm, VenueForm
 from .spotify import search_spotify_artists
 from findshows import spotify
 
@@ -186,6 +186,26 @@ def artist_search_results(request):
         "artists": search_results,
         "idx": idx
     })
+
+def create_temp_artist(request):
+    temp_artist_form = TempArtistForm(request.POST)
+    valid = temp_artist_form.is_valid()
+    if valid:
+        artist = temp_artist_form.save()
+        temp_artist_form = TempArtistForm()
+
+    response = render(request, "findshows/htmx/temp_artist_form.html", {
+        "temp_artist_form": temp_artist_form,
+    })
+
+    if valid:
+        response.headers['HX-Trigger'] = json.dumps({
+            "successfully-created-temp-artist": {
+                "created_temp_artist_name": artist.name,
+                "created_temp_artist_id": artist.id}})
+
+    return response
+
 
 @user_passes_test(is_artist_account)
 def my_concert_list(request):

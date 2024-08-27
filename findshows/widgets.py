@@ -99,3 +99,8 @@ class VenuePickerWidget(Input):
 class BillWidget(Input):
     template_name="findshows/widgets/bill_widget.html"
     input_type="hidden"
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['temp_artist_form'] = findshows.forms.TempArtistForm()
+        return context
