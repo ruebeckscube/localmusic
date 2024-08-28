@@ -5,16 +5,10 @@
 >        {# TODO:  this last line isn't working? #}
     <div class="flex flex-wrap">
         <template x-for="(spotify_artist, index) in selected_spotify_artists" :key="index">
-            <div class="flex">
-                <div class="h-16 w-16">
-                    <img class= "h-full w-full object-cover rounded-full"
-                         :src='spotify_artist.img_url'>
-                </div>
-                <div @click="remove_artist(index)"> x </div>
-                <div x-text='spotify_artist.name'></div>
-            </div>
+            {% include "../partials/spotify_card.html" with dynamic=True only%}
         </template>
     </div>
+
     <input type="hidden" name="{{widget.name}}" :value="JSON.stringify(selected_spotify_artists)">
 
     <div x-ref="spotify-search-plus-dropdown"

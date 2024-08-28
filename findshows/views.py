@@ -4,6 +4,7 @@ import json
 
 from django.contrib.auth import login
 from django.core.mail import send_mail
+from django.db.models.query_utils import DeferredAttribute
 from django.urls import reverse
 from django.views import generic
 from django.http import HttpResponse
@@ -90,6 +91,7 @@ class ArtistView(generic.DetailView):
         context = super().get_context_data(**kwargs)
         context["can_edit"] = (not self.request.user.is_anonymous
                                and self.object in self.request.user.userprofile.managed_artists.all())
+        context["spotify_artists"] = self.get_object().similar_spotify_artists
         return context
 
 

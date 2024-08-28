@@ -31,6 +31,12 @@
             <p class="p-10 w-2/3">
                 {{artist.bio}}
             </p>
+            <div class="flex flex-wrap items-center">
+                <p> Sounds like: </p>
+                {% for spotify_artist in spotify_artists %}
+                    {% include "../partials/spotify_card.html" %}
+                {% endfor %}
+            </div>
         </div>
     </div>
 
