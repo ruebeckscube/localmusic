@@ -91,7 +91,10 @@ class VenuePickerWidget(Input):
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
-        context['widget']['venue_name'] = Venue.objects.get(pk=context['widget']['value'])
+        if value:
+            context['widget']['venue_name'] = Venue.objects.get(pk=value)
+        else:
+            context['widget']['value'] = ''
         context['venue_form'] = findshows.forms.VenueForm()
         return context
 

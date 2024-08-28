@@ -64,22 +64,27 @@ class ConcertForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance:
+        if self.instance.id:
             self.fields['bill'].initial = [{'id': a.pk, 'name': a.name}
                                            for a in self.instance.sorted_artists]
         else:
             self.fields['bill'].initial = []
 
 
-    def save(self, commit = True):
+    def save(self, commit = True): # saving this without a commit is gonna be weird, hope it doesn't happen
         concert = super().save(commit=False)
 
-        concert.artists.clear()
-        for idx, artist_dict in enumerate(self.cleaned_data['bill']):  # Assuming all new artist records have been saved
-            concert.artists.add(artist_dict['id'], through_defaults = {'order_number': idx})
+        if commit and not concert.id:
+            concert.save()
+
+        if concert.id:
+            concert.artists.clear()
+            for idx, artist_dict in enumerate(self.cleaned_data['bill']):  # Assuming all new artist records have been saved
+                concert.artists.add(artist_dict['id'], through_defaults = {'order_number': idx})
 
         if commit:
             concert.save()
+
         return concert
 
 

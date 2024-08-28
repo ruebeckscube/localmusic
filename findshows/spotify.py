@@ -61,4 +61,7 @@ def relatedness_score(artists_and_relateds1, artists_and_relateds2):
     all_artists_1 = set().union(*artists_and_relateds1.values(), artists_and_relateds1.keys())
     all_artists_2 = set().union(*artists_and_relateds2.values(), artists_and_relateds2.keys())
     overlap = all_artists_1.intersection(all_artists_2)
-    return len(overlap) / min(len(all_artists_1), len(all_artists_2))
+    denominator = min(len(all_artists_1), len(all_artists_2))
+    if denominator == 0:
+        return 0
+    return len(overlap) / denominator

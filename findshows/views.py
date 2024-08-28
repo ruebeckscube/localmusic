@@ -128,7 +128,7 @@ def edit_concert(request, pk=None):
     if request.method != 'POST':
         form = ConcertForm(instance=concert)
     else:
-        form = ConcertForm(request.POST, instance=concert)
+        form = ConcertForm(request.POST, request.FILES, instance=concert)
         if form.is_valid():
             form.save()
             return redirect(reverse('findshows:my_concert_list'))

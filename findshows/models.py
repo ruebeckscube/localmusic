@@ -323,7 +323,7 @@ class Concert(models.Model):
     start_time=models.TimeField()
     end_time=models.TimeField(blank=True, null=True)
     venue=models.ForeignKey(Venue, on_delete=models.CASCADE)
-    ages=models.CharField(max_length=2, choices=Ages)
+    ages=models.CharField(max_length=2, choices=Ages, blank=True)
     artists=models.ManyToManyField(Artist, through="SetOrder")
     ticket_link=models.URLField(blank=True)
 
@@ -336,7 +336,13 @@ class Concert(models.Model):
     @property
     def sorted_artists(self):
         return self.artists.order_by('set_order')
-    
+
+    @property
+    def ages_with_default(self):
+        if self.ages:
+            return self.get_ages_display()
+        return self.venue.get_ages_display()
+
     def __str__(self):
         return ', '.join((str(a) for a in self.artists.all())) + ' at ' + str(self.venue) + ' ' + str(self.date)
 
