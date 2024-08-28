@@ -14,6 +14,11 @@
             <h2 class="text-center">
                 Follow (button)
             </h2>
+            <div class="flex flex-row justify-around w-full">
+                {% for link in artist.socials_links %}
+                    <a href="{{link.1}}" target="_blank">{{link.0}}</a>
+                {% endfor %}
+            </div>
         </div>
 
         <div class="w-1/2">
