@@ -4,13 +4,13 @@ import json
 
 from django.contrib.auth import login
 from django.core.mail import send_mail
-from django.db.models.query_utils import DeferredAttribute
 from django.urls import reverse
 from django.views import generic
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
+from django.utils import timezone
 
 from .models import Artist, Concert, Venue
 from .forms import ArtistEditForm, ConcertForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileCreationForm, VenueForm
@@ -92,6 +92,8 @@ class ArtistView(generic.DetailView):
         context["can_edit"] = (not self.request.user.is_anonymous
                                and self.object in self.request.user.userprofile.managed_artists.all())
         context["spotify_artists"] = self.get_object().similar_spotify_artists
+        context["upcoming_concerts"] = self.get_object().concert_set.filter(date__gt=timezone.now())
+
         return context
 
 

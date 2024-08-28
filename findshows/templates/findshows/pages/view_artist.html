@@ -2,10 +2,10 @@
 {% load findshows_tags %}
 
 {% block content %}
-            {% if can_edit %}
-                <a class="text-center" href={% url "findshows:edit_artist" artist.pk %}> Edit </a>
-            {% endif %}
-            <div class="flex flex-row flex-wrap w-full">
+    {% if can_edit %}
+        <a class="text-center" href={% url "findshows:edit_artist" artist.pk %}> Edit </a>
+    {% endif %}
+    <div class="flex flex-row flex-wrap w-full">
         <div class="basis-2 grow flex flex-col content-center justify-around">
             <h1 class="text-8xl text-left text-stone-600">
                 {{artist.name}}
@@ -50,6 +50,12 @@
         {% endfor %}
     </div>
 
-    <div name="upcoming-shows" class="w-full">
+    <div class="w-full">
+        <h2 class="text-center w-full"> Upcoming shows</h2>
+        {% for concert in upcoming_concerts %}
+            {% include "../partials/concert_card.html" %}
+        {% empty %}
+            <p class="text-center w-full">No upcoming shows listed!</p>
+        {% endfor %}
     </div>
 {% endblock %}
