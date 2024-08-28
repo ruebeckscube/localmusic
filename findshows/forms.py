@@ -2,6 +2,7 @@ import json
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.forms.fields import JSONField
 from findshows import email
 
@@ -70,6 +71,22 @@ class ConcertForm(forms.ModelForm):
         else:
             self.fields['bill'].initial = []
 
+    def clean(self):
+        cleaned_data = super().clean() or {}
+        venue = cleaned_data.get("venue")
+        date = cleaned_data.get("date")
+
+        if venue and date:
+            conflict_concerts = Concert.objects.filter(venue=venue, date=date)
+            if self.instance:
+                conflict_concerts = conflict_concerts.exclude(pk=self.instance.pk)
+            if conflict_concerts:
+                raise ValidationError(
+                    "There is already a show in the database for the specified venue and date.\
+                    If you think this is in error, or there are in fact two events on the same\
+                    date, please contact site admins for an override."
+                )
+        return cleaned_data
 
     def save(self, commit = True): # saving this without a commit is gonna be weird, hope it doesn't happen
         concert = super().save(commit=False)

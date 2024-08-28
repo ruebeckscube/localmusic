@@ -154,7 +154,8 @@ def venue_search_results(request):
 
 def create_venue(request):
     venue_form = VenueForm(request.POST)
-    if venue_form.is_valid():
+    valid = venue_form.is_valid()
+    if valid:
         venue = venue_form.save()
         venue_form = VenueForm()
 
@@ -162,7 +163,7 @@ def create_venue(request):
         "venue_form": venue_form,
     })
 
-    if venue_form.is_valid():
+    if valid:
         response.headers['HX-Trigger'] = json.dumps({
             "successfully-created-venue": {
                 "created_venue_name": venue.name,
