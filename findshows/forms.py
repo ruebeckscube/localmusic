@@ -35,7 +35,7 @@ class UserCreationFormE(UserCreationForm):
         return user
 
 
-class UserProfileCreationForm(forms.ModelForm):
+class UserProfileForm(forms.ModelForm):
     class Meta:
         model=UserProfile
         fields=("favorite_spotify_artists", "weekly_email")

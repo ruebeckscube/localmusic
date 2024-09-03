@@ -16,12 +16,7 @@
         </table>
 
         {% for field in profile_form %}
-            <div>
-                {{ field.label_tag }}
-            </div>
-            <div>
-                {{ field }}
-            </div>
+            {{field.as_field_group}}
         {% endfor %}
 
         <div>

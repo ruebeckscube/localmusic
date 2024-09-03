@@ -13,7 +13,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from .models import Artist, Concert, Venue
-from .forms import ArtistEditForm, ConcertForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileCreationForm, VenueForm
+from .forms import ArtistEditForm, ConcertForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
 from .spotify import search_spotify_artists
 from findshows import spotify
 
@@ -23,25 +23,38 @@ from findshows import spotify
 #################
 
 def home(request):
-    if request.POST:
-        search_form = ShowFinderForm(request.POST)
+    if request.user and hasattr(request.user, 'userprofile'):
+        search_form = ShowFinderForm(initial={'spotify_artists': request.user.userprofile.favorite_spotify_artists})
     else:
         search_form = ShowFinderForm()
-
     return render(request, "findshows/pages/home.html", context={
         "search_form": search_form
     })
 
+
+@login_required
 def user_settings(request):
-    return HttpResponse("This will be settings")
+    user_profile = request.user.userprofile
+    if request.POST:
+        form = UserProfileForm(request.POST, instance=user_profile)
+        if form.is_valid():
+            form.save()
+            return redirect('findshows:home')
+    else:
+        form = UserProfileForm(instance=user_profile)
+
+    return render(request, "findshows/pages/user_settings.html", context={
+        "form": form
+    })
+
 
 def create_account(request):
     if request.method != 'POST':
         user_form = UserCreationFormE()
-        profile_form = UserProfileCreationForm()
+        profile_form = UserProfileForm()
     else:
         user_form = UserCreationFormE(request.POST)
-        profile_form = UserProfileCreationForm(request.POST)
+        profile_form = UserProfileForm(request.POST)
         if user_form.is_valid() and profile_form.is_valid():
             user = user_form.save()
             profile = profile_form.save(commit=False)
@@ -250,6 +263,8 @@ def spotify_artist_search_results(request):
 def concert_search(request):
     if request.POST:
         search_form = ShowFinderForm(request.POST)
+    elif request.user and hasattr(request.user, 'userprofile'):
+        search_form = ShowFinderForm(initial={'spotify_artists': request.user.userprofile.favorite_spotify_artists})
     else:
         search_form = ShowFinderForm()
 

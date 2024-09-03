@@ -1,0 +1,18 @@
+{% extends "localmusic/base.html" %}
+
+{% block content %}
+
+    <form method="post" action="{% url 'findshows:user_settings' %}">
+        {% csrf_token %}
+
+        {% for field in form %}
+            {{ field.as_field_group }}
+        {% endfor %}
+
+        <div>
+            <input type="submit" value="save">
+        </div>
+
+    </form>
+
+{% endblock %}
