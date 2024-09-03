@@ -1,3 +1,4 @@
+import datetime
 from django import template
 
 register = template.Library()
@@ -13,3 +14,10 @@ def preview_player(artist, mini=False):
         'listen_ids': listen_ids,
         'mini': mini,
     }
+
+
+@register.filter
+def time_short(value: datetime.time):
+    ampm = (value.hour//12)*'pm' or 'am'
+    hour = value.hour%12 or 12
+    return f'{hour}:{value.minute:02}{ampm}'

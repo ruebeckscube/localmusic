@@ -31,15 +31,17 @@
                 </div>
             </div>
             <div class="flex flex-col">
+                {% if concert.doors_time %}
+                    <div>
+                        Doors {{concert.doors_time|time_short}}
+                    </div>
+                {% endif %}
                 <div>
-                    Doors {{concert.doors_time}}
-                </div>
-                <div>
-                    Music {{concert.start_time}}
+                    Music {{concert.start_time|time_short}}
                 </div>
                 {% if concert.end_time %}
                     <div>
-                        Ends {{concert.end_time}}
+                        Ends {{concert.end_time|time_short}}
                     </div>
                 {% endif %}
             </div>
