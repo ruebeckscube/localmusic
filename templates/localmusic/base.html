@@ -50,9 +50,11 @@
          }));
      }
 
-     for (svg of document.getElementsByClassName('rough-rect')) {
-         bg_rect(svg, 10, 5);
-     }
+     htmx.on("htmx:load", function(evt) { // This fires for initial page load on body, as well as any new element that htmx inserts (individually)
+         for (svg of evt.detail.elt.getElementsByClassName('rough-rect')) {
+             bg_rect(svg, 10, 5);
+         }
+     });
     </script>
 
 </html>
