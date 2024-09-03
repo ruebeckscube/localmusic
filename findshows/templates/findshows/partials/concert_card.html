@@ -1,48 +1,53 @@
 {% load findshows_tags %}
 
-<div class="flex w-full justify-between rounded-lg mb-4 bg-gray-100 shadow-md">
-    <div class="flex w-full">
-        <div class="flex align-center w-1/4 m-2">
-            <img src="{{concert.poster.url}}" alt="Concert poster"
-                 class="object-contain" />
-        </div>
-        <div class="grid grid-cols-3 w-3/4 my-1 items-center">
-            {% for artist in concert.sorted_artists %}
-                <div class="font-bold text-stone-700 text-lg text-right mr-3">
-                    <a href="{% url "findshows:view_artist" artist.pk %}"> {{artist.name}} </a>
-                </div>
-                <div class="col-span-2 my-1">
-                    {% preview_player artist True %}
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-    <div class="flex flex-col justify-around bg-slate-600 text-white text-center rounded-lg p-1 m-2 w-1/4">
-        <div class="flex flex-col">
-            <div>
-                <a href="{{ concert.venue.website }}" target="_blank">{{concert.venue.name}}</a> ({{concert.ages_with_default}})
+<div class="w-full relative mb-4 -z-10">
+
+    <svg class="rough-rect absolute w-full h-full -z-10" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio='none'></svg>
+
+    <div class="flex w-full relative z-10 p-2 justify-between">
+        <div class="flex w-full">
+            <div class="flex align-center w-1/4 m-2">
+                <img src="{{concert.poster.url}}" alt="Concert poster"
+                     class="object-contain" />
             </div>
-            <div>
-                {{concert.date}}
+            <div class="grid grid-cols-3 w-3/4 my-1 items-center">
+                {% for artist in concert.sorted_artists %}
+                    <div class="text-lg text-right mr-3">
+                        <a href="{% url "findshows:view_artist" artist.pk %}"> {{artist.name}} </a>
+                    </div>
+                    <div class="col-span-2 my-1">
+                        {% preview_player artist True %}
+                    </div>
+                {% endfor %}
             </div>
         </div>
-        <div class="flex flex-col">
-            <div>
-                Doors {{concert.doors_time}}
-            </div>
-            <div>
-                Music {{concert.start_time}}
-            </div>
-            {% if concert.end_time %}
+        <div class="flex flex-col justify-around text-center m-2 w-1/4">
+            <div class="flex flex-col">
                 <div>
-                    Ends {{concert.end_time}}
+                    <a href="{{ concert.venue.website }}" target="_blank">{{concert.venue.name}}</a> ({{concert.ages_with_default}})
+                </div>
+                <div>
+                    {{concert.date}}
+                </div>
+            </div>
+            <div class="flex flex-col">
+                <div>
+                    Doors {{concert.doors_time}}
+                </div>
+                <div>
+                    Music {{concert.start_time}}
+                </div>
+                {% if concert.end_time %}
+                    <div>
+                        Ends {{concert.end_time}}
+                    </div>
+                {% endif %}
+            </div>
+            {% if concert.ticket_link %}
+                <div>
+                    <a href="{{ concert.ticket_link }}">Tickets</a>
                 </div>
             {% endif %}
         </div>
-        {% if concert.ticket_link %}
-            <div>
-                <a href="{{ concert.ticket_link }}">Tickets</a>
-            </div>
-        {% endif %}
     </div>
 </div>

@@ -7,3 +7,26 @@
         </div>
     </div>
 {% endfor %}
+
+<script>
+ // PROOF OF CONCEPT
+ // TODO: refactor etc
+
+ function bg_rect(svg, p, roughness) {
+     let rough_svg = rough.svg(svg);
+     const d = svg.getBoundingClientRect();
+     svg.setAttribute('viewBox', '0 0 ' + (d.width + 2*p) + ' ' + (d.height + 2*p));
+
+     svg.appendChild(rough_svg.rectangle(p, p, d.width, d.height, {
+         // fill: 'rgba(255,0,200,0.2)',
+         // fillWeight: 3,
+         // fillStyle: 'solid',
+         roughness: roughness,
+         strokeWidth: 2,
+     }));
+ }
+
+ for (svg of document.getElementsByClassName('rough-rect')) {
+     bg_rect(svg, 10, 5);
+ }
+</script>

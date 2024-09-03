@@ -23,4 +23,8 @@ urlpatterns = [
     path("htmx/create_venue/", views.create_venue, name="create_venue"),
     path("htmx/create_temp_artist/", views.create_temp_artist, name="create_temp_artist"),
     path("htmx/artist_search_results/", views.artist_search_results, name="artist_search_results"),
+
+    # For static pages (about, etc)
+    # path('hello-webpack/', TemplateView.as_view(template_name='hello_webpack.html'))
+
 ]
