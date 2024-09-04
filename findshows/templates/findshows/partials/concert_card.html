@@ -24,7 +24,11 @@
         <div class="flex flex-col justify-around text-center m-2 w-1/4">
             <div class="flex flex-col">
                 <div>
-                    <a href="{{ concert.venue.website }}" target="_blank">{{concert.venue.name}}</a> ({{concert.ages_with_default}})
+                    {% if concert.venue.website %}
+                        <a href="{{ concert.venue.website }}" target="_blank">{{concert.venue.name}}</a> ({{concert.ages_with_default}})
+                    {% else %}
+                        {{concert.venue.name}} ({{concert.ages_with_default}})
+                    {% endif %}
                 </div>
                 <div>
                     {{concert.date}}
@@ -45,11 +49,16 @@
                     </div>
                 {% endif %}
             </div>
-            {% if concert.ticket_link %}
+            <div class="flex flex-col">
+                {% if concert.ticket_link %}
+                    <div>
+                        <a href="{{ concert.ticket_link }}">Tickets</a>
+                    </div>
+                {% endif %}
                 <div>
-                    <a href="{{ concert.ticket_link }}">Tickets</a>
+                    {{ concert.ticket_description  }}
                 </div>
-            {% endif %}
+            </div>
         </div>
     </div>
 </div>

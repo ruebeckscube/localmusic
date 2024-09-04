@@ -59,7 +59,7 @@ class ConcertForm(forms.ModelForm):
 
     class Meta:
         model=Concert
-        fields=("poster", "date", "doors_time", "start_time", "end_time", "venue", "ages", "ticket_link")
+        fields=("poster", "date", "doors_time", "start_time", "end_time", "venue", "ages", "ticket_link", "ticket_description")
         widgets={"venue": VenuePickerWidget}
 
     def __init__(self, *args, **kwargs):

@@ -326,6 +326,7 @@ class Concert(models.Model):
     ages=models.CharField(max_length=2, choices=Ages, blank=True)
     artists=models.ManyToManyField(Artist, through="SetOrder")
     ticket_link=models.URLField(blank=True)
+    ticket_description=models.CharField()
 
 
     def relevance_score(self, artists_and_relateds):
