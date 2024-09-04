@@ -153,4 +153,7 @@ LOGIN_URL = "login"
 LOGOUT_REDIRECT_URL = "/"
 
 
+# Email
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+MODERATORS = ['moderator@localmusic.com']
+ADMINS = ['admin@localmusic.com']

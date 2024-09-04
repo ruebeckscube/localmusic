@@ -12,8 +12,10 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
 from django.utils import timezone
 
+from findshows.email import contact_email
+
 from .models import Artist, Concert, Venue
-from .forms import ArtistEditForm, ConcertForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
+from .forms import ArtistEditForm, ConcertForm, ContactForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
 from .spotify import search_spotify_artists
 from findshows import spotify
 
@@ -29,6 +31,21 @@ def home(request):
         search_form = ShowFinderForm()
     return render(request, "findshows/pages/home.html", context={
         "search_form": search_form
+    })
+
+def contact(request):
+    success = False
+    if request.POST:
+        form = ContactForm(request.POST)
+        if form.is_valid() and contact_email(form):
+            success = True
+            form = ContactForm()
+    else:
+        form = ContactForm()
+
+    return render(request, "findshows/pages/contact.html", context={
+        "form": form,
+        "success": success
     })
 
 

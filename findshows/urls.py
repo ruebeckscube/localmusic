@@ -26,6 +26,6 @@ urlpatterns = [
     path("htmx/artist_search_results/", views.artist_search_results, name="artist_search_results"),
 
     path('about/', TemplateView.as_view(template_name='findshows/pages/about.html'), name="about"),
-    path('contact/', TemplateView.as_view(template_name='findshows/pages/contact.html'), name="contact")
+    path('contact/', views.contact, name="contact")
 
 ]

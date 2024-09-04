@@ -1,9 +1,8 @@
-import json
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.forms.fields import JSONField
+from django.db import models
 from findshows import email
 
 from findshows.models import Artist, Concert, UserProfile, Venue
@@ -56,7 +55,7 @@ class ConcertForm(forms.ModelForm):
     doors_time = TimePickerField(required=False)
     start_time = TimePickerField()
     end_time = TimePickerField(required=False)
-    bill = JSONField(widget=BillWidget) # NOT a model field, we parse this and save to the artists field through the SetOrder through-model
+    bill = forms.JSONField(widget=BillWidget) # NOT a model field, we parse this and save to the artists field through the SetOrder through-model
 
     class Meta:
         model=Concert
@@ -138,4 +137,16 @@ class TempArtistForm(forms.ModelForm):
 
 class ShowFinderForm(forms.Form):
     date = DatePickerField()
-    spotify_artists = forms.fields.JSONField(widget=SpotifyArtistSearchWidget, initial=list)
+    spotify_artists = forms.JSONField(widget=SpotifyArtistSearchWidget, initial=list)
+
+
+class ContactForm(forms.Form):
+    class Types(models.TextChoices):
+        REPORT_BUG = "bug", "Bug report"
+        OTHER = "oth", "Other"
+
+    email = forms.EmailField()
+    subject = forms.CharField()
+    message = forms.CharField(widget=forms.Textarea)
+    type = forms.ChoiceField(choices=Types)
+
