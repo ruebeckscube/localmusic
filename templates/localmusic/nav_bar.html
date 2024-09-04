@@ -2,7 +2,7 @@
     <div>
         <a href="{% url 'findshows:home' %}">Chicago Local Music</a>
     </div>
-    <div class="flex justify-between space-x-4">
+    <div class="flex justify-between space-x-5">
     {% if user.is_authenticated %}
         {% if user.userprofile.managed_artists.all|length > 0 %}
             <a href="{% url 'findshows:my_concert_list' %}">My shows</a>

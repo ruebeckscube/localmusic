@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import TemplateView
 
 from . import views
 
@@ -24,7 +25,7 @@ urlpatterns = [
     path("htmx/create_temp_artist/", views.create_temp_artist, name="create_temp_artist"),
     path("htmx/artist_search_results/", views.artist_search_results, name="artist_search_results"),
 
-    # For static pages (about, etc)
-    # path('hello-webpack/', TemplateView.as_view(template_name='hello_webpack.html'))
+    path('about/', TemplateView.as_view(template_name='findshows/pages/about.html'), name="about"),
+    path('contact/', TemplateView.as_view(template_name='findshows/pages/contact.html'), name="contact")
 
 ]

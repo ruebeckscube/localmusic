@@ -23,13 +23,16 @@
          }
         </style>
     </head>
-    <body class="font-mono">
+    <body class="font-mono flex flex-col min-h-screen">
         <div>
             {% include "./nav_bar.html" %}
         </div>
         <div>
             {% block content %}
             {% endblock %}
+        </div>
+        <div class="mt-auto">
+            {% include "./footer.html" %}
         </div>
     </body>
     <script>
