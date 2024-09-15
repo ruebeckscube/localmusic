@@ -11,6 +11,7 @@ pillow = "*"
 requests = "*"
 pymemcache = "*"
 django-stubs = "*"
+django-mjml = "*"
 
 [dev-packages]
 

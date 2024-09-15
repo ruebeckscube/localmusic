@@ -1,0 +1,82 @@
+{% load mjml %}
+{% load findshows_tags %}
+
+{% mjml %}
+    <mjml>
+        <mj-body>
+            <mj-section>
+                <mj-column>
+                    <mj-text>This will be the header!</mj-text>
+                    <mj-text>{{header_message}}</mj-text>
+                </mj-column>
+            </mj-section>
+{% comment %}
+            {% for concert in concerts %}
+                <div class="w-full relative mb-4 z-0">
+
+                    <svg class="rough-border-rect absolute w-full h-full -z-10" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio='none'></svg>
+
+                    <div class="flex w-full relative z-10 p-2 justify-between">
+                        <div class="flex w-full">
+                            <div class="flex align-center w-1/4 m-2">
+                                <img src="{{concert.poster.url}}" alt="Concert poster"
+                                     class="object-contain" />
+                            </div>
+                            <div class="flex flex-col w-3/4 my-1 items-center">
+                                {% for artist in concert.sorted_artists %}
+                                    <div class="text-lg text-right mr-3">
+                                        <a href="{% url "findshows:view_artist" artist.pk %}"> {{artist.name}} </a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="flex flex-col justify-around text-center m-2 w-1/4">
+                            <div class="flex flex-col">
+                                <div>
+                                    {% if concert.venue.website %}
+                                        <a href="{{ concert.venue.website }}" target="_blank">{{concert.venue.name}}</a> ({{concert.ages_with_default}})
+                                    {% else %}
+                                        {{concert.venue.name}} ({{concert.ages_with_default}})
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    {{concert.date}}
+                                </div>
+                            </div>
+                            <div class="flex flex-col">
+                                {% if concert.doors_time %}
+                                    <div>
+                                        Doors {{concert.doors_time|time_short}}
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    Music {{concert.start_time|time_short}}
+                                </div>
+                                {% if concert.end_time %}
+                                    <div>
+                                        Ends {{concert.end_time|time_short}}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex flex-col">
+                                {% if concert.ticket_link %}
+                                    <div>
+                                        <a href="{{ concert.ticket_link }}">Tickets</a>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    {{ concert.ticket_description  }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            {% empty %}
+                <div>
+                    No shows listed for this week!
+                </div>
+            {% endfor %}
+            {% endcomment %}
+    </mjml>
+{% endmjml %}

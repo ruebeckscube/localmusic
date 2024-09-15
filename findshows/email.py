@@ -1,8 +1,11 @@
+import datetime
 from django.conf import settings
-from django.core.mail import BadHeaderError, send_mail
-from findshows.forms import ContactForm
+from django.core.mail import BadHeaderError, EmailMultiAlternatives, get_connection, send_mail, send_mass_mail
+from django.shortcuts import render
+from django.template.loader import render_to_string
 
-from findshows.models import Artist
+from findshows.forms import ContactForm
+from findshows.models import Artist, Concert, UserProfile
 
 
 def invite_artist(temp_artist: Artist):
@@ -30,3 +33,48 @@ def contact_email(cf: ContactForm): # Assumes the form has already run is_valid(
         success = 0
 
     return success
+
+
+# from https://stackoverflow.com/questions/7583801/send-mass-emails-with-emailmultialternatives/10215091#10215091
+def send_mass_html_mail(datatuple, fail_silently=False, user=None, password=None,
+                        connection=None):
+    """
+    Given a datatuple of (subject, text_content, html_content, from_email,
+    recipient_list), sends each message to each recipient list. Returns the
+    number of emails sent.
+
+    If from_email is None, the DEFAULT_FROM_EMAIL setting is used.
+    If auth_user and auth_password are set, they're used to log in.
+    If auth_user is None, the EMAIL_HOST_USER setting is used.
+    If auth_password is None, the EMAIL_HOST_PASSWORD setting is used.
+
+    """
+    connection = connection or get_connection(
+        username=user, password=password, fail_silently=fail_silently)
+    messages = []
+    for subject, text, html, from_email, recipient in datatuple:
+        message = EmailMultiAlternatives(subject, text, from_email, recipient)
+        message.attach_alternative(html, 'text/html')
+        messages.append(message)
+    return connection.send_messages(messages)
+
+
+def send_rec_email(subject, header_message):
+    # TODO these generators + zips as written duplicate some work i think. but also there's caching. optimize later.
+    user_profiles = UserProfile.objects.filter(weekly_email=True)
+    today = datetime.date.today()
+    concertss = (sorted(Concert.objects.filter(date__gte=today, date__lt=today + datetime.timedelta(7)),
+                        key=lambda c: c.relevance_score(user_profile.favorite_spotify_artists_and_relateds),
+                        reverse=True)
+                 for user_profile in user_profiles)
+
+    # TODO: make this template
+    html_messages = (render_to_string("findshows/emails/rec_email.html", context={'header_message': header_message,
+                                                                                  'user_profile': user_profile,
+                                                                                  'concerts': concerts})
+                     for user_profile, concerts in zip(user_profiles, concertss))
+    text_message = f'{header_message}\n\nGo to liiiink to see your weekly recommendations' # TODO generate a correct link. And I guess a view for it? Unless we give concert_search a range.
+    datatuple = ( (subject, text_message, html_message, None, [user_profile.user.email])
+                  for html_message, user_profile in zip(html_messages, user_profiles) )
+    return send_mass_html_mail(datatuple)
+    # TODO unsubscribe link: just a link to settings page? easier than a whole new POST situation
