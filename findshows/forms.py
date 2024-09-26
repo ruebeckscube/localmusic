@@ -3,9 +3,10 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
+from multiselectfield import MultiSelectFormField
 from findshows import email
 
-from findshows.models import Artist, Concert, UserProfile, Venue
+from findshows.models import Artist, Concert, ConcertTags, UserProfile, Venue
 from findshows.widgets import BillWidget, DatePickerField, SocialsLinksWidget, SpotifyArtistSearchWidget, TimePickerField, VenuePickerWidget
 
 
@@ -37,7 +38,7 @@ class UserCreationFormE(UserCreationForm):
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model=UserProfile
-        fields=("favorite_spotify_artists", "weekly_email")
+        fields=("favorite_spotify_artists", "weekly_email", "preferred_concert_tags")
         widgets={"favorite_spotify_artists": SpotifyArtistSearchWidget}
 
 
@@ -59,7 +60,7 @@ class ConcertForm(forms.ModelForm):
 
     class Meta:
         model=Concert
-        fields=("poster", "date", "doors_time", "start_time", "end_time", "venue", "ages", "ticket_link", "ticket_description")
+        fields=("poster", "date", "doors_time", "start_time", "end_time", "venue", "ages", "ticket_link", "ticket_description", "tags")
         widgets={"venue": VenuePickerWidget}
 
     def __init__(self, *args, **kwargs):
@@ -138,6 +139,7 @@ class TempArtistForm(forms.ModelForm):
 class ShowFinderForm(forms.Form):
     date = DatePickerField()
     spotify_artists = forms.JSONField(widget=SpotifyArtistSearchWidget, initial=list)
+    concert_tags = forms.MultipleChoiceField(choices=ConcertTags, widget=forms.CheckboxSelectMultiple)
 
 
 class ContactForm(forms.Form):

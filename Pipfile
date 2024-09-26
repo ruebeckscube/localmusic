@@ -12,6 +12,7 @@ requests = "*"
 pymemcache = "*"
 django-stubs = "*"
 django-mjml = "*"
+django-multiselectfield = "*"
 
 [dev-packages]
 

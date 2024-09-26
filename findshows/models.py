@@ -6,6 +6,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
+from multiselectfield import MultiSelectField
 
 from findshows import spotify
 
@@ -260,6 +261,13 @@ def _parse_youtube_id(parsed_url):
     return ""
 
 
+class ConcertTags(models.TextChoices):
+    # DJ, originals, cover set/BG music, diy/house show
+    ORIGINALS = "OG", "Original music"
+    COVERS = "CV", "Cover set"
+    DJ = "DJ", "DJ set"
+
+
 class UserProfile(models.Model):
     user=models.OneToOneField(User, on_delete=models.CASCADE)
     # TODO email subscription preferences
@@ -282,6 +290,7 @@ class UserProfile(models.Model):
     #     [...]
     # }
     favorite_spotify_artists_and_relateds=models.JSONField(editable=False, default=dict, blank=True)
+    preferred_concert_tags=MultiSelectField(choices=ConcertTags)
 
     followed_artists=models.ManyToManyField(Artist, related_name="followers", blank=True)
     managed_artists=models.ManyToManyField(Artist, related_name="managing_users")
@@ -327,6 +336,7 @@ class Concert(models.Model):
     artists=models.ManyToManyField(Artist, through="SetOrder")
     ticket_link=models.URLField(blank=True)
     ticket_description=models.CharField()
+    tags=MultiSelectField(choices=ConcertTags)
 
 
     def relevance_score(self, artists_and_relateds):

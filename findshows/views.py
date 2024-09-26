@@ -1,4 +1,4 @@
-from operator import and_
+from operator import and_, or_
 from functools import reduce
 import json
 
@@ -11,10 +11,11 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
 from django.utils import timezone
+from django.views.generic.dates import timezone_today
 
 from findshows.email import contact_email
 
-from .models import Artist, Concert, Venue
+from .models import Artist, Concert, ConcertTags, Venue
 from .forms import ArtistEditForm, ConcertForm, ContactForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
 from .spotify import search_spotify_artists
 from findshows import spotify
@@ -25,10 +26,11 @@ from findshows import spotify
 #################
 
 def home(request):
+    defaults = {'date': timezone_today, 'concert_tags': [t.value for t in ConcertTags]}
     if request.user and hasattr(request.user, 'userprofile'):
-        search_form = ShowFinderForm(initial={'spotify_artists': request.user.userprofile.favorite_spotify_artists})
-    else:
-        search_form = ShowFinderForm()
+        defaults['spotify_artists'] = request.user.userprofile.favorite_spotify_artists
+        defaults['concert_tags'] = request.user.userprofile.preferred_concert_tags
+    search_form = ShowFinderForm(initial=defaults)
     return render(request, "findshows/pages/home.html", context={
         "search_form": search_form
     })
@@ -280,10 +282,12 @@ def spotify_artist_search_results(request):
 def concert_search(request):
     if request.POST:
         search_form = ShowFinderForm(request.POST)
-    elif request.user and hasattr(request.user, 'userprofile'):
-        search_form = ShowFinderForm(initial={'spotify_artists': request.user.userprofile.favorite_spotify_artists})
     else:
-        search_form = ShowFinderForm()
+        defaults = {'date': timezone_today, 'concert_tags': [t.value for t in ConcertTags]}
+        if request.user and hasattr(request.user, 'userprofile'):
+            defaults['spotify_artists'] = request.user.userprofile.favorite_spotify_artists
+            defaults['concert_tags'] = request.user.userprofile.preferred_concert_tags
+        search_form = ShowFinderForm(initial=defaults)
 
     return render(request, "findshows/pages/concert_search.html", context = {
         "search_form": search_form,
@@ -300,7 +304,9 @@ def concert_search_results(request):
     if search_form.is_valid():
         artists_and_relateds = { a['id']: spotify.get_related_spotify_artists(a['id'])
                                  for a in search_form.cleaned_data['spotify_artists']}
-        concerts = sorted(Concert.objects.filter(date=search_form.cleaned_data['date']),
+        concerts = Concert.objects.filter(Q(date=search_form.cleaned_data['date'])
+                                          & reduce(or_, (Q(tags__icontains=t) for t in search_form.cleaned_data['concert_tags'])))
+        concerts = sorted(concerts,
                           key=lambda c: c.relevance_score(artists_and_relateds),
                           reverse=True)
     else:
