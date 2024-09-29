@@ -71,7 +71,8 @@ def send_rec_email(subject, header_message):
     # TODO: make this template
     html_messages = (render_to_string("findshows/emails/rec_email.html", context={'header_message': header_message,
                                                                                   'user_profile': user_profile,
-                                                                                  'concerts': concerts})
+                                                                                  'concerts': concerts,
+                                                                                  'host_name': settings.HOST_NAME})
                      for user_profile, concerts in zip(user_profiles, concertss))
     text_message = f'{header_message}\n\nGo to liiiink to see your weekly recommendations' # TODO generate a correct link. And I guess a view for it? Unless we give concert_search a range.
     datatuple = ( (subject, text_message, html_message, None, [user_profile.user.email])

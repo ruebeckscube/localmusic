@@ -153,6 +153,11 @@ def edit_artist(request, pk):
 ## Concert Views ####
 #####################
 
+def view_concert(request, pk=None):
+    concert = get_object_or_404(Concert, pk=pk)
+    return render(request, 'findshows/pages/view_concert.html', {'concert': concert})
+
+
 @login_required
 def edit_concert(request, pk=None):
     if pk is None:

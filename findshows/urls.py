@@ -13,6 +13,7 @@ urlpatterns = [
     path("artist/<int:pk>/edit", views.edit_artist, name="edit_artist"),
 
     path("my_concerts", views.my_concert_list, name="my_concert_list"),
+    path("concert/<int:pk>", views.view_concert, name="view_concert"),
     path("concert/<int:pk>/edit", views.edit_concert, name="edit_concert"),
     path("concert/create", views.edit_concert, name="create_concert"),
 
