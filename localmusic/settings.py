@@ -12,16 +12,19 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+import json
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+with open(os.path.join(BASE_DIR, 'secrets.json')) as f:
+    secrets = json.load(f)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-l76ri#n8s0eib2i_f8$*t_@gln8!6whmfj9$!__e39xa3xf!u8'
+SECRET_KEY = secrets["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -137,8 +140,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 # Spotify API credentials
-SPOTIFY_CLIENT_ID="44a79d4ec79f4091b8fc0028ae2a2107"
-SPOTIFY_CLIENT_SECRET="bbe8a9bae3574e0aab11712363745370"
+SPOTIFY_CLIENT_ID=secrets["SPOTIFY_CLIENT_ID"]
+SPOTIFY_CLIENT_SECRET=secrets["SPOTIFY_CLIENT_SECRET"]
 
 
 # Memcache
