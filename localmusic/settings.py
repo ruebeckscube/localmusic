@@ -87,7 +87,7 @@ DATABASES = {
         # "HOST": "/tmp/.s.PGSQL.5432",
         # "PORT": "5432",
         "USER": "django",
-        "PASSWORD": "localmusicpwd"
+        "PASSWORD": secrets["DB_PASSWORD"]
 
     }
 }
