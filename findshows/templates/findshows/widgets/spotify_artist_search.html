@@ -1,8 +1,6 @@
 <div id = "spotify-artist-chooser"
      x-data="spotify_artist_chooser_data({{ widget.value }}, {{ widget.max_artists }})"
      @keydown.escape.prevent.stop="close_dropdown()"
-     {# @focusin.window="! $refs.spotify-search-plus-dropdown.contains($event.target) && close_dropdown()" #}
->        {# TODO:  this last line isn't working? #}
     <div class="flex flex-wrap">
         <template x-for="(spotify_artist, index) in selected_spotify_artists" :key="index">
             {% include "../partials/spotify_card.html" with dynamic=True only%}

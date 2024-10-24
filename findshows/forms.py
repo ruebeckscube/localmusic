@@ -44,7 +44,6 @@ class UserProfileForm(forms.ModelForm):
 
 class ArtistEditForm(forms.ModelForm):
     class Meta:
-        # TODO: should bands be able to edit their local status? if not how is it set?
         model=Artist
         fields=("name", "profile_picture", "bio", "youtube_links", "socials_links", "listen_links", "similar_spotify_artists")
         widgets={"similar_spotify_artists": SpotifyArtistSearchWidget,
@@ -128,7 +127,6 @@ class TempArtistForm(forms.ModelForm):
 
     def save(self, commit = True):
         artist = super().save(commit=False)
-        # TODO: handle failed email and send basically validation error back to user?
         email.invite_artist(artist)
 
         if commit:

@@ -11,15 +11,11 @@ from multiselectfield import MultiSelectField
 from findshows import spotify
 
 
-# TODO remove this when you reset database
 def empty_list():
     return []
 
 
 class LabeledURLsValidator(URLValidator):
-    # TODO issue's probably not actually in this chunk of code, but whenever we
-    # raise an Error here, it gets displayed on the Edit Artist page as "Enter a
-    # valid JSON."
     def __call__(self, value):
         if type(value) is not list:
             raise ValidationError("Internal parsing error. Please report.", code=self.code, params={"value": value})
@@ -71,7 +67,6 @@ class MultiURLValidator(URLValidator):
                 # player may fail if IDs don't exist, but we'll let that error trickle up
 
 
-# TODO set some sensible max_lengths
 class Artist(models.Model):
     DSP = "SP"
     BANDCAMP = "BC"
@@ -133,7 +128,6 @@ class Artist(models.Model):
 
 
     def _update_listen_links(self):
-        # TODO figure out how this works with apple music/switching based on user pref
         if self.listen_links == '':
             self.listen_platform = Artist.NOLISTEN
             self.listen_type = Artist.NOLISTEN
@@ -270,7 +264,6 @@ class ConcertTags(models.TextChoices):
 
 class UserProfile(models.Model):
     user=models.OneToOneField(User, on_delete=models.CASCADE)
-    # TODO email subscription preferences
 
     # Properties for algorithm matching
     # A list of spotify_artist dicts we use for spotify things:

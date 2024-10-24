@@ -82,7 +82,7 @@ def create_account(request):
             if "sendartistinfo" in request.POST:
                 send_mail(
                     "Make an Artist page on Chicago Local Music",
-                    "TODO make this a link to create an artist account linked to user",
+                    "this will be a link to create an artist account linked to user",
                     "admin@chicagolocalmusic.com",
                     [user.email],
                     fail_silently=False,
@@ -164,7 +164,6 @@ def edit_concert(request, pk=None):
         concert = Concert()
     else:
         concert = get_object_or_404(Concert, pk=pk)
-    # TODO check permissions to edit this concert... and THINK about who the heck should have access. Any listed band??? really??
 
     if request.method != 'POST':
         form = ConcertForm(instance=concert)
@@ -268,7 +267,7 @@ def spotify_artist_search_results(request):
         return HttpResponse(b'')
 
     search_results = search_spotify_artists(query)
-    # TODO: get selected artist IDs and exclude them from results
+
     for artist in search_results:
         for image in reversed(artist['images']):
             if image['height'] > 64 and image['width'] > 64:
@@ -300,7 +299,7 @@ def concert_search(request):
 
 
 def concert_search_results(request):
-    # TODO: display scores per individual artist somehow (colors for score ranges? idk)
+
     if request.POST:
         search_form = ShowFinderForm(request.POST)
     else:
