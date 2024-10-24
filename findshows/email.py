@@ -60,7 +60,6 @@ def send_mass_html_mail(datatuple, fail_silently=False, user=None, password=None
 
 
 def send_rec_email(subject, header_message):
-    # TODO these generators + zips as written duplicate some work i think. but also there's caching. optimize later.
     user_profiles = UserProfile.objects.filter(weekly_email=True)
     today = datetime.date.today()
     concertss = (sorted(Concert.objects.filter(date__gte=today, date__lt=today + datetime.timedelta(7)),
@@ -68,14 +67,12 @@ def send_rec_email(subject, header_message):
                         reverse=True)
                  for user_profile in user_profiles)
 
-    # TODO: make this template
     html_messages = (render_to_string("findshows/emails/rec_email.html", context={'header_message': header_message,
                                                                                   'user_profile': user_profile,
                                                                                   'concerts': concerts,
                                                                                   'host_name': settings.HOST_NAME})
                      for user_profile, concerts in zip(user_profiles, concertss))
-    text_message = f'{header_message}\n\nGo to liiiink to see your weekly recommendations' # TODO generate a correct link. And I guess a view for it? Unless we give concert_search a range.
+    text_message = f'{header_message}\n\nGo to liiiink to see your weekly recommendations'
     datatuple = ( (subject, text_message, html_message, None, [user_profile.user.email])
                   for html_message, user_profile in zip(html_messages, user_profiles) )
     return send_mass_html_mail(datatuple)
-    # TODO unsubscribe link: just a link to settings page? easier than a whole new POST situation

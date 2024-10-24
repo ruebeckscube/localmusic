@@ -12,7 +12,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if not send_rec_email(options["subject"], options["message"]):
-            # TODO get better error messages, especially like if some emails fail to deliver or something
             raise CommandError("Something went wrong delivering emails.")
         self.stdout.write(
             self.style.SUCCESS('Delivered emails.')
