@@ -136,7 +136,7 @@ class TempArtistForm(forms.ModelForm):
 
 class ShowFinderForm(forms.Form):
     date = DatePickerField()
-    spotify_artists = forms.JSONField(widget=SpotifyArtistSearchWidget, initial=list)
+    spotify_artists = forms.JSONField(widget=SpotifyArtistSearchWidget(is_ids_only=True), initial=list)
     concert_tags = forms.MultipleChoiceField(choices=ConcertTags, widget=forms.CheckboxSelectMultiple)
 
 

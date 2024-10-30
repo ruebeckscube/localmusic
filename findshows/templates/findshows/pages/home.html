@@ -8,9 +8,8 @@
         <div>
             Enter a date and some artists you like to get started:
         </div>
-        <form method="POST" action="{% url "findshows:concert_search" %}">
+        <form method="GET" action="{% url "findshows:concert_search" %}">
             <div class="flex justify-around w-full bg-gray-200">
-                {% csrf_token %}
                 {% for field in search_form %}
                     <div>
                     {{field.as_field_group}}

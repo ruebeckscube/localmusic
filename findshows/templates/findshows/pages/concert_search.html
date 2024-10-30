@@ -3,18 +3,19 @@
 {% block content %}
 <div class="flex w-full">
     <div class="flex flex-col w-1/5 mr-2">
-        <form method="POST" action="">
-            {% csrf_token %}
+        <form method="GET" action="" id = "search-form">
             {% for field in search_form %}
                 {{field.as_field_group}}
             {% endfor %}
             <input class=""
                    type="button"
                    name="concert-search"
-                   hx-post="{% url 'findshows:concert_search_results' %}"
+                   hx-get="{% url 'findshows:concert_search_results' %}"
                    hx-trigger="load,click"
                    hx-target="#concert-search-results"
+                   hx-include="#search-form"
                    value="Search"
+                   hx-on::after-request="update_url(event.detail.pathInfo, '{% url 'findshows:concert_search' %}')"
             >
         </form>
     </div>
@@ -23,4 +24,11 @@
     </div>
 
 </div>
+
+<script>
+ function update_url(pathInfo, baseURL) {
+     query = pathInfo.finalRequestPath.slice(pathInfo.requestPath.length);
+     window.history.pushState('', '', baseURL + query);
+ }
+</script>
 {% endblock %}
