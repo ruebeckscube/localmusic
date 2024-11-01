@@ -25,15 +25,19 @@ from findshows import spotify
 ## User Views ###
 #################
 
-def home(request):
+def get_concert_search_defaults(request):
     defaults = {'date': timezone_today, 'concert_tags': [t.value for t in ConcertTags]}
     if request.user and hasattr(request.user, 'userprofile'):
         defaults['spotify_artists'] = [a['id'] for a in request.user.userprofile.favorite_spotify_artists]
         defaults['concert_tags'] = request.user.userprofile.preferred_concert_tags
-    search_form = ShowFinderForm(initial=defaults)
+    return defaults
+
+
+def home(request):
     return render(request, "findshows/pages/home.html", context={
-        "search_form": search_form
+        "search_form": ShowFinderForm(initial=get_concert_search_defaults(request))
     })
+
 
 def contact(request):
     success = False
@@ -282,19 +286,13 @@ def concert_search(request):
     if request.GET:
         search_form = ShowFinderForm(request.GET)
     else:
-        defaults = {'date': timezone_today, 'concert_tags': [t.value for t in ConcertTags]}
-        if request.user and hasattr(request.user, 'userprofile'):
-            defaults['spotify_artists'] = [a['id'] for a in request.user.userprofile.favorite_spotify_artists]
-            defaults['concert_tags'] = request.user.userprofile.preferred_concert_tags
-        search_form = ShowFinderForm(initial=defaults)
-
+        search_form = ShowFinderForm(initial=get_concert_search_defaults(request))
     return render(request, "findshows/pages/concert_search.html", context = {
         "search_form": search_form,
     })
 
 
 def concert_search_results(request):
-
     if request.GET:
         search_form = ShowFinderForm(request.GET)
     else:

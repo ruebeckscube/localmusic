@@ -1,14 +1,15 @@
 <div id = "spotify-artist-chooser"
-     x-data="spotify_artist_chooser_data({{ widget.artist_dicts }},{{ widget.max_artists }},{{ widget.is_ids_only|yesno:"true,false" }})"
+     x-data="spotify_artist_chooser_data({{ widget.artist_dicts }},{{ widget.max_artists }})"
      @keydown.escape.prevent.stop="close_dropdown()"
 >
     <div class="flex flex-wrap">
         <template x-for="(spotify_artist, index) in selected_spotify_artists" :key="index">
-            {% include "../partials/spotify_card.html" with dynamic=True only%}
+            <div>
+                {% include "../partials/spotify_card.html" with dynamic=True %}
+                <input type='hidden' name='{{widget.name}}' :value='{{widget.is_ids_only|yesno:'spotify_artist.id,JSON.stringify(spotify_artist)'}}'>
+            </div>
         </template>
     </div>
-
-    <input type="hidden" name="{{widget.name}}" :value="return_val()">
 
     <div x-ref="spotify-search-plus-dropdown"
          @focusin="open_dropdown()"
@@ -59,13 +60,6 @@
 
          remove_artist(index) {
              this.selected_spotify_artists.splice(index, 1);
-         },
-
-         return_val() {
-             if (is_ids_only) {
-                 return JSON.stringify(this.selected_spotify_artists.map(a => a.id))
-             }
-             return JSON.stringify(this.selected_spotify_artists)
          }
      }
  }

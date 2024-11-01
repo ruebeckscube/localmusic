@@ -17,6 +17,12 @@ class SpotifyArtistSearchWidget(Input):
         self.max_artists = max_artists
         self.is_ids_only = is_ids_only
 
+    def value_from_datadict(self, data, files, name):
+        if self.is_ids_only:
+            return json.dumps(data.getlist(name))
+        else:
+            return json.dumps([json.loads(s) for s in data.getlist(name)])
+
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         context['widget']['max_artists'] = self.max_artists
