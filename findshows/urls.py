@@ -5,7 +5,7 @@ from . import views
 
 app_name = "findshows"
 urlpatterns = [
-    path("", views.home, name="home"),
+    path("", views.concert_search, name="home"),
     path("user_settings", views.user_settings, name="user_settings"),
 
     path("my_artists", views.managed_artist_list, name="managed_artist_list"),
