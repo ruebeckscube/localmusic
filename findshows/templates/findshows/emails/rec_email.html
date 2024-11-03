@@ -15,7 +15,7 @@
             <mj-column>
                 <mj-text>
                     Click a concert poster to view details and listen to previews,
-                    or <a href={% url 'findshows:home' %} }target="_blank">view them all on the website</a>.
+                    or <a href='{{search_url}}' target="_blank">view them all on the website</a>.
                 </mj-text>
 
                 {% for concert in concerts %}

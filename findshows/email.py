@@ -1,8 +1,9 @@
 import datetime
 from django.conf import settings
 from django.core.mail import BadHeaderError, EmailMultiAlternatives, get_connection, send_mail, send_mass_mail
-from django.shortcuts import render
 from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.http import urlencode
 
 from findshows.forms import ContactForm
 from findshows.models import Artist, Concert, UserProfile
@@ -59,20 +60,35 @@ def send_mass_html_mail(datatuple, fail_silently=False, user=None, password=None
     return connection.send_messages(messages)
 
 
-def send_rec_email(subject, header_message):
+def rec_email_generator(header_message):
     user_profiles = UserProfile.objects.filter(weekly_email=True)
     today = datetime.date.today()
-    concertss = (sorted(Concert.objects.filter(date__gte=today, date__lt=today + datetime.timedelta(7)),
-                        key=lambda c: c.relevance_score(user_profile.favorite_spotify_artists_and_relateds),
-                        reverse=True)
-                 for user_profile in user_profiles)
+    week_later = today + datetime.timedelta(6)
+    search_params = {'date': today,
+                      'end_date': week_later,
+                      'is_date_range': True}
 
-    html_messages = (render_to_string("findshows/emails/rec_email.html", context={'header_message': header_message,
-                                                                                  'user_profile': user_profile,
-                                                                                  'concerts': concerts,
-                                                                                  'host_name': settings.HOST_NAME})
-                     for user_profile, concerts in zip(user_profiles, concertss))
-    text_message = f'{header_message}\n\nGo to liiiink to see your weekly recommendations'
-    datatuple = ( (subject, text_message, html_message, None, [user_profile.user.email])
-                  for html_message, user_profile in zip(html_messages, user_profiles) )
+    for user_profile in user_profiles:
+        concerts = sorted(Concert.objects.filter(date__gte=today, date__lte=week_later),
+                          key=lambda c: c.relevance_score(user_profile.favorite_spotify_artists_and_relateds),
+                          reverse=True)
+        search_params['concert_tags'] = user_profile.preferred_concert_tags
+        search_params['spotify_artists'] = [a['id'] for a in user_profile.favorite_spotify_artists]
+        search_url = settings.HOST_NAME + reverse('findshows:concert_search') + '?' + urlencode(search_params, doseq=True)
+
+        html_message = render_to_string("findshows/emails/rec_email.html",
+                                        context={'header_message': header_message,
+                                                 'user_profile': user_profile,
+                                                 'concerts': concerts,
+                                                 'host_name': settings.HOST_NAME,
+                                                 'search_url': search_url})
+        text_message = f'{header_message}\n\nGo to {search_url} to see your weekly concert recommendations.'
+
+        yield text_message, html_message, user_profile.user.email
+
+
+
+def send_rec_email(subject, header_message):
+    datatuple = ( (subject, text_message, html_message, None, [email])
+                  for text_message, html_message, email in rec_email_generator(header_message) )
     return send_mass_html_mail(datatuple)
