@@ -140,8 +140,8 @@ class ShowFinderForm(forms.Form):
     date = DatePickerField()
     end_date = DatePickerField(required=False)
     is_date_range = forms.BooleanField(required=False)
-    spotify_artists = forms.JSONField(widget=SpotifyArtistSearchWidget(is_ids_only=True), initial=list)
-    concert_tags = forms.MultipleChoiceField(choices=ConcertTags, widget=forms.CheckboxSelectMultiple)
+    spotify_artists = forms.JSONField(widget=SpotifyArtistSearchWidget(is_ids_only=True), initial=list, required=False)
+    concert_tags = forms.MultipleChoiceField(choices=ConcertTags, widget=forms.CheckboxSelectMultiple, required=False)
 
     def clean(self):
         cleaned_data = super().clean() or {}
