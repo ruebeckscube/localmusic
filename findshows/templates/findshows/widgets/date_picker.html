@@ -7,7 +7,6 @@
           <div class="container mx-auto px-4 py-2">
               <div class="max-w-64">
 
-                  <!-- <label for="datepicker" class="font-bold mb-1 text-gray-700 block">Select Date</label> -->
                   <div class="relative">
                       <input type="hidden" name={{ widget.name }} :value="getWidgetReturnVal()">
                       <input
@@ -65,9 +64,10 @@
                                               @click="onDateClick(date)"
                                               x-text="date"
                                               class="cursor-pointer text-center text-sm rounded-full leading-loose transition ease-in-out duration-100"
-                                              :class="{'bg-blue-500 text-white': isSelected(date),
-                                                      'text-gray-700 hover:bg-blue-200': !isSelected(date),
-                                                      'outline outline-blue-500 outline-1': isToday(date)}"
+                                              :class="{'text-gray-300': isPast(date),
+                                                      'bg-blue-500 text-white': isSelected(date),
+                                                      'text-black hover:bg-blue-200': !(isSelected(date)||isPast(date)),
+                                                      'font-bold': isToday(date)}"
                                           ></div>
                                       </div>
                                 </template>
@@ -83,6 +83,7 @@
       <script>
        const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
        const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+       const TODAY = new Date();
 
        function datePickerData() {
            return {
@@ -129,10 +130,15 @@
                },
 
                isToday(date) {
-                   const today = new Date();
-                   return (date === today.getDate() &&
-                           this.calMonth === today.getMonth() + 1 &&
-                           this.calYear === today.getFullYear())
+                   return (date === TODAY.getDate() &&
+                           this.calMonth === TODAY.getMonth() + 1 &&
+                           this.calYear === TODAY.getFullYear())
+               },
+
+               isPast(date) { // calMonth/Year are bounded >= present by incrementCalDisplay
+                   return (this.calMonth === TODAY.getMonth() + 1 &&
+                           this.calYear === TODAY.getFullYear() &&
+                           date < TODAY.getDate())
                },
 
                isSelected(date) {
@@ -142,6 +148,8 @@
                },
 
                onDateClick(date) {
+                   if (this.isPast(date)) return;
+
                    this.selectedYear = this.calYear;
                    this.selectedMonth = this.calMonth;
                    this.selectedDate = date;
@@ -150,11 +158,16 @@
                },
 
                incrementCalDisplay(incr) {
-                   monthIndexedZero = this.calMonth - 1;
-                   monthIndexedZero += incr;
-                   this.calYear += Math.floor(monthIndexedZero / 12);
-                   monthIndexedZero = ((monthIndexedZero % 12) + 12) % 12; // get true modulo from Javascript's remainder operator
-                   this.calMonth = monthIndexedZero + 1;
+                   newMonthIndexedZero = this.calMonth - 1 + incr;
+                   newYear = this.calYear + Math.floor(newMonthIndexedZero / 12);
+                   newMonthIndexedZero = ((newMonthIndexedZero % 12) + 12) % 12; // get true modulo from Javascript's remainder operator
+
+                   if (newYear < TODAY.getFullYear()) return;
+                   if (newYear === TODAY.getFullYear() &&
+                       newMonthIndexedZero < TODAY.getMonth()) return;
+
+                   this.calYear = newYear;
+                   this.calMonth = newMonthIndexedZero + 1;
 
                    this.numDaysInMonth = new Date(this.calYear, this.calMonth, 0).getDate();
                    this.NumSpacesBeforeDays = new Date(this.calYear, this.calMonth - 1).getDay();

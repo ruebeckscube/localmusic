@@ -1,11 +1,13 @@
+from datetime import timedelta
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
-from multiselectfield import MultiSelectFormField
-from findshows import email
+from django.views.generic.dates import timezone_today
+from django.conf import settings
 
+from findshows import email
 from findshows.models import Artist, Concert, ConcertTags, UserProfile, Venue
 from findshows.widgets import BillWidget, DatePickerField, SocialsLinksWidget, SpotifyArtistSearchWidget, TimePickerField, VenuePickerWidget
 
@@ -136,8 +138,42 @@ class TempArtistForm(forms.ModelForm):
 
 class ShowFinderForm(forms.Form):
     date = DatePickerField()
+    end_date = DatePickerField(required=False)
+    is_date_range = forms.BooleanField(required=False)
     spotify_artists = forms.JSONField(widget=SpotifyArtistSearchWidget(is_ids_only=True), initial=list)
     concert_tags = forms.MultipleChoiceField(choices=ConcertTags, widget=forms.CheckboxSelectMultiple)
+
+    def clean(self):
+        cleaned_data = super().clean() or {}
+        today = timezone_today()
+        if cleaned_data.get('is_date_range'):
+            start_date, end_date = cleaned_data.get("date"), cleaned_data.get("end_date")
+            if not end_date:
+                raise ValidationError(
+                    "Please enter an end date, or hide date range."
+                )
+            if end_date < today:
+                raise ValidationError(
+                    "End date is in the past. Please select a valid date."
+                )
+            if start_date and start_date > end_date:
+                raise ValidationError(
+                    "Please enter a date range with the end date after the start date."
+                )
+            if start_date and end_date-start_date > timedelta(settings.MAX_DATE_RANGE):
+                raise ValidationError(
+                    "Max date range is " + str(settings.MAX_DATE_RANGE) + " days."
+                )
+            if (not start_date) or start_date < today:
+                cleaned_data['date'] = today
+        else:
+            date = cleaned_data.get('date')
+            if date and date < today:
+                raise ValidationError(
+                    "Date is in the past. Please select a valid date."
+                )
+
+        return cleaned_data
 
 
 class ContactForm(forms.Form):

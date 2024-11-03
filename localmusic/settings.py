@@ -167,3 +167,6 @@ ADMINS = ['admin@localmusic.com']
 MJML_BACKEND_MODE = 'cmd'
 MJML_EXEC_CMD = ['node_modules/.bin/mjml', '--config.minify', 'true', '--config.validationLevel', 'strict']
 MJML_CHECK_CMD_ON_STARTUP = False
+
+# Misc
+MAX_DATE_RANGE = 31

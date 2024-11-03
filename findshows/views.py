@@ -26,7 +26,10 @@ from findshows import spotify
 #################
 
 def get_concert_search_defaults(request):
-    defaults = {'date': timezone_today, 'concert_tags': [t.value for t in ConcertTags]}
+    defaults = {'date': timezone_today,
+                'end_date': timezone_today,
+                'is_date_range': False,
+                'concert_tags': [t.value for t in ConcertTags]}
     if request.user and hasattr(request.user, 'userprofile'):
         defaults['spotify_artists'] = [a['id'] for a in request.user.userprofile.favorite_spotify_artists]
         defaults['concert_tags'] = request.user.userprofile.preferred_concert_tags
@@ -301,8 +304,12 @@ def concert_search_results(request):
     if search_form.is_valid():
         artists_and_relateds = { id: spotify.get_related_spotify_artists(id)
                                  for id in search_form.cleaned_data['spotify_artists']}
-        concerts = Concert.objects.filter(Q(date=search_form.cleaned_data['date'])
-                                          & reduce(or_, (Q(tags__icontains=t) for t in search_form.cleaned_data['concert_tags'])))
+        concerts = Concert.objects.filter(reduce(or_, (Q(tags__icontains=t) for t in search_form.cleaned_data['concert_tags'])))
+        if search_form.cleaned_data['is_date_range']:
+            concerts = concerts.filter(date__gte=search_form.cleaned_data['date'])
+            concerts = concerts.filter(date__lte=search_form.cleaned_data['end_date'])
+        else:
+            concerts = concerts.filter(date=search_form.cleaned_data['date'])
         concerts = sorted(concerts,
                           key=lambda c: c.relevance_score(artists_and_relateds),
                           reverse=True)
