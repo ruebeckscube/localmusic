@@ -1,21 +1,32 @@
 {% extends "localmusic/base.html" %}
 
 {% block content %}
-    <div class="flex flex-col justify-around align-middle text-center w-full h-full">
+    <div class="flex flex-col justify-around align-middle text-center w-full h-full"
+        x-data="{'show_end_date': {{ search_form.is_date_range.value|lower }} }">
         <div class="text-4xl text-slate-700">
             Find a Show
         </div>
         <div>
             Enter a date and some artists you like to get started:
         </div>
-        <form method="POST" action="{% url "findshows:concert_search" %}">
+        <form method="GET" action="{% url "findshows:concert_search" %}">
             <div class="flex justify-around w-full bg-gray-200">
-                {% csrf_token %}
-                {% for field in search_form %}
-                    <div>
-                    {{field.as_field_group}}
+            {{ search_form.non_field_errors }}  {# duplicated code but we're going to get rid of the home page anyway #}
+                <div>
+                    {{ search_form.date.as_field_group }}
+                    <div x-show="show_end_date">
+                        {{ search_form.end_date.as_field_group }}
                     </div>
-                {% endfor %}
+                    <div x-show="!show_end_date" @click="show_end_date=true">
+                        Show date range
+                    </div>
+                    <div x-show="show_end_date" @click="show_end_date=false">
+                        Hide date range
+                    </div>
+                </div>
+            <input type='hidden' :value='show_end_date' name='is_date_range'>
+            {{ search_form.spotify_artists.as_field_group }}
+            {{ search_form.concert_tags.as_field_group }}
             </div>
             <button class="" type="submit">Search</button>
         </form>

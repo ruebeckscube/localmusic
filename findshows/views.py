@@ -25,15 +25,22 @@ from findshows import spotify
 ## User Views ###
 #################
 
-def home(request):
-    defaults = {'date': timezone_today, 'concert_tags': [t.value for t in ConcertTags]}
+def get_concert_search_defaults(request):
+    defaults = {'date': timezone_today,
+                'end_date': timezone_today,
+                'is_date_range': False,
+                'concert_tags': [t.value for t in ConcertTags]}
     if request.user and hasattr(request.user, 'userprofile'):
-        defaults['spotify_artists'] = request.user.userprofile.favorite_spotify_artists
+        defaults['spotify_artists'] = [a['id'] for a in request.user.userprofile.favorite_spotify_artists]
         defaults['concert_tags'] = request.user.userprofile.preferred_concert_tags
-    search_form = ShowFinderForm(initial=defaults)
+    return defaults
+
+
+def home(request):
     return render(request, "findshows/pages/home.html", context={
-        "search_form": search_form
+        "search_form": ShowFinderForm(initial=get_concert_search_defaults(request))
     })
+
 
 def contact(request):
     success = False
@@ -268,11 +275,6 @@ def spotify_artist_search_results(request):
 
     search_results = search_spotify_artists(query)
 
-    for artist in search_results:
-        for image in reversed(artist['images']):
-            if image['height'] > 64 and image['width'] > 64:
-                artist['image'] = image
-                continue
     return render(request, "findshows/htmx/spotify_artist_search_results.html", {
         "spotify_artists": search_results
     })
@@ -284,32 +286,30 @@ def spotify_artist_search_results(request):
 #######################
 
 def concert_search(request):
-    if request.POST:
-        search_form = ShowFinderForm(request.POST)
+    if request.GET:
+        search_form = ShowFinderForm(request.GET)
     else:
-        defaults = {'date': timezone_today, 'concert_tags': [t.value for t in ConcertTags]}
-        if request.user and hasattr(request.user, 'userprofile'):
-            defaults['spotify_artists'] = request.user.userprofile.favorite_spotify_artists
-            defaults['concert_tags'] = request.user.userprofile.preferred_concert_tags
-        search_form = ShowFinderForm(initial=defaults)
-
+        search_form = ShowFinderForm(initial=get_concert_search_defaults(request))
     return render(request, "findshows/pages/concert_search.html", context = {
         "search_form": search_form,
     })
 
 
 def concert_search_results(request):
-
-    if request.POST:
-        search_form = ShowFinderForm(request.POST)
+    if request.GET:
+        search_form = ShowFinderForm(request.GET)
     else:
         search_form = ShowFinderForm()
 
     if search_form.is_valid():
-        artists_and_relateds = { a['id']: spotify.get_related_spotify_artists(a['id'])
-                                 for a in search_form.cleaned_data['spotify_artists']}
-        concerts = Concert.objects.filter(Q(date=search_form.cleaned_data['date'])
-                                          & reduce(or_, (Q(tags__icontains=t) for t in search_form.cleaned_data['concert_tags'])))
+        artists_and_relateds = { id: spotify.get_related_spotify_artists(id)
+                                 for id in search_form.cleaned_data['spotify_artists']}
+        concerts = Concert.objects.filter(reduce(or_, (Q(tags__icontains=t) for t in search_form.cleaned_data['concert_tags'])))
+        if search_form.cleaned_data['is_date_range']:
+            concerts = concerts.filter(date__gte=search_form.cleaned_data['date'])
+            concerts = concerts.filter(date__lte=search_form.cleaned_data['end_date'])
+        else:
+            concerts = concerts.filter(date=search_form.cleaned_data['date'])
         concerts = sorted(concerts,
                           key=lambda c: c.relevance_score(artists_and_relateds),
                           reverse=True)

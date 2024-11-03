@@ -1,14 +1,15 @@
 <div id = "spotify-artist-chooser"
-     x-data="spotify_artist_chooser_data({{ widget.value }}, {{ widget.max_artists }})"
+     x-data="spotify_artist_chooser_data({{ widget.artist_dicts }},{{ widget.max_artists }})"
      @keydown.escape.prevent.stop="close_dropdown()"
 >
     <div class="flex flex-wrap">
         <template x-for="(spotify_artist, index) in selected_spotify_artists" :key="index">
-            {% include "../partials/spotify_card.html" with dynamic=True only%}
+            <div>
+                {% include "../partials/spotify_card.html" with dynamic=True %}
+                <input type='hidden' name='{{widget.name}}' :value='{{widget.is_ids_only|yesno:'spotify_artist.id,JSON.stringify(spotify_artist)'}}'>
+            </div>
         </template>
     </div>
-
-    <input type="hidden" name="{{widget.name}}" :value="JSON.stringify(selected_spotify_artists)">
 
     <div x-ref="spotify-search-plus-dropdown"
          @focusin="open_dropdown()"
@@ -33,7 +34,7 @@
 </div>
 
 <script>
- function spotify_artist_chooser_data(selected_spotify_artists, max_artists) {
+ function spotify_artist_chooser_data(selected_spotify_artists, max_artists, is_ids_only) {
      return {
          show_search: false,
          search_text: '',

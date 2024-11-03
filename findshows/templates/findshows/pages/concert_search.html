@@ -1,20 +1,33 @@
 {% extends "localmusic/base.html" %}
 
 {% block content %}
-<div class="flex w-full">
+<div class="flex w-full" x-data="{'show_end_date': {{ search_form.is_date_range.value|lower }} }">
     <div class="flex flex-col w-1/5 mr-2">
-        <form method="POST" action="">
-            {% csrf_token %}
-            {% for field in search_form %}
-                {{field.as_field_group}}
-            {% endfor %}
+        <form method="GET" action="" id="search-form">
+            {{ search_form.non_field_errors }}
+            {{ search_form.date.as_field_group }}
+            <div x-show="show_end_date">
+                {{ search_form.end_date.as_field_group }}
+            </div>
+            <div x-show="!show_end_date" @click="show_end_date=true">
+                Show date range
+            </div>
+            <div x-show="show_end_date" @click="show_end_date=false">
+                Hide date range
+            </div>
+            <input type='hidden' :value='show_end_date' name='is_date_range'>
+            {{ search_form.spotify_artists.as_field_group }}
+            {{ search_form.concert_tags.as_field_group }}
+
             <input class=""
                    type="button"
                    name="concert-search"
-                   hx-post="{% url 'findshows:concert_search_results' %}"
+                   hx-get="{% url 'findshows:concert_search_results' %}"
                    hx-trigger="load,click"
                    hx-target="#concert-search-results"
+                   hx-include="#search-form"
                    value="Search"
+                   hx-on::after-request="update_url(event.detail.pathInfo, '{% url 'findshows:concert_search' %}')"
             >
         </form>
     </div>
@@ -23,4 +36,11 @@
     </div>
 
 </div>
+
+<script>
+ function update_url(pathInfo, baseURL) {
+     query = pathInfo.finalRequestPath.slice(pathInfo.requestPath.length);
+     window.history.pushState('', '', baseURL + query);
+ }
+</script>
 {% endblock %}

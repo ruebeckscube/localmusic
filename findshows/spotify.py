@@ -22,11 +22,33 @@ def _get_spotify_auth_headers():
     return {"Authorization": "Bearer " + token}
 
 
+def set_spotify_artist_image(artist):
+    for image in reversed(artist['images']):
+        if image['height'] > 64 and image['width'] > 64:
+            artist['image'] = image
+            return
+
+
 def search_spotify_artists(query):
     params = {"q": query, "type": "artist", "limit": 6}
     headers = _get_spotify_auth_headers()
     r = requests.get("https://api.spotify.com/v1/search", params, headers=headers)
-    return r.json()["artists"]["items"]
+
+    search_results = r.json()["artists"]["items"]
+    for artist in search_results:
+        set_spotify_artist_image(artist)
+    return search_results
+
+
+def get_spotify_artist_dict(spotify_artist_id):
+    headers = _get_spotify_auth_headers()
+    r = requests.get("https://api.spotify.com/v1/artists/" + spotify_artist_id,
+                     headers=headers)
+    artist = r.json()
+    set_spotify_artist_image(artist)
+    return {'id': spotify_artist_id,
+            'img_url': artist['image']['url'],
+            'name': artist['name']}
 
 
 def get_related_spotify_artists(spotify_artist_id):
