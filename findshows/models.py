@@ -330,6 +330,7 @@ class Concert(models.Model):
     ticket_link=models.URLField(blank=True)
     ticket_description=models.CharField()
     tags=MultiSelectField(choices=ConcertTags)
+    created_by=models.ForeignKey(UserProfile, on_delete=models.CASCADE)
 
 
     def relevance_score(self, artists_and_relateds):

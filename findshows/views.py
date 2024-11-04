@@ -4,6 +4,7 @@ import json
 from random import shuffle
 
 from django.contrib.auth import login
+from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 from django.urls import reverse
 from django.views import generic
@@ -124,7 +125,7 @@ class ArtistView(generic.DetailView):
 def edit_artist(request, pk):
     artist = get_object_or_404(Artist, pk=pk)
     if artist not in request.user.userprofile.managed_artists.all():
-        return redirect("/accounts/login/?next=%s" % request.path)
+        raise PermissionDenied
 
     if request.method != 'POST':
         form = ArtistEditForm(instance=artist)
@@ -149,12 +150,15 @@ def view_concert(request, pk=None):
     return render(request, 'findshows/pages/view_concert.html', {'concert': concert})
 
 
-@login_required
+@user_passes_test(is_artist_account)
 def edit_concert(request, pk=None):
     if pk is None:
         concert = Concert()
+        concert.created_by = request.user.userprofile
     else:
         concert = get_object_or_404(Concert, pk=pk)
+        if not concert.created_by == request.user.userprofile:
+            raise PermissionDenied
 
     if request.method != 'POST':
         form = ConcertForm(instance=concert)
@@ -245,6 +249,7 @@ def my_concert_list(request):
     concerts=set(c for a in artists for c in a.concert_set.all()) # Set removes duplicates
     return render(request, "findshows/pages/concert_list_for_artist.html", context = {
         "concerts": concerts,
+        "userprofile": request.user.userprofile
     })
 
 
