@@ -160,6 +160,7 @@ def edit_concert(request, pk=None):
         form = ConcertForm(instance=concert)
     else:
         form = ConcertForm(request.POST, request.FILES, instance=concert)
+        form.set_editing_user(request.user)
         if form.is_valid():
             form.save()
             return redirect(reverse('findshows:my_concert_list'))
