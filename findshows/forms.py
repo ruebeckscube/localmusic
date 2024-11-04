@@ -72,11 +72,21 @@ class ConcertForm(forms.ModelForm):
         else:
             self.fields['bill'].initial = []
 
+    def set_editing_user(self, user):
+        self.editing_user = user
+
     def clean(self):
         cleaned_data = super().clean() or {}
+
+        user_artists = set(str(a.id) for a in self.editing_user.userprofile.managed_artists.all())
+        if not user_artists.intersection(str(a['id']) for a in cleaned_data['bill']):
+            raise ValidationError(
+                "You may only post shows where the bill includes one of the artists \
+                that your account manages."
+            )
+
         venue = cleaned_data.get("venue")
         date = cleaned_data.get("date")
-
         if venue and date:
             conflict_concerts = Concert.objects.filter(venue=venue, date=date)
             if self.instance:
@@ -98,7 +108,8 @@ class ConcertForm(forms.ModelForm):
         if concert.id:
             concert.artists.clear()
             for idx, artist_dict in enumerate(self.cleaned_data['bill']):  # Assuming all new artist records have been saved
-                concert.artists.add(artist_dict['id'], through_defaults = {'order_number': idx})
+                if artist_dict['id']:
+                    concert.artists.add(artist_dict['id'], through_defaults = {'order_number': idx})
 
         if commit:
             concert.save()

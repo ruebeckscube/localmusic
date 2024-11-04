@@ -11,9 +11,11 @@
                 <div class="w-5/6">
                     {% include "findshows/partials/concert_card.html" %}
                 </div>
+                {% if concert.created_by == userprofile %}
                 <div class = "w-1/6 grid content-center">
                     <a href="{% url 'findshows:edit_concert' concert.pk %}"> Edit </a>
                 </div>
+                {% endif %}
             </div>
         {% endfor %}
     </div>

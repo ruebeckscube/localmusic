@@ -15,6 +15,14 @@ def empty_list():
     return []
 
 
+class CreationTrackingMixin(models.Model):
+    created_at=models.DateField(auto_now_add=True)
+    created_by=models.ForeignKey('UserProfile', on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
+
+
 class LabeledURLsValidator(URLValidator):
     def __call__(self, value):
         if type(value) is not list:
@@ -307,7 +315,7 @@ class Ages(models.TextChoices):
     TWENTYONE = "21", "21+"
 
 
-class Venue(models.Model):
+class Venue(CreationTrackingMixin):
     name=models.CharField()
     # For now, folks will put "DM for address" for house venues.
     address=models.CharField()
@@ -318,7 +326,7 @@ class Venue(models.Model):
         return self.name
 
 
-class Concert(models.Model):
+class Concert(CreationTrackingMixin):
     poster=models.ImageField()
     date=models.DateField()
     doors_time=models.TimeField(blank=True, null=True)
