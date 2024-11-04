@@ -14,6 +14,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
 from django.utils import timezone
 from django.views.generic.dates import timezone_today
+from django.conf import settings
 
 from findshows.email import contact_email
 
@@ -150,9 +151,17 @@ def view_concert(request, pk=None):
     return render(request, 'findshows/pages/view_concert.html', {'concert': concert})
 
 
+# Model should subclass CreationTrackingMixin
+def records_created_today(model, userprofile):
+    records = model.objects.filter(created_by=userprofile, created_at=timezone_today())
+    return len(records)
+
+
 @user_passes_test(is_artist_account)
 def edit_concert(request, pk=None):
     if pk is None:
+        if records_created_today(Concert, request.user.userprofile) >= settings.MAX_DAILY_CONCERT_CREATES:
+            return render(request, 'findshows/pages/cant_create_concert.html')
         concert = Concert()
         concert.created_by = request.user.userprofile
     else:
@@ -189,10 +198,16 @@ def venue_search_results(request):
 
 
 def create_venue(request):
+    print(records_created_today(Venue, request.user.userprofile))
+    if records_created_today(Venue, request.user.userprofile) >= settings.MAX_DAILY_VENUE_CREATES:
+        return render(request, 'findshows/htmx/cant_create_venue.html')
+
     venue_form = VenueForm(request.POST)
     valid = venue_form.is_valid()
     if valid:
-        venue = venue_form.save()
+        venue = venue_form.save(commit=False)
+        venue.created_by = request.user.userprofile
+        venue.save()
         venue_form = VenueForm()
 
     response = render(request, "findshows/htmx/venue_form.html", {
