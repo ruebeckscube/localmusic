@@ -16,7 +16,7 @@ from django.utils import timezone
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.email import contact_email
+from findshows.email import contact_email, invite_artist
 
 from .models import Artist, Concert, ConcertTags, Venue
 from .forms import ArtistEditForm, ConcertForm, ContactForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
@@ -243,6 +243,7 @@ def create_temp_artist(request):
     valid = temp_artist_form.is_valid()
     if valid:
         artist = temp_artist_form.save()
+        invite_artist(artist)
         temp_artist_form = TempArtistForm()
 
     response = render(request, "findshows/htmx/temp_artist_form.html", {
