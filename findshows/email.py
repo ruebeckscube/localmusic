@@ -18,9 +18,11 @@ def invite_artist(temp_artist: Artist):
 def contact_email(cf: ContactForm): # Assumes the form has already run is_valid()
     match cf.cleaned_data['type']:
         case cf.Types.REPORT_BUG:
-            recipient_list = settings.ADMINS
+            recipient_list = [admin[1] for admin in settings.ADMINS] # Tuples (Name, email)
         case cf.Types.OTHER:
-            recipient_list = settings.MODERATORS
+            recipient_list = [mod[1] for mod in settings.MODERATORS]
+        case _:
+            recipient_list = []
 
     try:
         success = send_mail(cf.cleaned_data['subject'],
