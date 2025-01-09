@@ -7,6 +7,8 @@ app_name = "findshows"
 urlpatterns = [
     path("", views.concert_search, name="home"),
     path("user_settings", views.user_settings, name="user_settings"),
+    path('about/', TemplateView.as_view(template_name='findshows/pages/about.html'), name="about"),
+    path('contact/', views.contact, name="contact"),
 
     path("my_artists", views.managed_artist_list, name="managed_artist_list"),
     path("artist/<int:pk>", views.ArtistView.as_view(), name="view_artist"),
@@ -25,8 +27,4 @@ urlpatterns = [
     path("htmx/create_venue/", views.create_venue, name="create_venue"),
     path("htmx/create_temp_artist/", views.create_temp_artist, name="create_temp_artist"),
     path("htmx/artist_search_results/", views.artist_search_results, name="artist_search_results"),
-
-    path('about/', TemplateView.as_view(template_name='findshows/pages/about.html'), name="about"),
-    path('contact/', views.contact, name="contact")
-
 ]

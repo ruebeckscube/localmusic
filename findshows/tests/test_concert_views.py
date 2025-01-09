@@ -6,9 +6,8 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
 from django.views.generic.dates import timezone_today
-from findshows.forms import ConcertForm
-from findshows.models import Concert, Venue
 
+from findshows.models import Concert, Venue
 from findshows.tests.test_helpers import TestCaseHelpers, TestCaseHelpers, create_artist_t, create_concert_t, create_user_profile_t, create_venue_t, image_file_t
 from findshows.views import records_created_today
 
@@ -50,8 +49,7 @@ class MyConcertListTests(TestCaseHelpers):
 
 
     def test_not_artist_user_my_concert_list_redirects(self):
-        create_user_profile_t('name', 'pwd')
-        self.client.login(username='name', password='pwd')
+        self.create_and_login_non_artist_user()
         self.assert_redirects_to_login(reverse("findshows:my_concert_list"))
 
 
@@ -100,8 +98,7 @@ class CreateConcertTests(TestCaseHelpers):
 
 
     def test_not_artist_user_create_new_concert_redirects(self):
-        create_user_profile_t('name', 'pwd')
-        self.client.login(username='name', password='pwd')
+        self.create_and_login_non_artist_user()
         self.assert_redirects_to_login(reverse("findshows:create_concert"))
 
 

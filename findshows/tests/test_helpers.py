@@ -11,6 +11,11 @@ from findshows.models import Ages, Artist, Concert, UserProfile, Venue
 
 
 class TestCaseHelpers(TestCase):
+    def create_and_login_non_artist_user(self):
+        user = create_user_profile_t('name', 'pwd')
+        self.client.login(username='name', password='pwd')
+        return user
+
     def create_and_login_artist_user(self, artist=None):
         user = create_user_profile_t('name', 'pwd')
         artist = artist or create_artist_t()
