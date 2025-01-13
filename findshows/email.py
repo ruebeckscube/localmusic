@@ -15,6 +15,16 @@ def invite_artist(temp_artist: Artist):
     return send_mail(subject, message, None, [temp_artist.temp_email])
 
 
+def send_artist_setup_info(user_email: str):
+    send_mail(
+        "Make an Artist page on Chicago Local Music",
+        "this will be a link to create an artist account linked to user",
+        "admin@chicagolocalmusic.com",
+        [user_email],
+        fail_silently=False,
+    )
+
+
 def contact_email(cf: ContactForm): # Assumes the form has already run is_valid()
     match cf.cleaned_data['type']:
         case cf.Types.REPORT_BUG:

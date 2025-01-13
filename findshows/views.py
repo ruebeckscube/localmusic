@@ -16,7 +16,7 @@ from django.utils import timezone
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.email import contact_email, invite_artist
+from findshows.email import contact_email, invite_artist, send_artist_setup_info
 
 from .models import Artist, Concert, ConcertTags, Venue
 from .forms import ArtistEditForm, ConcertForm, ContactForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
@@ -73,13 +73,7 @@ def create_account(request):
             profile.user = user
             profile.save()
             if "sendartistinfo" in request.POST:
-                send_mail(
-                    "Make an Artist page on Chicago Local Music",
-                    "this will be a link to create an artist account linked to user",
-                    "admin@chicagolocalmusic.com",
-                    [user.email],
-                    fail_silently=False,
-                )
+                send_artist_setup_info(user.email)
             login(request, user)
             return redirect('findshows:home')
 
