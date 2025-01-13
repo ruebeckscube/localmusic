@@ -36,6 +36,7 @@ class ViewConcertTests(TestCase):
         concert = create_concert_t()
         response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'findshows/pages/view_concert.html')
         self.assertEqual(response.context["concert"], concert)
 
     def test_concert_doesnt_exist(self):
@@ -62,6 +63,7 @@ class MyConcertListTests(TestCaseHelpers):
 
         response = self.client.get(reverse("findshows:my_concert_list"))
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'findshows/pages/concert_list_for_artist.html')
         self.assertEqual(response.context['concerts'], {concert1,})
 
 
@@ -106,6 +108,7 @@ class CreateConcertTests(TestCaseHelpers):
         self.create_and_login_artist_user()
         response = self.client.get(reverse("findshows:create_concert"))
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'findshows/pages/edit_concert.html')
         self.assertEqual(response.context['form'].data, MultiValueDict({}))
 
 
@@ -198,6 +201,7 @@ class EditConcertTests(TestCaseHelpers):
         concert = create_concert_t(created_by=user)
         response = self.client.get(reverse("findshows:edit_concert", args=(concert.pk,)))
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'findshows/pages/edit_concert.html')
         self.assertEqual(response.context['form'].instance, concert)
 
 
