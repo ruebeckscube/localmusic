@@ -1,0 +1,14 @@
+[run]
+omit =
+    __init__.py
+    findshows/migrations/*
+    admin.py
+    apps.py
+    findshows/tests/*
+    urls.py
+    manage.py
+    settings.py
+
+[report]
+exclude_also =
+    if settings.DEBUG
