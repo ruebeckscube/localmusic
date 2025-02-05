@@ -111,7 +111,7 @@ class ArtistView(generic.DetailView):
         context["can_edit"] = (not self.request.user.is_anonymous
                                and self.object in self.request.user.userprofile.managed_artists.all())
         context["spotify_artists"] = self.get_object().similar_spotify_artists
-        context["upcoming_concerts"] = self.get_object().concert_set.filter(date__gt=timezone.now())
+        context["upcoming_concerts"] = self.get_object().concert_set.filter(date__gte=timezone.now())
 
         return context
 
