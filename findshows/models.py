@@ -75,6 +75,14 @@ class MultiURLValidator(URLValidator):
                 # player may fail if IDs don't exist, but we'll let that error trickle up
 
 
+class MusicBrainzArtist(models.Model):
+    mbid = models.CharField(primary_key=True)
+    name = models.CharField()
+
+    def __str__(self):
+        return self.name
+
+
 class Artist(models.Model):
     DSP = "SP"
     BANDCAMP = "BC"
