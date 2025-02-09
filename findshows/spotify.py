@@ -52,10 +52,7 @@ def get_spotify_artist_dict(spotify_artist_id):
 
 
 def get_related_spotify_artists(spotify_artist_id):
-    headers = _get_spotify_auth_headers()
-    r = requests.get("https://api.spotify.com/v1/artists/" + spotify_artist_id + "/related-artists",
-                     headers=headers)
-    return [ artist['id'] for artist in r.json()['artists'] ]
+    return []
 
 # Test artist IDs
 # dylan = "74ASZWbe4lXaubB36ztrGX"

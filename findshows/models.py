@@ -302,7 +302,7 @@ class ConcertTags(models.TextChoices):
 class UserProfile(models.Model):
     user=models.OneToOneField(User, on_delete=models.CASCADE)
 
-    favorite_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist)
+    favorite_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist, blank=True)
     preferred_concert_tags=MultiSelectField(choices=ConcertTags)
 
     followed_artists=models.ManyToManyField(Artist, related_name="followers", blank=True)

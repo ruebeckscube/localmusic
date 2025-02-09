@@ -7,10 +7,8 @@ from django.db import models
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows import email
 from findshows.models import Artist, Concert, ConcertTags, MusicBrainzArtist, UserProfile, Venue
 from findshows.widgets import BillWidget, DatePickerField, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
-
 
 class UserCreationFormE(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -137,14 +135,6 @@ class TempArtistForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['temp_email'].required = True
-
-    def save(self, commit = True):
-        artist = super().save(commit=False)
-        email.invite_artist(artist)
-
-        if commit:
-            artist.save()
-        return artist
 
 
 class ShowFinderForm(forms.Form):
