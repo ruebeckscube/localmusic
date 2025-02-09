@@ -1,7 +1,6 @@
 import json
 
-from django.core.management.base import BaseCommand, CommandError
-from django.db import IntegrityError
+from django.core.management.base import BaseCommand
 
 from findshows.models import MusicBrainzArtist
 
@@ -24,6 +23,3 @@ class Command(BaseCommand):
                     if mb_artist.name != artist_json['name']:
                         mb_artist.name = artist_json['name']
                         mb_artist.save()
-
-        # TODO handle removal of an MBartist from the database
-        # TODO optimize using bulk_update etc

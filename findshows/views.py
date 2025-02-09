@@ -18,10 +18,8 @@ from django.conf import settings
 
 from findshows.email import contact_email
 
-from .models import Artist, Concert, ConcertTags, Venue
+from .models import Artist, Concert, ConcertTags, MusicBrainzArtist, Venue
 from .forms import ArtistEditForm, ConcertForm, ContactForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
-from .spotify import search_spotify_artists
-from findshows import spotify
 
 
 #################
@@ -116,7 +114,7 @@ class ArtistView(generic.DetailView):
         context = super().get_context_data(**kwargs)
         context["can_edit"] = (not self.request.user.is_anonymous
                                and self.object in self.request.user.userprofile.managed_artists.all())
-        context["spotify_artists"] = self.get_object().similar_spotify_artists
+        context["musicbrainz_artists"] = self.get_object().similar_musicbrainz_artists.all()
         context["upcoming_concerts"] = self.get_object().concert_set.filter(date__gt=timezone.now())
 
         return context
@@ -198,7 +196,6 @@ def venue_search_results(request):
 
 
 def create_venue(request):
-    print(records_created_today(Venue, request.user.userprofile))
     if records_created_today(Venue, request.user.userprofile) >= settings.MAX_DAILY_VENUE_CREATES:
         return render(request, 'findshows/htmx/cant_create_venue.html')
 
@@ -268,20 +265,20 @@ def my_concert_list(request):
     })
 
 
-#########################
-## Spotify search tool ##
-#########################
+#############################
+## MusicBrainz search tool ##
+#############################
 
 
-def spotify_artist_search_results(request):
-    query = request.GET['spotify-search']
+def musicbrainz_artist_search_results(request):
+    query = request.GET['mb-search']
     if not query:
         return HttpResponse(b'')
 
-    search_results = search_spotify_artists(query)
+    mb_artists = MusicBrainzArtist.objects.defer('similar_artists', 'similar_artists_cache_datetime').filter(name__icontains=query)[:10]
 
-    return render(request, "findshows/htmx/spotify_artist_search_results.html", {
-        "spotify_artists": search_results
+    return render(request, "findshows/htmx/musicbrainz_artist_search_results.html", {
+        "musicbrainz_artists": mb_artists
     })
 
 
@@ -296,7 +293,7 @@ def get_concert_search_defaults(request):
                 'is_date_range': False,
                 'concert_tags': [t.value for t in ConcertTags]}
     if request.user and hasattr(request.user, 'userprofile'):
-        defaults['spotify_artists'] = [a['id'] for a in request.user.userprofile.favorite_spotify_artists]
+        defaults['musicbrainz_artists'] = request.user.userprofile.favorite_musicbrainz_artists.all()
         defaults['concert_tags'] = request.user.userprofile.preferred_concert_tags
     return defaults
 
@@ -318,9 +315,6 @@ def concert_search_results(request):
         search_form = ShowFinderForm()
 
     if search_form.is_valid():
-        artists_and_relateds = { id: spotify.get_related_spotify_artists(id)
-                                 for id in search_form.cleaned_data['spotify_artists']}
-
         if search_form.cleaned_data['is_date_range']:
             concerts = Concert.objects.filter(date__gte=search_form.cleaned_data['date'])
             concerts = concerts.filter(date__lte=search_form.cleaned_data['end_date'])
@@ -331,9 +325,10 @@ def concert_search_results(request):
             concerts = concerts.filter(reduce(or_, (Q(tags__icontains=t) for t in search_form.cleaned_data['concert_tags'])))
 
         concerts = list(concerts)
-        if len(artists_and_relateds) > 0:
+        searched_mbids = [mb_artist.mbid for mb_artist in search_form.cleaned_data['musicbrainz_artists']]
+        if len(searched_mbids) > 0:
             concerts = sorted(concerts,
-                              key=lambda c: c.relevance_score(artists_and_relateds),
+                              key=lambda c: c.relevance_score(searched_mbids),
                               reverse=True)
         else:
             shuffle(concerts)

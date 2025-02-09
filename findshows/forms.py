@@ -8,8 +8,8 @@ from django.views.generic.dates import timezone_today
 from django.conf import settings
 
 from findshows import email
-from findshows.models import Artist, Concert, ConcertTags, UserProfile, Venue
-from findshows.widgets import BillWidget, DatePickerField, SocialsLinksWidget, SpotifyArtistSearchWidget, TimePickerField, VenuePickerWidget
+from findshows.models import Artist, Concert, ConcertTags, MusicBrainzArtist, UserProfile, Venue
+from findshows.widgets import BillWidget, DatePickerField, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
 
 
 class UserCreationFormE(UserCreationForm):
@@ -40,15 +40,15 @@ class UserCreationFormE(UserCreationForm):
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model=UserProfile
-        fields=("favorite_spotify_artists", "weekly_email", "preferred_concert_tags")
-        widgets={"favorite_spotify_artists": SpotifyArtistSearchWidget}
+        fields=("favorite_musicbrainz_artists", "weekly_email", "preferred_concert_tags")
+        widgets={"favorite_musicbrainz_artists": MusicBrainzArtistSearchWidget}
 
 
 class ArtistEditForm(forms.ModelForm):
     class Meta:
         model=Artist
-        fields=("name", "profile_picture", "bio", "youtube_links", "socials_links", "listen_links", "similar_spotify_artists")
-        widgets={"similar_spotify_artists": SpotifyArtistSearchWidget,
+        fields=("name", "profile_picture", "bio", "youtube_links", "socials_links", "listen_links", "similar_musicbrainz_artists")
+        widgets={"similar_musicbrainz_artists": MusicBrainzArtistSearchWidget,
                  "socials_links": SocialsLinksWidget}
 
 
@@ -151,8 +151,12 @@ class ShowFinderForm(forms.Form):
     date = DatePickerField()
     end_date = DatePickerField(required=False)
     is_date_range = forms.BooleanField(required=False)
-    spotify_artists = forms.JSONField(widget=SpotifyArtistSearchWidget(is_ids_only=True), initial=list, required=False)
-    concert_tags = forms.MultipleChoiceField(choices=ConcertTags, widget=forms.CheckboxSelectMultiple, required=False)
+    musicbrainz_artists = forms.ModelMultipleChoiceField(queryset=MusicBrainzArtist.objects.all(),
+                                                         widget=MusicBrainzArtistSearchWidget,
+                                                         required=False)
+    concert_tags = forms.MultipleChoiceField(choices=ConcertTags,
+                                             widget=forms.CheckboxSelectMultiple,
+                                             required=False)
 
     def clean(self):
         cleaned_data = super().clean() or {}

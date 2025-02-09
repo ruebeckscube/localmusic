@@ -38,8 +38,8 @@
             </p>
             <div class="flex flex-wrap items-center">
                 <p> Sounds like: </p>
-                {% for spotify_artist in spotify_artists %}
-                    {% include "../partials/spotify_card.html" %}
+                {% for musicbrainz_artist in musicbrainz_artists %}
+                    {% include "../partials/musicbrainz_card.html" %}
                 {% endfor %}
             </div>
         </div>

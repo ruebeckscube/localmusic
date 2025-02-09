@@ -1,0 +1,66 @@
+<div id = "musicbrainz-artist-chooser"
+     x-data="musicbrainz_artist_chooser_data({{ widget.artist_dicts }},{{ widget.max_artists }})"
+     @keydown.escape.prevent.stop="close_dropdown()"
+>
+    <div class="flex flex-wrap">
+        <template x-for="(musicbrainz_artist, index) in selected_musicbrainz_artists" :key="index">
+            <div>
+                {% include "../partials/musicbrainz_card.html" with dynamic=True %}
+                <input type='hidden' name='{{widget.name}}' :value='musicbrainz_artist.mbid'>
+            </div>
+        </template>
+    </div>
+
+    <div x-ref="musicbrainz-search-plus-dropdown"
+         @focusin="open_dropdown()"
+         @click.outside="close_dropdown()"
+    >
+            <input class="" type="search"
+                   name="mb-search" placeholder="Search artists..."
+                   x-model="search_text"
+                   hx-get="{% url 'findshows:musicbrainz_artist_search_results' %}"
+                   hx-trigger="keyup changed delay:500ms, click from:#search-results"
+                   hx-target="#musicbrainz-search-results"
+            >
+
+            <ul id="musicbrainz-search-results"
+                class="absolute"
+                x-show="show_search"
+                @click="close_dropdown()"
+                style="display: none;"
+            >
+            </ul>
+        </div>
+</div>
+
+<script>
+ function musicbrainz_artist_chooser_data(selected_musicbrainz_artists, max_artists) {
+     return {
+         show_search: false,
+         search_text: '',
+         selected_musicbrainz_artists: selected_musicbrainz_artists,
+
+         open_dropdown() {
+             if (this.show_search) return;
+             this.show_search = true;
+         },
+
+         close_dropdown(focusAfter) {
+             if (! this.show_search) return;
+             this.show_search = false;
+             focusAfter && focusAfter.focus();
+         },
+
+         add_artist(mbid, name) {
+             if (this.selected_musicbrainz_artists.length < max_artists && !this.selected_musicbrainz_artists.some(a => a.mbid === mbid)) {
+                 this.selected_musicbrainz_artists.push({'mbid':mbid, 'name':name});
+                 this.search_text = '';
+             }
+         },
+
+         remove_artist(index) {
+             this.selected_musicbrainz_artists.splice(index, 1);
+         }
+     }
+ }
+</script>

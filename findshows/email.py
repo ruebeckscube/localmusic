@@ -69,11 +69,14 @@ def rec_email_generator(header_message):
                       'is_date_range': True}
 
     for user_profile in user_profiles:
-        concerts = sorted(Concert.objects.filter(date__gte=today, date__lte=week_later),
-                          key=lambda c: c.relevance_score(user_profile.favorite_spotify_artists_and_relateds),
-                          reverse=True)
+        search_params['musicbrainz_artists'] = [mb_artist.mbid
+                                                for mb_artist in user_profile.favorite_musicbrainz_artists.all()]
         search_params['concert_tags'] = user_profile.preferred_concert_tags
-        search_params['spotify_artists'] = [a['id'] for a in user_profile.favorite_spotify_artists]
+
+        concerts = sorted(Concert.objects.filter(date__gte=today, date__lte=week_later),
+                          key=lambda c: c.relevance_score(search_params['musicbrainz_artists']),
+                          reverse=True)
+
         search_url = settings.HOST_NAME + reverse('findshows:concert_search') + '?' + urlencode(search_params, doseq=True)
 
         html_message = render_to_string("findshows/emails/rec_email.html",
