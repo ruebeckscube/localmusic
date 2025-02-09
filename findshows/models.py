@@ -1,14 +1,19 @@
+from datetime import timedelta
 from urllib.parse import urlparse, parse_qs
 import urllib.request
 import re
+from statistics import mean
 
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
+from django.conf import settings
+from django.utils.timezone import now
+
 from multiselectfield import MultiSelectField
 
-from findshows import spotify
+from findshows import musicbrainz
 
 
 def empty_list():
@@ -75,6 +80,41 @@ class MultiURLValidator(URLValidator):
                 # player may fail if IDs don't exist, but we'll let that error trickle up
 
 
+class MusicBrainzArtist(models.Model):
+    mbid = models.CharField(primary_key=True)
+    name = models.CharField()
+    similar_artists = models.JSONField(editable=False, default=dict)
+    similar_artists_cache_datetime = models.DateTimeField(editable=False, null=True)
+
+    def get_similar_artists(self):
+        if self.similar_artists_cache_datetime is None or self.similar_artists is None:
+            needs_update = True
+        else:
+            needs_update = self.similar_artists_cache_datetime < now() - timedelta(settings.LISTENBRAINZ_SIMILAR_ARTIST_CACHE_DAYS)
+
+        if needs_update:
+            artists_from_api = musicbrainz.get_similar_artists(self.mbid)
+            if artists_from_api is not None:
+                self.similar_artists = artists_from_api
+                self.similar_artists_cache_datetime = now()
+                self.save()
+
+        return self.similar_artists
+
+
+    def similarity_score(self, mbid):
+        if mbid == self.mbid:
+            return 1 # Max score
+        similar_artists = self.get_similar_artists()
+        if similar_artists is None:
+            return 0
+        return similar_artists.get(mbid, 0)
+
+
+    def __str__(self):
+        return self.name
+
+
 class Artist(models.Model):
     DSP = "SP"
     BANDCAMP = "BC"
@@ -116,23 +156,16 @@ class Artist(models.Model):
     # List of tuples [ (display_name, url), ... ]
     socials_links=models.JSONField(default=list, blank=True, validators=[LabeledURLsValidator(),])
 
-    # A list of spotify_artist dicts we use for spotify things:
-    # [ {'id': <spotify id>,
-    #    'name': <artist name>,
-    #    'img_url': <url to artist's Spotify image
-    #    },
-    #    ...
-    # ]
-    similar_spotify_artists=models.JSONField(default=list, blank=True)
-    # Structured as spotify.relatedness_score wants:
-    # { artist1_spotify_id:
-    #     [related_artist1_spotify_id,
-    #      related_artist2_spotify_id,
-    #      ...],
-    #   artist2_spotify_id:
-    #     [...]
-    # }
-    similar_spotify_artists_and_relateds=models.JSONField(default=dict, blank=True)
+    similar_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist)
+
+
+    def similarity_score(self, searched_mbids):
+        similar_mb_artists = self.similar_musicbrainz_artists.all()
+        if similar_mb_artists.count() == 0 or not searched_mbids:
+            return 0
+        return mean(mb_artist.similarity_score(mbid)
+                   for mb_artist in similar_mb_artists
+                   for mbid in searched_mbids)
 
 
     def _update_listen_links(self):
@@ -162,10 +195,6 @@ class Artist(models.Model):
     def save(self, *args, **kwargs):
         self._update_listen_links()
         self._update_youtube_links()
-        self.similar_spotify_artists_and_relateds={
-            artist['id'] : spotify.get_related_spotify_artists(artist['id'])
-            for artist in self.similar_spotify_artists
-        }
         return super().save(*args, **kwargs)
 
     def __str__(self):
@@ -273,36 +302,12 @@ class ConcertTags(models.TextChoices):
 class UserProfile(models.Model):
     user=models.OneToOneField(User, on_delete=models.CASCADE)
 
-    # Properties for algorithm matching
-    # A list of spotify_artist dicts we use for spotify things:
-    # [ {'id': <spotify id>,
-    #    'name': <artist name>,
-    #    'img_url': <url to artist's Spotify image
-    #    },
-    #    ...
-    # ]
-    favorite_spotify_artists=models.JSONField(default=list, blank=True)
-    # Structured as spotify.relatedness_score wants:
-    # { artist1_spotify_id:
-    #     [related_artist1_spotify_id,
-    #      related_artist2_spotify_id,
-    #      ...],
-    #   artist2_spotify_id:
-    #     [...]
-    # }
-    favorite_spotify_artists_and_relateds=models.JSONField(editable=False, default=dict, blank=True)
+    favorite_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist, blank=True)
     preferred_concert_tags=MultiSelectField(choices=ConcertTags)
 
     followed_artists=models.ManyToManyField(Artist, related_name="followers", blank=True)
     managed_artists=models.ManyToManyField(Artist, related_name="managing_users")
     weekly_email=models.BooleanField(default=True)
-
-    def save(self, *args, **kwargs):
-        self.favorite_spotify_artists_and_relateds={
-            artist['id'] : spotify.get_related_spotify_artists(artist['id'])
-            for artist in self.favorite_spotify_artists
-        }
-        return super().save(*args, **kwargs)
 
     def __str__(self):
         return str(self.user)
@@ -340,10 +345,9 @@ class Concert(CreationTrackingMixin):
     tags=MultiSelectField(choices=ConcertTags)
 
 
-    def relevance_score(self, artists_and_relateds):
-        return sum(spotify.relatedness_score(artists_and_relateds, a.similar_spotify_artists_and_relateds)
-                   for a in self.artists.all()
-                   )/len(self.artists.all())
+    def relevance_score(self, searched_mbids):
+        return mean(artist.similarity_score(searched_mbids)
+                    for artist in self.artists.all())
 
     @property
     def sorted_artists(self):

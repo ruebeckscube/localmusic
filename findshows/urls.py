@@ -22,7 +22,7 @@ urlpatterns = [
     path("search", views.concert_search, name="concert_search"),
     path("htmx/concert_search_results/", views.concert_search_results, name="concert_search_results"),
 
-    path("htmx/spotify_artist_search_results/", views.spotify_artist_search_results, name="spotify_artist_search_results"),
+    path("htmx/mb_artist_search_results/", views.musicbrainz_artist_search_results, name="musicbrainz_artist_search_results"),
     path("htmx/venue_search_results/", views.venue_search_results, name="venue_search_results"),
     path("htmx/create_venue/", views.create_venue, name="create_venue"),
     path("htmx/create_temp_artist/", views.create_temp_artist, name="create_temp_artist"),

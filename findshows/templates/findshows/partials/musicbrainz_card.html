@@ -1,21 +1,11 @@
 <div class="flex items-center bg-gray-200 rounded-full m-1">
-    <div class="h-16 w-16">
-        <img class= "h-full w-full object-cover rounded-full"
-             {% if dynamic %}
-             :src='spotify_artist.img_url'
-             {% else %}
-             src={{ spotify_artist.img_url }}
-             {% endif %}
-
-        >
-    </div>
     <div class="min-w-14 max-w-20 ml-2 mr-2"
          {% if dynamic %}
-         x-text='spotify_artist.name'
+         x-text='musicbrainz_artist.name'
          {% endif %}
     >
         {% if not dynamic %}
-            {{spotify_artist.name}}
+            {{musicbrainz_artist.name}}
         {% endif %}
     </div>
     {% if dynamic %}

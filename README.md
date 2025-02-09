@@ -3,7 +3,8 @@
 Clone the repo, navigate to project root.
 
 Create `secrets.json` with the properties `DB_PASSWORD`, `SECRET_KEY`,
-`SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET` (or get a copy from someone)
+`SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `MUSICBRAINZ_TOKEN`,
+`USER_AGENT_HEADER` (or get a copy from someone).
 
 Install Python dependencies:
 ```

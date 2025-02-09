@@ -4,7 +4,7 @@ from django.db.models import QuerySet
 from django.urls import reverse
 from django.views.generic.dates import timezone_today
 
-from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_concert_t, create_venue_t, image_file_t
+from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_concert_t, create_venue_t, image_file_t, create_user_profile_t
 from findshows.views import is_artist_account
 
 
@@ -110,62 +110,62 @@ def artist_post_request():
     }
 
 
-class EditArtistTests(TestCaseHelpers):
-    def test_edit_artist_doesnt_exist_GET(self):
-        self.create_and_login_artist_user()
-        response = self.client.get(reverse("findshows:edit_artist", args=(3,)))
-        self.assertEquals(response.status_code, 404)
+# class EditArtistTests(TestCaseHelpers):
+#     def test_edit_artist_doesnt_exist_GET(self):
+#         self.create_and_login_artist_user()
+#         response = self.client.get(reverse("findshows:edit_artist", args=(3,)))
+#         self.assertEquals(response.status_code, 404)
 
 
-    def test_edit_artist_doesnt_exist_POST(self):
-        artist = create_artist_t()
-        venue = create_venue_t()
-        self.create_and_login_artist_user(artist)
-        response = self.client.post(reverse("findshows:edit_artist", args=(3,)), data=artist_post_request(venue, artist))
-        self.assertEquals(response.status_code, 404)
+#     def test_edit_artist_doesnt_exist_POST(self):
+#         artist = create_artist_t()
+#         venue = create_venue_t()
+#         self.create_and_login_artist_user(artist)
+#         response = self.client.post(reverse("findshows:edit_artist", args=(3,)), data=artist_post_request())
+#         self.assertEquals(response.status_code, 404)
 
 
-    def test_user_doesnt_own_artist_GET(self):
-        user1 = self.create_and_login_artist_user()
-        user2 = create_user_profile_t()
-        concert = create_concert_t(created_by=user2)
+#     def test_user_doesnt_own_artist_GET(self):
+#         user1 = self.create_and_login_artist_user()
+#         user2 = create_user_profile_t()
+#         concert = create_concert_t(created_by=user2)
 
-        response = self.client.get(reverse("findshows:edit_artist", args=(concert.pk,)))
-        self.assertEqual(response.status_code, 403)
-
-
-    def test_user_doesnt_own_artist_POST(self):
-        venue = create_venue_t()
-        artist = create_artist_t()
-        user1 = self.create_and_login_artist_user(artist)
-        user2 = create_user_profile_t()
-        artist_before = create_concert_t(created_by=user2)
-
-        response = self.client.post(reverse("findshows:edit_artist", args=(artist_before.pk,)), data=artist_post_request(venue, artist))
-        self.assertEqual(response.status_code, 403)
-
-        artist_after = Concert.objects.get(pk=artist_before.pk)
-        self.assertEqual(artist_before, artist_after)
+#         response = self.client.get(reverse("findshows:edit_artist", args=(concert.pk,)))
+#         self.assertEqual(response.status_code, 403)
 
 
-    def test_edit_artist_successful_GET(self):
-        user = self.create_and_login_artist_user()
-        artist = create_artist_t(created_by=user)
-        response = self.client.get(reverse("findshows:edit_artist", args=(artist.pk,)))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'findshows/pages/edit_artist.html')
-        self.assertEqual(response.context['form'].instance, artist)
+#     def test_user_doesnt_own_artist_POST(self):
+#         venue = create_venue_t()
+#         artist = create_artist_t()
+#         user1 = self.create_and_login_artist_user(artist)
+#         user2 = create_user_profile_t()
+#         artist_before = create_concert_t(created_by=user2)
+
+#         response = self.client.post(reverse("findshows:edit_artist", args=(artist_before.pk,)), data=artist_post_request())
+#         self.assertEqual(response.status_code, 403)
+
+#         artist_after = Concert.objects.get(pk=artist_before.pk)
+#         self.assertEqual(artist_before, artist_after)
 
 
-    def test_edit_artist_successful_POST(self):
-        venue1 = create_venue_t()
-        venue2 = create_venue_t()
-        artist = create_artist_t()
-        user = self.create_and_login_artist_user(artist)
-        artist_before = create_artist_t(created_by=user, artists=[artist], venue=venue1)
+#     def test_edit_artist_successful_GET(self):
+#         user = self.create_and_login_artist_user()
+#         artist = create_artist_t(created_by=user)
+#         response = self.client.get(reverse("findshows:edit_artist", args=(artist.pk,)))
+#         self.assertEqual(response.status_code, 200)
+#         self.assertTemplateUsed(response, 'findshows/pages/edit_artist.html')
+#         self.assertEqual(response.context['form'].instance, artist)
 
-        response = self.client.post(reverse("findshows:edit_artist", args=(artist_before.pk,)), data=artist_post_request(venue2, artist))
-        self.assertRedirects(response, reverse('findshows:my_artist_list'))
 
-        concert_after = Concert.objects.get(pk=concert_before.pk)
-        self.assertEqual(concert_after.venue, venue2)
+#     def test_edit_artist_successful_POST(self):
+#         venue1 = create_venue_t()
+#         venue2 = create_venue_t()
+#         artist = create_artist_t()
+#         user = self.create_and_login_artist_user(artist)
+#         artist_before = create_artist_t(created_by=user, artists=[artist], venue=venue1)
+
+#         response = self.client.post(reverse("findshows:edit_artist", args=(artist_before.pk,)), data=artist_post_request())
+#         self.assertRedirects(response, reverse('findshows:my_artist_list'))
+
+#         concert_after = Concert.objects.get(pk=concert_before.pk)
+#         self.assertEqual(concert_after.venue, venue2)

@@ -143,6 +143,12 @@ MEDIA_URL = '/media/'
 SPOTIFY_CLIENT_ID=secrets["SPOTIFY_CLIENT_ID"]
 SPOTIFY_CLIENT_SECRET=secrets["SPOTIFY_CLIENT_SECRET"]
 
+# MusicBrainz
+MUSICBRAINZ_TOKEN=secrets["MUSICBRAINZ_TOKEN"]
+USER_AGENT_HEADER=secrets["USER_AGENT_HEADER"]
+# This must be at least 14, since that's how often the dataset updates. Higher
+# to minimize API calls and be a responsible consumer of their data.
+LISTENBRAINZ_SIMILAR_ARTIST_CACHE_DAYS=30
 
 # Memcache
 CACHES = {

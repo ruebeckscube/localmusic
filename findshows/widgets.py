@@ -3,35 +3,28 @@ from django.forms.fields import DateField, TimeField
 
 from django.forms.widgets import Input
 
-from findshows.models import Venue
+from findshows.models import MusicBrainzArtist, Venue
 import findshows.forms
-from findshows.spotify import get_spotify_artist_dict
 
 
-class SpotifyArtistSearchWidget(Input):
-    template_name="findshows/widgets/spotify_artist_search.html"
+class MusicBrainzArtistSearchWidget(Input):
+    template_name="findshows/widgets/musicbrainz_artist_search.html"
     input_type="hidden"
 
-    def __init__(self, max_artists=3, is_ids_only=False, **kwargs):
+    def __init__(self, max_artists=3, **kwargs):
         super().__init__(**kwargs)
         self.max_artists = max_artists
-        self.is_ids_only = is_ids_only
 
     def value_from_datadict(self, data, files, name):
-        if self.is_ids_only:
-            return json.dumps(data.getlist(name))
-        else:
-            return json.dumps([json.loads(s) for s in data.getlist(name)])
+        return data.getlist(name)
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
+        mb_artists = [MusicBrainzArtist.objects.get(mbid=mbid) for mbid in value or []]
+
+        context['widget']['artist_dicts'] = json.dumps([ {'mbid': artist.mbid, 'name': artist.name}
+                                                         for artist in mb_artists])
         context['widget']['max_artists'] = self.max_artists
-        context['widget']['is_ids_only'] = self.is_ids_only
-        if self.is_ids_only:
-            context['widget']['artist_dicts'] = json.dumps([ get_spotify_artist_dict(spotify_artist_id)
-                                                             for spotify_artist_id in json.loads(value)])
-        else:
-            context['widget']['artist_dicts'] = value
         return context
 
 
