@@ -265,51 +265,6 @@ def create_venue(request):
     return response
 
 
-def artist_search_results(request):
-    if not (request.GET and request.GET["artist-search"] and request.GET["idx"]):
-        return HttpResponse("")
-
-    keywords = request.GET["artist-search"].split()
-    idx = int(request.GET["idx"])
-
-    search_results = Artist.objects.filter(
-        reduce(and_, (Q(name__icontains=k) for k in keywords))
-    )[:5]
-    return render(request, "findshows/htmx/artist_search_results.html", {
-        "artists": search_results,
-        "idx": idx
-    })
-
-def create_temp_artist(request):
-    temp_artist_form = TempArtistForm(request.POST)
-    valid = temp_artist_form.is_valid()
-    if valid:
-        artist = temp_artist_form.save()
-        temp_artist_form = TempArtistForm()
-
-    response = render(request, "findshows/htmx/temp_artist_form.html", {
-        "temp_artist_form": temp_artist_form,
-    })
-
-    if valid:
-        response.headers['HX-Trigger'] = json.dumps({
-            "successfully-created-temp-artist": {
-                "created_temp_artist_name": artist.name,
-                "created_temp_artist_id": artist.id}})
-
-    return response
-
-
-@user_passes_test(is_artist_account)
-def my_concert_list(request):
-    artists=request.user.userprofile.managed_artists.all()
-    concerts=set(c for a in artists for c in a.concert_set.all()) # Set removes duplicates
-    return render(request, "findshows/pages/concert_list_for_artist.html", context = {
-        "concerts": concerts,
-        "userprofile": request.user.userprofile
-    })
-
-
 #############################
 ## MusicBrainz search tool ##
 #############################
