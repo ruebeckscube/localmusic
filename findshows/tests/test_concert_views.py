@@ -4,7 +4,6 @@ import json
 from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
-from django.utils.datastructures import MultiValueDict
 from django.views.generic.dates import timezone_today
 
 from findshows.models import Concert, Venue
@@ -109,7 +108,7 @@ class CreateConcertTests(TestCaseHelpers):
         response = self.client.get(reverse("findshows:create_concert"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/edit_concert.html')
-        self.assertEqual(response.context['form'].data, MultiValueDict({}))
+        self.assert_blank_form(response.context['form'])
 
 
     def test_concert_creation_limit(self):

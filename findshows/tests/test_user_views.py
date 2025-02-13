@@ -1,9 +1,6 @@
 from django.contrib.auth.models import User
 
-from django.test import TestCase
-from django.core import mail
 from django.urls import reverse
-from django.utils.datastructures import MultiValueDict
 from findshows.models import UserProfile
 
 from findshows.tests.test_helpers import TestCaseHelpers
@@ -18,20 +15,20 @@ def contact_post_request():
     }
 
 
-class ContactTests(TestCase):
+class ContactTests(TestCaseHelpers):
     def test_contact_GET(self):
         response = self.client.get(reverse("findshows:contact"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/contact.html')
-        self.assertEqual(len(mail.outbox), 0)
+        self.assert_emails_sent(0)
 
 
     def test_contact_POST_success(self):
         response = self.client.post(reverse("findshows:contact"), contact_post_request())
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/contact.html')
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(response.context['form'].data, MultiValueDict({}))
+        self.assert_emails_sent(1)
+        self.assert_blank_form(response.context['form'])
 
 
     def test_contact_POST_fail(self):
@@ -40,8 +37,8 @@ class ContactTests(TestCase):
         response = self.client.post(reverse("findshows:contact"), data)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/contact.html')
-        self.assertEqual(len(mail.outbox), 0)
-        self.assertNotEqual(response.context['form'].data, MultiValueDict({}))
+        self.assert_emails_sent(0)
+        self.assert_not_blank_form(response.context['form'])
 
 
 def user_settings_post_request():
@@ -98,7 +95,7 @@ def create_account_post_request():
     }
 
 
-class CreateAccountTests(TestCase):
+class CreateAccountTests(TestCaseHelpers):
     def test_create_account_GET(self):
         response = self.client.get(reverse("create_account"))
         self.assertTemplateUsed('create_account.html')
@@ -121,12 +118,12 @@ class CreateAccountTests(TestCase):
     def test_create_account_sends_artist_email(self):
         data = create_account_post_request()  # No sendartistinfo flag
         self.client.post(reverse("create_account"), data)
-        self.assertEqual(len(mail.outbox), 0)
+        self.assert_emails_sent(0)
         data['username'] = 'asnoetihaoeirasoehuanoet'
         data['email'] = 'another@unique.eml'
         data['sendartistinfo'] = ''
         self.client.post(reverse("create_account"), data)
-        self.assertEqual(len(mail.outbox), 1)
+        self.assert_emails_sent(1)
 
 
     def test_create_account_POST_fail(self):

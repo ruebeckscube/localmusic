@@ -1,11 +1,11 @@
 import datetime
+import json
 
-from django.db.models import QuerySet
 from django.urls import reverse
 from django.views.generic.dates import timezone_today
 from findshows.models import Artist
 
-from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_concert_t, create_venue_t, image_file_t, create_user_profile_t, populate_musicbrainz_artists_t, three_musicbrainz_artist_dicts_t
+from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_concert_t,image_file_t, populate_musicbrainz_artists_t, three_musicbrainz_artist_dicts_t
 from findshows.views import is_artist_account
 
 
@@ -196,3 +196,54 @@ class ArtistSearchTests(TestCaseHelpers):
         response = self.client.get(reverse("findshows:artist_search_results"),
                                    data={'artist-search': query,'idx': 1})
         self.assertEqual(set(response.context['artists']), {pete, bob})
+
+
+def temp_artist_post_data():
+    return {
+        'temp_artist-name': 'test name 123',
+        'temp_artist-local': ['on'],
+        'temp_artist-temp_email': ['nht@snoth.soh']
+    }
+
+class CreateTempArtistTests(TestCaseHelpers):
+    def test_get_doesnt_create(self):
+        self.create_and_login_artist_user()
+        self.client.get(reverse("findshows:create_temp_artist"))
+        self.assertEqual(Artist.objects.all().count(), 1) # create_and_login_artist_user creates one
+
+
+    def test_not_logged_in_doesnt_create(self):
+        self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
+        self.assertEqual(Artist.objects.all().count(), 0)
+
+
+    def test_not_artist_user_doesnt_create(self):
+        self.create_and_login_non_artist_user()
+        self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
+        self.assertEqual(Artist.objects.all().count(), 0)
+
+
+    def test_successful_create(self):
+        self.create_and_login_artist_user()
+        response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
+        self.assert_blank_form(response.context['temp_artist_form'])
+        self.assertEqual(Artist.objects.all().count(), 2) # create_and_login_artist_user creates one
+
+        self.assertTrue('HX-Trigger' in response.headers)
+        hx_trigger = json.loads(response.headers['HX-Trigger'])
+        self.assertTrue('successfully-created-temp-artist' in hx_trigger)
+
+        self.assert_emails_sent(1)
+
+
+    def test_invalid_form(self):
+        self.create_and_login_artist_user()
+        data=temp_artist_post_data()
+        data['temp_artist-name'] = ''
+        response = self.client.post(reverse("findshows:create_temp_artist"), data)
+        self.assert_not_blank_form(response.context['temp_artist_form'])
+        self.assertEqual(Artist.objects.all().count(), 1) # create_and_login_artist_user creates one
+
+        self.assertFalse('HX-Trigger' in response.headers)
+
+        self.assert_emails_sent(0)

@@ -2,9 +2,11 @@ import datetime
 from uuid import uuid4
 
 from django.contrib.auth.models import User
+from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.datastructures import MultiValueDict
 from django.views.generic.dates import timezone_today
 
 from findshows.models import Ages, Artist, Concert, MusicBrainzArtist, UserProfile, Venue
@@ -29,6 +31,18 @@ class TestCaseHelpers(TestCase):
         response = self.client.get(create_concert_url)
         self.assertEqual(response.status_code, 302) # HTTP redirect
         self.assertEqual(response.url, f"{reverse('login')}?next={create_concert_url}")
+
+
+    def assert_blank_form(self, form):
+        self.assertEqual(form.data, MultiValueDict({}))
+
+
+    def assert_not_blank_form(self, form):
+        self.assertNotEqual(form.data, MultiValueDict({}))
+
+
+    def assert_emails_sent(self, number):
+        self.assertEqual(len(mail.outbox), number)
 
 
 def image_file_t():

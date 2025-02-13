@@ -151,8 +151,16 @@ def artist_search_results(request):
 
 
 def create_temp_artist(request):
-    temp_artist_form = TempArtistForm(request.POST)
-    valid = temp_artist_form.is_valid()
+    if not is_artist_account(request.user):
+        return HttpResponse('')
+
+    if request.POST:
+        temp_artist_form = TempArtistForm(request.POST)
+        valid = temp_artist_form.is_valid()
+    else:
+        temp_artist_form = TempArtistForm()
+        valid = False
+
     if valid:
         artist = temp_artist_form.save()
         invite_artist(artist)
