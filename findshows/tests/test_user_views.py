@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 
 from django.urls import reverse
+from findshows.forms import ContactForm
 from findshows.models import UserProfile
 
 from findshows.tests.test_helpers import TestCaseHelpers
@@ -28,7 +29,7 @@ class ContactTests(TestCaseHelpers):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/contact.html')
         self.assert_emails_sent(1)
-        self.assert_blank_form(response.context['form'])
+        self.assert_blank_form(response.context['form'], ContactForm)
 
 
     def test_contact_POST_fail(self):
@@ -38,7 +39,7 @@ class ContactTests(TestCaseHelpers):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/contact.html')
         self.assert_emails_sent(0)
-        self.assert_not_blank_form(response.context['form'])
+        self.assert_not_blank_form(response.context['form'], ContactForm)
 
 
 def user_settings_post_request():
@@ -100,8 +101,8 @@ class CreateAccountTests(TestCaseHelpers):
         response = self.client.get(reverse("create_account"))
         self.assertTemplateUsed('create_account.html')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(User.objects.all()), 0)
-        self.assertEqual(len(UserProfile.objects.all()), 0)
+        self.assert_records_created(User, 0)
+        self.assert_records_created(UserProfile, 0)
 
 
     def test_create_account_POST_success(self):
@@ -132,7 +133,5 @@ class CreateAccountTests(TestCaseHelpers):
         response = self.client.post(reverse("create_account"), data)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'registration/create_account.html')
-        userProfiles = UserProfile.objects.all()
-        users = User.objects.all()
-        self.assertEqual(len(userProfiles), 0)
-        self.assertEqual(len(users), 0)
+        self.assert_records_created(User, 0)
+        self.assert_records_created(UserProfile, 0)

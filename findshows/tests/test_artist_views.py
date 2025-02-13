@@ -3,6 +3,7 @@ import json
 
 from django.urls import reverse
 from django.views.generic.dates import timezone_today
+from findshows.forms import TempArtistForm
 from findshows.models import Artist
 
 from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_concert_t,image_file_t, populate_musicbrainz_artists_t, three_musicbrainz_artist_dicts_t
@@ -51,7 +52,7 @@ class ManagedArtistListTests(TestCaseHelpers):
         response = self.client.get(reverse("findshows:managed_artist_list"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/managed_artist_list.html')
-        self.assertEqual(set(response.context['artists']), {artist1, artist2})
+        self.assert_equal_as_sets(response.context['artists'], [artist1, artist2])
 
 
 class ArtistViewTests(TestCaseHelpers):
@@ -92,7 +93,7 @@ class ArtistViewTests(TestCaseHelpers):
 
         response = self.client.get(reverse("findshows:view_artist", args=(artist1.pk,)))
 
-        self.assertEqual(set(response.context['upcoming_concerts']), {concert12today, concert12future})
+        self.assert_equal_as_sets(response.context['upcoming_concerts'], [concert12today, concert12future])
 
 
 def artist_post_request():
@@ -190,12 +191,12 @@ class ArtistSearchTests(TestCaseHelpers):
         query = 'see'
         response = self.client.get(reverse("findshows:artist_search_results"),
                                    data={'artist-search': query,'idx': 1})
-        self.assertEqual(set(response.context['artists']), {pete, seekers})
+        self.assert_equal_as_sets(response.context['artists'], [pete, seekers])
 
         query = 'ger'
         response = self.client.get(reverse("findshows:artist_search_results"),
                                    data={'artist-search': query,'idx': 1})
-        self.assertEqual(set(response.context['artists']), {pete, bob})
+        self.assert_equal_as_sets(response.context['artists'], [pete, bob])
 
 
 def temp_artist_post_data():
@@ -209,25 +210,25 @@ class CreateTempArtistTests(TestCaseHelpers):
     def test_get_doesnt_create(self):
         self.create_and_login_artist_user()
         self.client.get(reverse("findshows:create_temp_artist"))
-        self.assertEqual(Artist.objects.all().count(), 1) # create_and_login_artist_user creates one
+        self.assert_records_created(Artist, 1) # create_and_login_artist_user creates one
 
 
     def test_not_logged_in_doesnt_create(self):
         self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
-        self.assertEqual(Artist.objects.all().count(), 0)
+        self.assert_records_created(Artist, 0)
 
 
     def test_not_artist_user_doesnt_create(self):
         self.create_and_login_non_artist_user()
         self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
-        self.assertEqual(Artist.objects.all().count(), 0)
+        self.assert_records_created(Artist, 0)
 
 
     def test_successful_create(self):
         self.create_and_login_artist_user()
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
-        self.assert_blank_form(response.context['temp_artist_form'])
-        self.assertEqual(Artist.objects.all().count(), 2) # create_and_login_artist_user creates one
+        self.assert_blank_form(response.context['temp_artist_form'], TempArtistForm)
+        self.assert_records_created(Artist, 2) # create_and_login_artist_user creates one
 
         self.assertTrue('HX-Trigger' in response.headers)
         hx_trigger = json.loads(response.headers['HX-Trigger'])
@@ -241,8 +242,8 @@ class CreateTempArtistTests(TestCaseHelpers):
         data=temp_artist_post_data()
         data['temp_artist-name'] = ''
         response = self.client.post(reverse("findshows:create_temp_artist"), data)
-        self.assert_not_blank_form(response.context['temp_artist_form'])
-        self.assertEqual(Artist.objects.all().count(), 1) # create_and_login_artist_user creates one
+        self.assert_not_blank_form(response.context['temp_artist_form'], TempArtistForm)
+        self.assert_records_created(Artist, 1) # create_and_login_artist_user creates one
 
         self.assertFalse('HX-Trigger' in response.headers)
 

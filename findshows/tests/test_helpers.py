@@ -33,16 +33,26 @@ class TestCaseHelpers(TestCase):
         self.assertEqual(response.url, f"{reverse('login')}?next={create_concert_url}")
 
 
-    def assert_blank_form(self, form):
+    def assert_blank_form(self, form, form_class):
+        self.assertIsInstance(form, form_class)
         self.assertEqual(form.data, MultiValueDict({}))
 
 
-    def assert_not_blank_form(self, form):
+    def assert_not_blank_form(self, form, form_class):
+        self.assertIsInstance(form, form_class)
         self.assertNotEqual(form.data, MultiValueDict({}))
 
 
     def assert_emails_sent(self, number):
         self.assertEqual(len(mail.outbox), number)
+
+
+    def assert_records_created(self, model_class, number):
+        self.assertEqual(model_class.objects.all().count(), number)
+
+
+    def assert_equal_as_sets(self, iterable1, iterable2):
+        self.assertEqual(set(iterable1), set(iterable2))
 
 
 def image_file_t():

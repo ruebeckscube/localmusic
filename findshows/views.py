@@ -156,11 +156,10 @@ def create_temp_artist(request):
 
     if request.POST:
         temp_artist_form = TempArtistForm(request.POST)
-        valid = temp_artist_form.is_valid()
     else:
         temp_artist_form = TempArtistForm()
-        valid = False
 
+    valid = temp_artist_form.is_valid()
     if valid:
         artist = temp_artist_form.save()
         invite_artist(artist)
@@ -249,10 +248,17 @@ def venue_search_results(request):
 
 
 def create_venue(request):
+    if not is_artist_account(request.user):
+        return HttpResponse('')
+
     if records_created_today(Venue, request.user.userprofile) >= settings.MAX_DAILY_VENUE_CREATES:
         return render(request, 'findshows/htmx/cant_create_venue.html')
 
-    venue_form = VenueForm(request.POST)
+    if request.POST:
+        venue_form = VenueForm(request.POST)
+    else:
+        venue_form = VenueForm()
+
     valid = venue_form.is_valid()
     if valid:
         venue = venue_form.save(commit=False)

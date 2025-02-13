@@ -5,6 +5,7 @@ from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 from django.views.generic.dates import timezone_today
+from findshows.forms import ConcertForm
 
 from findshows.models import Concert, Venue
 from findshows.tests.test_helpers import TestCaseHelpers, TestCaseHelpers, create_artist_t, create_concert_t, create_user_profile_t, create_venue_t, image_file_t
@@ -108,7 +109,7 @@ class CreateConcertTests(TestCaseHelpers):
         response = self.client.get(reverse("findshows:create_concert"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/edit_concert.html')
-        self.assert_blank_form(response.context['form'])
+        self.assert_blank_form(response.context['form'], ConcertForm)
 
 
     def test_concert_creation_limit(self):
@@ -138,14 +139,14 @@ class CreateConcertTests(TestCaseHelpers):
         response = self.client.post(reverse("findshows:create_concert"), data=concert_post_request(venue, artist))
         self.assertTemplateUsed(response, 'findshows/pages/cant_create_concert.html')
         self.assertTemplateNotUsed(response, 'findshows/pages/edit_concert.html')
-        self.assertEquals(len(Concert.objects.all()), settings.MAX_DAILY_CONCERT_CREATES)
+        self.assert_records_created(Concert, settings.MAX_DAILY_CONCERT_CREATES)
 
 
     def test_create_concert_successful_POST(self):
         artist = create_artist_t()
         venue = create_venue_t()
         user = self.create_and_login_artist_user(artist)
-        self.assertEquals(len(Concert.objects.all()), 0)
+        self.assert_records_created(Concert, 0)
         response = self.client.post(reverse("findshows:create_concert"), data=concert_post_request(venue, artist))
         self.assertRedirects(response, reverse('findshows:my_concert_list'))
         concerts = Concert.objects.all()
