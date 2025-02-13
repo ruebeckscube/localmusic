@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.views.generic.dates import timezone_today
 
-from findshows.models import Ages, Artist, Concert, UserProfile, Venue
+from findshows.models import Ages, Artist, Concert, MusicBrainzArtist, UserProfile, Venue
 
 
 class TestCaseHelpers(TestCase):
@@ -106,3 +106,21 @@ def create_concert_t(date=None,
     concert.save()
 
     return concert
+
+
+def musicbrainz_artist_dicts_t():
+    return [
+        {'mbid': '90744b3e-363a-458e-8da1-e3e392a489c4',
+         'name': 'Wet Leg'},
+        {'mbid': '88775bfe-4bf2-4ef7-a3a4-0ed769d621bb',
+         'name': 'Devo'},
+        {'mbid': '92de1f8d-833e-47d0-ba85-02a03c81848a',
+         'name': 'Illuminati Hotties'},
+    ]
+
+def three_musicbrainz_artist_dicts_t():
+    return musicbrainz_artist_dicts_t()[:3]
+
+def populate_musicbrainz_artists_t():
+    for artist_dict in musicbrainz_artist_dicts_t():
+        MusicBrainzArtist.objects.create(mbid=artist_dict['mbid'], name=artist_dict['name'])
