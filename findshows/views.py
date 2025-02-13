@@ -285,11 +285,15 @@ def create_venue(request):
 
 
 def musicbrainz_artist_search_results(request):
-    query = request.GET['mb-search']
-    if not query:
+    if not (request.GET and request.GET["mb-search"]):
+        return HttpResponse("")
+
+    keywords = request.GET['mb-search'].split()
+    if not keywords:
         return HttpResponse(b'')
 
-    mb_artists = MusicBrainzArtist.objects.defer('similar_artists', 'similar_artists_cache_datetime').filter(name__icontains=query)[:10]
+    mb_artists = MusicBrainzArtist.objects.defer('similar_artists', 'similar_artists_cache_datetime')
+    mb_artists = mb_artists.filter(reduce(and_, (Q(name__icontains=k) for k in keywords)))[:10]
 
     return render(request, "findshows/htmx/musicbrainz_artist_search_results.html", {
         "musicbrainz_artists": mb_artists
