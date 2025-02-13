@@ -289,9 +289,6 @@ def musicbrainz_artist_search_results(request):
         return HttpResponse("")
 
     keywords = request.GET['mb-search'].split()
-    if not keywords:
-        return HttpResponse(b'')
-
     mb_artists = MusicBrainzArtist.objects.defer('similar_artists', 'similar_artists_cache_datetime')
     mb_artists = mb_artists.filter(reduce(and_, (Q(name__icontains=k) for k in keywords)))[:10]
 
