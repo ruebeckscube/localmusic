@@ -1,5 +1,5 @@
 from django.urls import reverse
-from findshows.tests.test_helpers import TestCaseHelpers, populate_musicbrainz_artists_t
+from findshows.tests.test_helpers import TestCaseHelpers, create_musicbrainz_artist_t
 
 
 class MusicbrainzArtistSearchTests(TestCaseHelpers):
@@ -9,9 +9,11 @@ class MusicbrainzArtistSearchTests(TestCaseHelpers):
 
 
     def test_search(self):
-        populate_musicbrainz_artists_t()
+        create_musicbrainz_artist_t('1', 'Wet Leg')
+        create_musicbrainz_artist_t('2', 'Devo')
+        create_musicbrainz_artist_t('3', 'Illuminati Hotties')
+
         query = 'nat hot'
         response = self.client.get(reverse("findshows:musicbrainz_artist_search_results"),
                                    data={'mb-search': query})
-        self.assert_equal_as_sets([a.mbid for a in response.context['musicbrainz_artists']],
-                                  ['92de1f8d-833e-47d0-ba85-02a03c81848a'])
+        self.assert_equal_as_sets([a.mbid for a in response.context['musicbrainz_artists']], ['3'])

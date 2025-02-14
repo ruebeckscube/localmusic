@@ -7,6 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
+from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 
 from findshows.models import Ages, Artist, Concert, MusicBrainzArtist, UserProfile, Venue
@@ -73,12 +74,11 @@ def create_user_profile_t(username=None, password='12345'):
     return UserProfile.objects.create(user=user)
 
 
-def create_artist_t(name="Test Artist", local=True):
-    return Artist.objects.create(
-        name=name,
-        local=local
-    )
-
+def create_artist_t(name="Test Artist", local=True, similar_musicbrainz_artists=None):
+    artist = Artist.objects.create(name=name, local=local)
+    if similar_musicbrainz_artists is not None:
+        artist.similar_musicbrainz_artists.set(similar_musicbrainz_artists)
+    return artist
 
 def create_venue_t(name="Test Venue",
                    address="100 West Hollywood",
@@ -132,19 +132,17 @@ def create_concert_t(date=None,
     return concert
 
 
-def musicbrainz_artist_dicts_t():
-    return [
-        {'mbid': '90744b3e-363a-458e-8da1-e3e392a489c4',
-         'name': 'Wet Leg'},
-        {'mbid': '88775bfe-4bf2-4ef7-a3a4-0ed769d621bb',
-         'name': 'Devo'},
-        {'mbid': '92de1f8d-833e-47d0-ba85-02a03c81848a',
-         'name': 'Illuminati Hotties'},
-    ]
-
-def three_musicbrainz_artist_dicts_t():
-    return musicbrainz_artist_dicts_t()[:3]
-
-def populate_musicbrainz_artists_t():
-    for artist_dict in musicbrainz_artist_dicts_t():
-        MusicBrainzArtist.objects.create(mbid=artist_dict['mbid'], name=artist_dict['name'])
+def create_musicbrainz_artist_t(mbid,
+                                name='test_mb_artist',
+                                similar_artists=None):
+    # Setting cache datetime to tomorrow should prevent API calls
+    # as long as similar_artists is populated. Note the default empty
+    # dict counts as populated, as that's a possible return value from
+    # the API and we store None otherwise.
+    tomorrow = now() + datetime.timedelta(1)
+    if similar_artists is None:
+        similar_artists = {}
+    MusicBrainzArtist.objects.create(mbid=mbid,
+                                     name=name,
+                                     similar_artists=similar_artists,
+                                     similar_artists_cache_datetime=tomorrow)

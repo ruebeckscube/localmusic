@@ -6,7 +6,7 @@ from django.views.generic.dates import timezone_today
 from findshows.forms import TempArtistForm
 from findshows.models import Artist
 
-from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_concert_t,image_file_t, populate_musicbrainz_artists_t, three_musicbrainz_artist_dicts_t
+from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_concert_t, create_musicbrainz_artist_t, image_file_t
 from findshows.views import is_artist_account
 
 
@@ -97,12 +97,17 @@ class ArtistViewTests(TestCaseHelpers):
 
 
 def artist_post_request():
+    # Creating MB artists here so we know it's a legitimate request.
+    # This should only be called once per test, or you'll get duplicate ID issues.
+    create_musicbrainz_artist_t('1')
+    create_musicbrainz_artist_t('2')
+    create_musicbrainz_artist_t('3')
     return {
         'name': 'This is a test with lots of extra text',
         'bio': ['I sing folk songs and stuff'],
         'profile_picture': image_file_t(),
         'listen_links': ['https://soundcloud.com/measuringmarigolds/was-it-worth-the-kiss-demo\r\nhttps://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo\r\nhttps://soundcloud.com/measuringmarigolds/wax-wane-demo'],
-        'similar_musicbrainz_artists': [artist_dict['mbid'] for artist_dict in three_musicbrainz_artist_dicts_t()],
+        'similar_musicbrainz_artists': ['1', '2', '3'],
         'socials_links_display_name': ['', '', ''],
         'socials_links_url': ['', '', ''],
         'initial-socials_links': ['[]'],
@@ -169,13 +174,13 @@ class EditArtistTests(TestCaseHelpers):
     def test_edit_artist_successful_POST(self):
         artist_before = create_artist_t()
         self.create_and_login_artist_user(artist_before)
-        populate_musicbrainz_artists_t()
+        post_request = artist_post_request()
 
-        response = self.client.post(reverse("findshows:edit_artist", args=(artist_before.pk,)), data=artist_post_request())
+        response = self.client.post(reverse("findshows:edit_artist", args=(artist_before.pk,)), data=post_request)
         self.assertRedirects(response, reverse('findshows:view_artist', args=(artist_before.pk,)))
 
         artist_after = Artist.objects.get(pk=artist_before.pk)
-        self.assertEqual(artist_after.name, artist_post_request()['name'])
+        self.assertEqual(artist_after.name, post_request['name'])
 
 
 class ArtistSearchTests(TestCaseHelpers):
