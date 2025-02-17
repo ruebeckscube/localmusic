@@ -10,17 +10,17 @@ from django.utils.datastructures import MultiValueDict
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 
-from findshows.models import Ages, Artist, Concert, MusicBrainzArtist, UserProfile, Venue
+from findshows.models import Ages, Artist, Concert, ConcertTags, MusicBrainzArtist, UserProfile, Venue
 
 
 class TestCaseHelpers(TestCase):
-    def create_and_login_non_artist_user(self):
-        user = create_user_profile_t('name', 'pwd')
+    def create_and_login_non_artist_user(self, **kwargs):
+        user = create_user_profile_t('name', 'pwd', **kwargs)
         self.client.login(username='name', password='pwd')
         return user
 
-    def create_and_login_artist_user(self, artist=None):
-        user = create_user_profile_t('name', 'pwd')
+    def create_and_login_artist_user(self, artist=None, **kwargs):
+        user = create_user_profile_t('name', 'pwd', **kwargs)
         artist = artist or create_artist_t()
         user.managed_artists.add(artist)
         self.client.login(username='name', password='pwd')
@@ -65,13 +65,18 @@ def image_file_t():
     return SimpleUploadedFile(name='small.gif', content=small_gif, content_type='image/gif')
 
 
-def create_user_profile_t(username=None, password='12345'):
+def create_user_profile_t(username=None,
+                          password='12345',
+                          favorite_musicbrainz_artists=[],
+                          preferred_concert_tags=[]):
     while username is None:
         username = str(uuid4())
         if User.objects.filter(username=username).exists():
             username = None
     user = User.objects.create_user(username=username, password=password)
-    return UserProfile.objects.create(user=user)
+    user_profile = UserProfile.objects.create(user=user, preferred_concert_tags=preferred_concert_tags)
+    user_profile.favorite_musicbrainz_artists.set(favorite_musicbrainz_artists)
+    return user_profile
 
 
 def create_artist_t(name="Test Artist", local=True, similar_musicbrainz_artists=None):
@@ -107,7 +112,8 @@ def create_concert_t(date=None,
                      artists=None,
                      ticket_description="10 buckaroos",
                      created_by=None,
-                     created_at=None) -> Concert:
+                     created_at=None,
+                     tags=[ConcertTags.ORIGINALS]) -> Concert:
     date = date or timezone_today()
     start_time = start_time or datetime.time(19,0)
     venue = venue or create_venue_t()
@@ -121,7 +127,8 @@ def create_concert_t(date=None,
         start_time=start_time,
         venue=venue,
         ticket_description=ticket_description,
-        created_by=created_by
+        created_by=created_by,
+        tags=tags
     )
     concert.save()
     for idx, artist in enumerate(artists):  # Assuming all new artist records have been saved
@@ -140,9 +147,7 @@ def create_musicbrainz_artist_t(mbid,
     # dict counts as populated, as that's a possible return value from
     # the API and we store None otherwise.
     tomorrow = now() + datetime.timedelta(1)
-    if similar_artists is None:
-        similar_artists = {}
     MusicBrainzArtist.objects.create(mbid=mbid,
                                      name=name,
-                                     similar_artists=similar_artists,
+                                     similar_artists=similar_artists or {},
                                      similar_artists_cache_datetime=tomorrow)
