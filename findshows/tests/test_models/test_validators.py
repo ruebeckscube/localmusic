@@ -45,10 +45,15 @@ class MultiURLValidatorTests(TestCase):
             v = MultiURLValidator(MultiURLValidator.LISTEN, 3)
             v("https://measuringmarigolds.bandcamp.com/track/was-it-worth-the-kiss\nnotaurl")
 
-    def test_bad_youtube_link(self):
+    def test_youtube_link_bad_args(self):
         with self.assertRaises(ValidationError):
             v = MultiURLValidator(MultiURLValidator.YOUTUBE, 3)
             v("https://www.youtube.com/watch?vid=kC1bSJELPaQ")
+
+    def test_youtube_link_bad_netloc(self):
+        with self.assertRaises(ValidationError):
+            v = MultiURLValidator(MultiURLValidator.YOUTUBE, 3)
+            v("https://www.yt.com/watch?v=kC1bSJELPaQ")
 
     def test_unsupported_domain(self):
         with self.assertRaises(ValidationError):

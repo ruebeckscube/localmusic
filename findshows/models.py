@@ -169,12 +169,6 @@ class Artist(models.Model):
 
 
     def _update_listen_links(self):
-        if self.listen_links == '':
-            self.listen_platform = Artist.NOLISTEN
-            self.listen_type = Artist.NOLISTEN
-            self.listen_ids = []
-            return
-
         urls = [url.strip() for url in str.split(str(self.listen_links).strip(),"\n")]
 
         parsed_urls = [urlparse(url) for url in urls]
@@ -184,12 +178,9 @@ class Artist(models.Model):
 
 
     def _update_youtube_links(self):
-        if self.youtube_links == '':
-            self.youtube_ids = []
-            return
-
         urls = [url.strip() for url in str.split(str(self.youtube_links).strip(),"\n")]
-        self.youtube_ids = [_parse_youtube_id(urlparse(url)) for url in urls]
+        parsed_ids = (_parse_youtube_id(urlparse(url)) for url in urls)
+        self.youtube_ids = [id for id in parsed_ids if id != ""]
 
 
     def save(self, *args, **kwargs):
