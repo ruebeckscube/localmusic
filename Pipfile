@@ -16,6 +16,7 @@ django-multiselectfield = "*"
 
 [dev-packages]
 coverage = "*"
+tblib = "*"
 
 [requires]
 python_version = "3.12.4"
