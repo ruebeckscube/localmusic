@@ -191,28 +191,6 @@ class Artist(models.Model):
     def __str__(self):
         return self.name
 
-    # Test values for listen links:
-    #
-    # https://open.spotify.com/album/52UVPYpWJtkadiJeIq6OSz?si=eEUWYO3BR8y7ivSbUi0G5A
-    #
-    # https://open.spotify.com/track/2mL1FLfUncO4UTAlDymUXQ?si=7e53f7f27c3f40c0
-    # https://open.spotify.com/track/29BrlEPb8MaNYwBSovTpE4?si=66c8e11af7474230
-    # https://open.spotify.com/track/2mL1FLfUncO4UTAlDymUXQ?si=7e53f7f27c3f40c0
-    #
-    # https://measuringmarigolds.bandcamp.com/album/measuring-marigolds
-    #
-    # https://measuringmarigolds.bandcamp.com/track/was-it-worth-the-kiss
-    # https://measuringmarigolds.bandcamp.com/track/pardes-the-orchard
-    # https://measuringmarigolds.bandcamp.com/track/rather-be-a-stranger
-    #
-    # https://soundcloud.com/schrodingers-finch/sets/live-at-the-cave-5-16-14
-    #
-    # https://soundcloud.com/measuringmarigolds/was-it-worth-the-kiss-demo
-    # https://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo
-    # https://soundcloud.com/measuringmarigolds/wax-wane-demo
-    #
-    # https://www.youtube.com/watch?v=kC1bSJELPaQ&embeds_referring_origin=http%3A%2F%2Fexample.com&source_ve_path=MjM4NTE
-    # https://youtu.be/kC1bSJELPaQ?si=ShmObXpVfek30gRF
 
 def _id_from_bandcamp_url(url, listen_type):
     match listen_type:
