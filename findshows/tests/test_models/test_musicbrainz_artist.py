@@ -55,7 +55,5 @@ class SimilarityScoreTests(TestCase):
     @patch('findshows.musicbrainz.get_similar_artists')
     def test_API_failed(self, mock: MagicMock):
         mb_artist = MusicBrainzArtist.objects.create(mbid='123', name='Test Artist')
-        print('\n\n', mb_artist.similar_artists, "\n\n")
-        print(mock.called)
         mock.return_value = None
         self.assertEqual(mb_artist.similarity_score('2468'), 0)
