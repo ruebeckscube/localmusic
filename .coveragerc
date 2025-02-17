@@ -10,5 +10,8 @@ omit =
     settings.py
 
 [report]
+exclude_lines =
+    def __str__
+
 exclude_also =
     if settings.DEBUG
