@@ -78,10 +78,9 @@ class ConcertForm(forms.ModelForm):
 
         user_artists = set(str(a.id) for a in self.editing_user.userprofile.managed_artists.all())
         if not user_artists.intersection(str(a['id']) for a in cleaned_data['bill']):
-            raise ValidationError(
-                "You may only post shows where the bill includes one of the artists \
-                that your account manages."
-            )
+            self.add_error('bill',
+                           "You may only post shows where the bill includes one of the artists \
+                           that your account manages.")
 
         venue = cleaned_data.get("venue")
         date = cleaned_data.get("date")
@@ -90,11 +89,10 @@ class ConcertForm(forms.ModelForm):
             if self.instance:
                 conflict_concerts = conflict_concerts.exclude(pk=self.instance.pk)
             if conflict_concerts:
-                raise ValidationError(
-                    "There is already a show in the database for the specified venue and date.\
-                    If you think this is in error, or there are in fact two events on the same\
-                    date, please contact site admins for an override."
-                )
+                self.add_error(None,
+                               "There is already a show in the database for the specified venue and date.\
+                               If you think this is in error, or there are in fact two events on the same\
+                               date, please contact site admins for an override.")
         return cleaned_data
 
     def save(self, commit = True): # saving this without a commit is gonna be weird, hope it doesn't happen

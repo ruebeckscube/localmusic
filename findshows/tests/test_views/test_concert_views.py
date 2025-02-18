@@ -112,6 +112,14 @@ class CreateConcertTests(TestCaseHelpers):
         self.assert_blank_form(response.context['form'], ConcertForm)
 
 
+    def test_user_doesnt_own_one_of_the_artists(self):
+        artist = create_artist_t()
+        venue = create_venue_t()
+        user = self.create_and_login_artist_user() # different artist
+        response = self.client.post(reverse("findshows:create_concert"), data=concert_post_request(venue, artist))
+        self.assertEqual(response.context['form'].errors["bill"][0][:17], "You may only post")
+
+
     def test_concert_creation_limit(self):
         """Make sure we can create the max number of concerts but no more"""
         user = self.create_and_login_artist_user()
