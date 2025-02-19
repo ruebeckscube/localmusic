@@ -28,11 +28,15 @@ def get_similar_artists(mbid=None):
         warnings.warn("MusicBrainz API for finding similar artists was called unsuccessfully.")
         return None
 
-    artist_list = response.json()
-    if not artist_list:
-        return {}
-    max_score = max(a['score'] for a in artist_list)
-    return {a['artist_mbid']: a['score']/max_score for a in artist_list}
+    try:
+        artist_list = response.json()
+        if not artist_list:
+            return {}
+        max_score = max(a['score'] for a in artist_list)
+        return {a['artist_mbid']: a['score']/max_score for a in artist_list}
+    except KeyError:
+        warnings.warn("MusicBrainz API for finding similar artists returned unexpected JSON.")
+        return None
 
 
 # Test artist IDs
