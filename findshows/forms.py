@@ -152,19 +152,19 @@ class ShowFinderForm(forms.Form):
         if cleaned_data.get('is_date_range'):
             start_date, end_date = cleaned_data.get("date"), cleaned_data.get("end_date")
             if not end_date:
-                raise ValidationError(
+                self.add_error('end_date',
                     "Please enter an end date, or hide date range."
                 )
-            if end_date < today:
-                raise ValidationError(
+            elif end_date < today:
+                self.add_error('end_date',
                     "End date is in the past. Please select a valid date."
                 )
-            if start_date and start_date > end_date:
-                raise ValidationError(
+            elif start_date and start_date > end_date:
+                self.add_error(None,
                     "Please enter a date range with the end date after the start date."
                 )
-            if start_date and end_date-start_date > timedelta(settings.MAX_DATE_RANGE):
-                raise ValidationError(
+            elif start_date and end_date-start_date > timedelta(settings.MAX_DATE_RANGE):
+                self.add_error(None,
                     "Max date range is " + str(settings.MAX_DATE_RANGE) + " days."
                 )
             if (not start_date) or start_date < today:
@@ -172,7 +172,7 @@ class ShowFinderForm(forms.Form):
         else:
             date = cleaned_data.get('date')
             if date and date < today:
-                raise ValidationError(
+                self.add_error('date',
                     "Date is in the past. Please select a valid date."
                 )
 
