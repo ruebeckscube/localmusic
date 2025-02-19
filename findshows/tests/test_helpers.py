@@ -1,10 +1,11 @@
 import datetime
 from uuid import uuid4
+import tempfile
 
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
 from django.utils.timezone import now
@@ -12,7 +13,7 @@ from django.views.generic.dates import timezone_today
 
 from findshows.models import Ages, Artist, Concert, ConcertTags, MusicBrainzArtist, UserProfile, Venue
 
-
+@override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
 class TestCaseHelpers(TestCase):
     def create_and_login_non_artist_user(self, **kwargs):
         user = create_user_profile_t('name', 'pwd', **kwargs)

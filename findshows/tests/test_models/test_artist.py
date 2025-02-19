@@ -1,12 +1,10 @@
 from unittest.mock import MagicMock, patch
 
-from django.test import TestCase
-
-from findshows.models import Artist, _id_from_bandcamp_url, _parse_listen_type, _parse_listen_ids
-from findshows.tests.test_helpers import create_artist_t, create_musicbrainz_artist_t
+from findshows.models import Artist, _id_from_bandcamp_url
+from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_musicbrainz_artist_t
 
 
-class SimilarityScoreTests(TestCase):
+class SimilarityScoreTests(TestCaseHelpers):
     def test_no_similar_artists(self):
         artist = create_artist_t()
         self.assertEqual(artist.similarity_score(['123', '456']), 0)
@@ -24,7 +22,7 @@ class SimilarityScoreTests(TestCase):
         self.assertEqual(artist.similarity_score(['999', '888']), .275) # (.2+.5+.4+0)/4
 
 
-class SaveTests(TestCase):
+class SaveTests(TestCaseHelpers):
     # Tests Save and its helper functions by recalling from the database;
     # should be easier to rewrite/use as a check when we redo the model
     # definition for listen links etc
@@ -121,7 +119,7 @@ class SaveTests(TestCase):
         self.assertEqual(artist.youtube_ids, ['kC1bSJELPaQ', 'dQw4w9WgXcQ'])
 
 
-class LinkParserEdgeCaseTests(TestCase):
+class LinkParserEdgeCaseTests(TestCaseHelpers):
     # Edge cases for link parsing helper functions
     @patch('urllib.request.urlopen')
     def test_bandcamp_page_doesnt_contain_id(self, mock: MagicMock):

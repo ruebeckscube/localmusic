@@ -1,14 +1,10 @@
 import datetime
 import json
-from django.contrib.auth.models import User
-from django.core.exceptions import NON_FIELD_ERRORS
-from django.test import TestCase
 from django.views.generic.dates import timezone_today
 from findshows.forms import ConcertForm
-from findshows.models import Concert, ConcertTags
+from findshows.models import Concert
 
-from findshows.tests.test_helpers import create_artist_t, create_concert_t, create_user_profile_t, create_venue_t, image_file_t
-from findshows.views import managed_artist_list
+from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_concert_t, create_user_profile_t, create_venue_t, image_file_t
 
 def form_data(date=None,
               venue=None,
@@ -42,7 +38,7 @@ def bill_json_from_artist_list(artists):
     return json.dumps([{'id': a.id, 'name': a.name} for a in artists])
 
 
-class InitTests(TestCase):
+class InitTests(TestCaseHelpers):
     def test_from_instance(self):
         artist1 = create_artist_t('chris')
         artist2 = create_artist_t('dave')
@@ -56,7 +52,7 @@ class InitTests(TestCase):
         self.assertEqual(form['bill'].value(), json.dumps([]))
 
 
-class ValidationTests(TestCase):
+class ValidationTests(TestCaseHelpers):
     # We test whether the bill includes an artist of the editing user
     # in test_concert_views because it relies on the form being called correctly
 

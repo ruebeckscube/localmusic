@@ -2,7 +2,6 @@ import datetime
 import json
 
 from django.conf import settings
-from django.test import TestCase
 from django.urls import reverse
 from django.views.generic.dates import timezone_today
 from findshows.forms import ConcertForm
@@ -31,7 +30,7 @@ def concert_post_request(venue, artist):
             'tags': ['OG']
             }
 
-class ViewConcertTests(TestCase):
+class ViewConcertTests(TestCaseHelpers):
     def test_concert_exists(self):
         concert = create_concert_t()
         response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
@@ -67,7 +66,7 @@ class MyConcertListTests(TestCaseHelpers):
         self.assertEqual(response.context['concerts'], {concert1,})
 
 
-class RecordsCreatedTodayTests(TestCase):
+class RecordsCreatedTodayTests(TestCaseHelpers):
     def test_venues_created_today(self):
         user1 = create_user_profile_t()
         user2 = create_user_profile_t()

@@ -1,10 +1,9 @@
-from django.test import TestCase
 from findshows.models import Ages
 
-from findshows.tests.test_helpers import create_artist_t, create_concert_t, create_musicbrainz_artist_t, create_venue_t
+from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_concert_t, create_musicbrainz_artist_t, create_venue_t
 
 
-class ConcertTests(TestCase):
+class ConcertTests(TestCaseHelpers):
     def test_relevance_score(self):
         create_musicbrainz_artist_t('123', 'mb 123' , {'999': .2, '888': .5})
         create_musicbrainz_artist_t('456', 'mb 456' , {'999': .4, '777': .8})
