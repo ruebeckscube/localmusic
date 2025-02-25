@@ -25,15 +25,11 @@ def time_short(value: datetime.time):
 
 @register.inclusion_tag("findshows/partials/similar_artist_name_with_relevancy.html")
 def similar_artist_name_with_relevancy(similar_musicbrainz_artist, searched_musicbrainz_artists=None):
-    print("\n\nIN TAG")
-    print('sim:', similar_musicbrainz_artist)
-    print('searched:', searched_musicbrainz_artists)
     if not searched_musicbrainz_artists:
         searched_musicbrainz_artists = []
     relevant_names = ", ".join(searched_artist.name
                                for searched_artist in searched_musicbrainz_artists
                                if similar_musicbrainz_artist.similarity_score(searched_artist.mbid))
-    print("rel:", relevant_names)
     return {
         'name': similar_musicbrainz_artist.name,
         'relevant_names': relevant_names,

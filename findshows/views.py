@@ -338,6 +338,7 @@ def concert_search_results(request):
         if search_form.cleaned_data['concert_tags']: # no concert tags = all concert tags
             concerts = concerts.filter(reduce(or_, (Q(tags__icontains=t) for t in search_form.cleaned_data['concert_tags'])))
 
+        searched_musicbrainz_artists = search_form.cleaned_data.get('musicbrainz_artists', [])
         concerts = list(concerts)
         searched_mbids = [mb_artist.mbid for mb_artist in search_form.cleaned_data['musicbrainz_artists']]
         if len(searched_mbids) > 0:
@@ -349,9 +350,10 @@ def concert_search_results(request):
 
     else:
         concerts = []
+        searched_musicbrainz_artists = []
 
     return render(request, "findshows/htmx/concert_search_results.html", context = {
         "concerts": concerts,
         "search_form": search_form,
-        "searched_musicbrainz_artists": search_form.cleaned_data['musicbrainz_artists']
+        "searched_musicbrainz_artists": searched_musicbrainz_artists,
     })
