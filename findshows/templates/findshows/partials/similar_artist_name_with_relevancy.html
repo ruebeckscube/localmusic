@@ -1,0 +1,8 @@
+{% if relevant_names %}
+    <div class="text-xs text-lime-700 font-bold"
+         title="Similar to {{relevant_names}}">
+        {{name}}
+    </div>
+{% else %}
+    <div class="text-xs text-gray-400"> {{name}} </div>
+{% endif %}

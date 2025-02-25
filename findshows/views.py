@@ -352,5 +352,6 @@ def concert_search_results(request):
 
     return render(request, "findshows/htmx/concert_search_results.html", context = {
         "concerts": concerts,
-        "search_form": search_form
+        "search_form": search_form,
+        "searched_musicbrainz_artists": search_form.cleaned_data['musicbrainz_artists']
     })

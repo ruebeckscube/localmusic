@@ -14,6 +14,9 @@
                 {% for artist in concert.sorted_artists %}
                     <div class="text-lg text-right mr-3">
                         <a href="{% url "findshows:view_artist" artist.pk %}"> {{artist.name}} </a>
+                        {% for similar_musicbrainz_artist in artist.similar_musicbrainz_artists.all %}
+                            {% similar_artist_name_with_relevancy similar_musicbrainz_artist searched_musicbrainz_artists %}
+                        {% endfor %}
                     </div>
                     <div class="col-span-2 my-1">
                         {% preview_player artist True %}
