@@ -53,7 +53,7 @@ class MyConcertListTests(TestCaseHelpers):
         self.assert_redirects_to_login(reverse("findshows:my_concert_list"))
 
 
-    def test_my_concert_list(self):
+    def test_only_shows_users_artists(self):
         artist1 = create_artist_t()
         artist2 = create_artist_t()
         concert1 = create_concert_t(artists=[artist1])
@@ -63,7 +63,18 @@ class MyConcertListTests(TestCaseHelpers):
         response = self.client.get(reverse("findshows:my_concert_list"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/concert_list_for_artist.html')
-        self.assertEqual(response.context['concerts'], {concert1,})
+        self.assertEqual(response.context['concerts'], [concert1])
+
+
+    def test_date_filtering_and_sorting(self):
+        artist1 = create_artist_t()
+        concert1 = create_concert_t(artists=[artist1], date=timezone_today() - datetime.timedelta(1))
+        concert2 = create_concert_t(artists=[artist1], date=timezone_today())
+        concert3 = create_concert_t(artists=[artist1], date=timezone_today() + datetime.timedelta(1))
+        self.create_and_login_artist_user(artist1)
+
+        response = self.client.get(reverse("findshows:my_concert_list"))
+        self.assertEqual(response.context['concerts'], [concert2, concert3])
 
 
 class RecordsCreatedTodayTests(TestCaseHelpers):

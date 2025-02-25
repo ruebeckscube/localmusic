@@ -223,7 +223,10 @@ def edit_concert(request, pk=None):
 @user_passes_test(is_artist_account)
 def my_concert_list(request):
     artists=request.user.userprofile.managed_artists.all()
-    concerts=set(c for a in artists for c in a.concert_set.all()) # Set removes duplicates
+    # Remove duplicates in case user manages multiple artists on same bill
+    concerts = set(c for a in artists for c in a.concert_set.filter(date__gte=timezone_today()))
+    concerts = sorted(concerts, key = lambda c: c.date)
+
     return render(request, "findshows/pages/concert_list_for_artist.html", context = {
         "concerts": concerts,
         "userprofile": request.user.userprofile
