@@ -26,7 +26,6 @@ class Command(BaseCommand):
                                                   unique_fields=('mbid',))
             processed += BATCH_SIZE
             self.stdout.write(f"Processed: {processed}")
-            self.stdout.
 
         self.stdout.write("\nSuccessfully completed importing MusicBrainz artists.\n\n")
 
@@ -35,7 +34,7 @@ class Command(BaseCommand):
         response = requests.get("https://data.metabrainz.org/pub/musicbrainz/data/json-dumps/LATEST")
         latest_dirname = response.text.strip()
         artist_dump_url = f"https://data.metabrainz.org/pub/musicbrainz/data/json-dumps/{latest_dirname}/artist.tar.xz"
-        self.stdout.write(f"\nDownloading from {artist_dump_url}\n")
+        self.stdout.write(f"\nSource: {artist_dump_url}\n")
 
         with requests.get(artist_dump_url, stream=True) as response:
             response.raise_for_status()
