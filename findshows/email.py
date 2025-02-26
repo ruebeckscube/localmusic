@@ -1,4 +1,5 @@
 import datetime
+from random import shuffle
 from django.conf import settings
 from django.core.mail import BadHeaderError, EmailMultiAlternatives, get_connection, send_mail, send_mass_mail
 from django.template.loader import render_to_string
@@ -80,23 +81,30 @@ def rec_email_generator(header_message):
                       'end_date': week_later,
                       'is_date_range': True}
 
+    next_week_concerts = Concert.objects.filter(date__gte=today, date__lte=week_later)
     for user_profile in user_profiles:
         search_params['musicbrainz_artists'] = [mb_artist.mbid
                                                 for mb_artist in user_profile.favorite_musicbrainz_artists.all()]
         search_params['concert_tags'] = user_profile.preferred_concert_tags
-
-        concerts = sorted(Concert.objects.filter(date__gte=today, date__lte=week_later),
-                          key=lambda c: c.relevance_score(search_params['musicbrainz_artists']),
-                          reverse=True)
-
         search_url = settings.HOST_NAME + reverse('findshows:concert_search') + '?' + urlencode(search_params, doseq=True)
+
+        scored_concerts = ((c.relevance_score(search_params['musicbrainz_artists']), c) for c in next_week_concerts)
+        top_scored_concerts = sorted(s_c for s_c in scored_concerts if s_c[0] != 0)
+        has_recs = len(top_scored_concerts) > 0
+        if has_recs:
+            rec_concerts = [s_c[1] for s_c in top_scored_concerts]
+        else:
+            rec_concerts = list(next_week_concerts)
+            shuffle(rec_concerts)
+        rec_concerts = rec_concerts[:settings.CONCERT_RECS_PER_EMAIL]
 
         html_message = render_to_string("findshows/emails/rec_email.html",
                                         context={'header_message': header_message,
                                                  'user_profile': user_profile,
-                                                 'concerts': concerts,
+                                                 'concerts': rec_concerts,
                                                  'host_name': settings.HOST_NAME,
-                                                 'search_url': search_url})
+                                                 'search_url': search_url,
+                                                 'has_recs': has_recs})
         text_message = f'{header_message}\n\nGo to {search_url} to see your weekly concert recommendations.'
 
         yield text_message, html_message, user_profile.user.email
