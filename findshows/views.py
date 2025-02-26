@@ -1,11 +1,10 @@
 from operator import and_, or_
 from functools import reduce
 import json
-from random import shuffle
+from random import random, shuffle
 
 from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied
-from django.core.mail import send_mail
 from django.urls import reverse
 from django.views import generic
 from django.http import HttpResponse
@@ -346,7 +345,7 @@ def concert_search_results(request):
         searched_mbids = [mb_artist.mbid for mb_artist in search_form.cleaned_data['musicbrainz_artists']]
         if len(searched_mbids) > 0:
             concerts = sorted(concerts,
-                              key=lambda c: c.relevance_score(searched_mbids),
+                              key=lambda c: (c.relevance_score(searched_mbids), random()),
                               reverse=True)
         else:
             shuffle(concerts)
