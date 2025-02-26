@@ -8,8 +8,9 @@ Create `secrets.json` with the properties `DB_PASSWORD`, `SECRET_KEY`,
 
 Install Python dependencies:
 ```
-pipenv --install
+pipenv install --dev
 ```
+(leave out the `--dev` flag for production environment)
 
 Install [PostgreSQL](https://www.postgresql.org), create a database named
 `localmusicdb` and run
@@ -18,18 +19,30 @@ CREATE USER django PASSWORD '<db password from secrets.json>';
 ALTER DATABASE localmusicdb OWNER TO django;
 ```
 
-Install [Memcached](https://memcached.org)
-
-Install TailwindCSS (for development):
+Install TailwindCSS (for development environment only):
 ```
 npm install -D tailwindcss
 ```
 
-Run Django database migrations:
+Run Django database migrations, and donwload data from MusicBrainz (2.5 million artists, it will let you know its progress, should take about 10 minutes):
 ```
 pipenv shell
 python manage.py migrate
+python manage.py update_musicbrainz_data
 ```
+
+
+# Create/load data dump
+If you want to send/load some test data from your database, in the pipenv shell, run
+```
+python manage.py dumpdata --natural-foreign --natural-primary -e contenttypes -e auth.Permission -e admin -e sessions -e findshows.MusicBrainzArtist --indent 4 > localmusic-db-dump.json
+```
+to dump and
+```
+python manage.py loaddata ./localmusic-db-dump.json
+```
+to load.
+
 
 # Running the server (development)
 
