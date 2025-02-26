@@ -29,5 +29,16 @@
                 {% endfor %}
             </mj-column>
         </mj-section>
+
+        <mj-section>
+            <mj-column>
+                <mj-text>
+                    To unsubscribe, please visit your
+                    <a href="{{host_name}}{% url 'findshows:user_settings' %}">settings page</a>
+                    and uncheck the "Weekly Email" option.
+                </mj-text>
+            </mj-column>
+        </mj-section>
+    </mj-body>
 </mjml>
 {% endmjml %}
