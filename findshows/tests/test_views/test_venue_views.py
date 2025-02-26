@@ -11,7 +11,7 @@ from findshows.tests.test_helpers import TestCaseHelpers, create_venue_t
 class VenueSearchTests(TestCaseHelpers):
     def test_handles_missing_params(self):
         response = self.client.get(reverse("findshows:venue_search_results"))
-        self.assertEquals(response.content, b'')
+        self.assertEqual(response.content, b'')
 
     def test_search(self):
         bottle = create_venue_t(name="Empty Bottle")
@@ -61,9 +61,9 @@ class CreateVenueTests(TestCaseHelpers):
         self.assert_blank_form(response.context['venue_form'], VenueForm)
 
         venues = Venue.objects.all()
-        self.assertEquals(len(venues), 1)
-        self.assertEquals(venues[0].created_by, user)
-        self.assertEquals(venues[0].created_at, timezone_today())
+        self.assertEqual(len(venues), 1)
+        self.assertEqual(venues[0].created_by, user)
+        self.assertEqual(venues[0].created_at, timezone_today())
 
         self.assertTrue('HX-Trigger' in response.headers)
         hx_trigger = json.loads(response.headers['HX-Trigger'])

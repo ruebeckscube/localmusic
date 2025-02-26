@@ -5,7 +5,7 @@ from findshows.tests.test_helpers import TestCaseHelpers, create_musicbrainz_art
 class MusicbrainzArtistSearchTests(TestCaseHelpers):
     def test_handles_missing_params(self):
         response = self.client.get(reverse("findshows:musicbrainz_artist_search_results"))
-        self.assertEquals(response.content, b'')
+        self.assertEqual(response.content, b'')
 
 
     def test_search(self):

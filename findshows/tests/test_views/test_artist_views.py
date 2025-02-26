@@ -119,13 +119,13 @@ class EditArtistTests(TestCaseHelpers):
     def test_edit_artist_doesnt_exist_GET(self):
         self.create_and_login_artist_user()
         response = self.client.get(reverse("findshows:edit_artist", args=(3,)))
-        self.assertEquals(response.status_code, 404)
+        self.assertEqual(response.status_code, 404)
 
 
     def test_edit_artist_doesnt_exist_POST(self):
         self.create_and_login_artist_user()
         response = self.client.post(reverse("findshows:edit_artist", args=(3,)), data=artist_post_request())
-        self.assertEquals(response.status_code, 404)
+        self.assertEqual(response.status_code, 404)
 
 
     def test_user_doesnt_own_artist_GET(self):
@@ -186,7 +186,7 @@ class EditArtistTests(TestCaseHelpers):
 class ArtistSearchTests(TestCaseHelpers):
     def test_handles_missing_params(self):
         response = self.client.get(reverse("findshows:artist_search_results"))
-        self.assertEquals(response.content, b'')
+        self.assertEqual(response.content, b'')
 
     def test_search(self):
         pete = create_artist_t(name="Pete Seeger")

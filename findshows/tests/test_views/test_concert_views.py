@@ -168,9 +168,9 @@ class CreateConcertTests(TestCaseHelpers):
         response = self.client.post(reverse("findshows:create_concert"), data=concert_post_request(venue, artist))
         self.assertRedirects(response, reverse('findshows:my_concert_list'))
         concerts = Concert.objects.all()
-        self.assertEquals(len(concerts), 1)
-        self.assertEquals(concerts[0].created_by, user)
-        self.assertEquals(concerts[0].created_at, timezone_today())
+        self.assertEqual(len(concerts), 1)
+        self.assertEqual(concerts[0].created_by, user)
+        self.assertEqual(concerts[0].created_at, timezone_today())
 
 
 class EditConcertTests(TestCaseHelpers):
@@ -180,7 +180,7 @@ class EditConcertTests(TestCaseHelpers):
     def test_edit_concert_doesnt_exist_GET(self):
         self.create_and_login_artist_user()
         response = self.client.get(reverse("findshows:edit_concert", args=(3,)))
-        self.assertEquals(response.status_code, 404)
+        self.assertEqual(response.status_code, 404)
 
 
     def test_edit_concert_doesnt_exist_POST(self):
@@ -188,7 +188,7 @@ class EditConcertTests(TestCaseHelpers):
         venue = create_venue_t()
         self.create_and_login_artist_user(artist)
         response = self.client.post(reverse("findshows:edit_concert", args=(3,)), data=concert_post_request(venue, artist))
-        self.assertEquals(response.status_code, 404)
+        self.assertEqual(response.status_code, 404)
 
 
     def test_user_doesnt_own_concert_GET(self):
