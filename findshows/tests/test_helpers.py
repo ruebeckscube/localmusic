@@ -69,13 +69,15 @@ def image_file_t():
 def create_user_profile_t(username=None,
                           password='12345',
                           favorite_musicbrainz_artists=[],
-                          preferred_concert_tags=[]):
+                          preferred_concert_tags=[],
+                          email="test@em.ail",
+                          weekly_email=True):
     while username is None:
         username = str(uuid4())
         if User.objects.filter(username=username).exists():
             username = None
-    user = User.objects.create_user(username=username, password=password)
-    user_profile = UserProfile.objects.create(user=user, preferred_concert_tags=preferred_concert_tags)
+    user = User.objects.create_user(username=username, password=password, email=email)
+    user_profile = UserProfile.objects.create(user=user, preferred_concert_tags=preferred_concert_tags, weekly_email=weekly_email)
     user_profile.favorite_musicbrainz_artists.set(favorite_musicbrainz_artists)
     return user_profile
 
@@ -118,7 +120,7 @@ def create_concert_t(date=None,
                      tags=[ConcertTags.ORIGINALS]) -> Concert:
     date = date or timezone_today()
     start_time = start_time or datetime.time(19,0)
-    venue = venue or create_venue_t()
+    venue = venue or create_venue_t(created_by=created_by)
     artists = artists or [create_artist_t(f"Test Artist {i}") for i in range(3)]
     created_by = created_by or create_user_profile_t()
     created_at = created_at or timezone_today()
