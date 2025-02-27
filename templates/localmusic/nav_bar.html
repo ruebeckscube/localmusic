@@ -14,7 +14,7 @@
             <button type="submit">Logout</button>
         </form>
     {% else %}
-        <a href="{% url 'login' %}?next={{ request.path }}">Login</a>
+        <a href="{% url 'login' %}">Login</a>
     {% endif %}
     </div>
 </div>
