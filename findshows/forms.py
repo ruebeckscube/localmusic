@@ -76,10 +76,12 @@ class ConcertForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean() or {}
 
-        user_artists = set(str(a.id) for a in self.editing_user.userprofile.managed_artists.all())
-        if not user_artists.intersection(str(a['id']) for a in cleaned_data['bill']):
+        local_user_artists = set(str(a.id)
+                                 for a in self.editing_user.userprofile.managed_artists.all()
+                                 if a.local)
+        if not local_user_artists.intersection(str(a['id']) for a in cleaned_data['bill']):
             self.add_error('bill',
-                           "You may only post shows where the bill includes one of the artists \
+                           "You may only post shows where the bill includes one of the local artists \
                            that your account manages.")
 
         venue = cleaned_data.get("venue")

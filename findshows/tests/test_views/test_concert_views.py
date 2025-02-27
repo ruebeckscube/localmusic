@@ -152,6 +152,17 @@ class CreateConcertTests(TestCaseHelpers):
         self.assertEqual(response.context['form'].errors["bill"][0][:17], "You may only post")
 
 
+    def test_user_only_owns_nonlocal_artist(self):
+        artist1 = create_artist_t(local=True)
+        artist2 = create_artist_t(local=False)
+        venue = create_venue_t()
+        user = self.create_and_login_artist_user(artist1)
+        user.managed_artists.add(artist2)
+        user.save()
+        response = self.client.post(reverse("findshows:create_concert"), data=concert_post_request(venue, artist2))
+        self.assertEqual(response.context['form'].errors["bill"][0][:17], "You may only post")
+
+
     def test_concert_creation_limit(self):
         """Make sure we can create the max number of concerts but no more"""
         user = self.create_and_login_artist_user()
