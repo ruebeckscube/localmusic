@@ -77,6 +77,22 @@ class MyConcertListTests(TestCaseHelpers):
         self.assertEqual(response.context['concerts'], [concert2, concert3])
 
 
+    def test_create_link_shows_for_local_artists(self):
+        artist = create_artist_t(local=True)
+        self.create_and_login_artist_user(artist)
+
+        response = self.client.get(reverse("findshows:my_concert_list"))
+        self.assertIn(reverse('findshows:create_concert'), str(response.content))
+
+
+    def test_create_link_doesnt_show_for_nonlocal_artist(self):
+        artist = create_artist_t(local=False)
+        self.create_and_login_artist_user(artist)
+
+        response = self.client.get(reverse("findshows:my_concert_list"))
+        self.assertNotIn(reverse('findshows:create_concert'), str(response.content))
+
+
 class RecordsCreatedTodayTests(TestCaseHelpers):
     def test_venues_created_today(self):
         user1 = create_user_profile_t()
@@ -114,6 +130,12 @@ class CreateConcertTests(TestCaseHelpers):
         self.assert_redirects_to_login(reverse("findshows:create_concert"))
 
 
+    def test_non_local_artist_user_create_new_concert_redirects(self):
+        artist = create_artist_t(local=False)
+        self.create_and_login_artist_user(artist)
+        self.assert_redirects_to_login(reverse("findshows:create_concert"))
+
+
     def test_artist_user_can_create_new_concert(self):
         self.create_and_login_artist_user()
         response = self.client.get(reverse("findshows:create_concert"))
@@ -127,6 +149,17 @@ class CreateConcertTests(TestCaseHelpers):
         venue = create_venue_t()
         user = self.create_and_login_artist_user() # different artist
         response = self.client.post(reverse("findshows:create_concert"), data=concert_post_request(venue, artist))
+        self.assertEqual(response.context['form'].errors["bill"][0][:17], "You may only post")
+
+
+    def test_user_only_owns_nonlocal_artist(self):
+        artist1 = create_artist_t(local=True)
+        artist2 = create_artist_t(local=False)
+        venue = create_venue_t()
+        user = self.create_and_login_artist_user(artist1)
+        user.managed_artists.add(artist2)
+        user.save()
+        response = self.client.post(reverse("findshows:create_concert"), data=concert_post_request(venue, artist2))
         self.assertEqual(response.context['form'].errors["bill"][0][:17], "You may only post")
 
 

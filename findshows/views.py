@@ -89,6 +89,11 @@ def is_artist_account(user):
             and len(user.userprofile.managed_artists.all()) > 0)
 
 
+def is_local_artist_account(user):
+    return (not user.is_anonymous
+            and any(a.local for a in user.userprofile.managed_artists.all()) > 0)
+
+
 @user_passes_test(is_artist_account)
 def managed_artist_list(request):
     artists=request.user.userprofile.managed_artists.all()
@@ -150,7 +155,7 @@ def artist_search_results(request):
 
 
 def create_temp_artist(request):
-    if not is_artist_account(request.user):
+    if not is_local_artist_account(request.user):
         return HttpResponse('')
 
     if request.POST:
@@ -192,7 +197,7 @@ def records_created_today(model, userprofile):
     return len(records)
 
 
-@user_passes_test(is_artist_account)
+@user_passes_test(is_local_artist_account)
 def edit_concert(request, pk=None):
     if pk is None:
         if records_created_today(Concert, request.user.userprofile) >= settings.MAX_DAILY_CONCERT_CREATES:
@@ -228,7 +233,8 @@ def my_concert_list(request):
 
     return render(request, "findshows/pages/concert_list_for_artist.html", context = {
         "concerts": concerts,
-        "userprofile": request.user.userprofile
+        "userprofile": request.user.userprofile,
+        "is_local_artist": is_local_artist_account(request.user)
     })
 
 
@@ -250,7 +256,7 @@ def venue_search_results(request):
 
 
 def create_venue(request):
-    if not is_artist_account(request.user):
+    if not is_local_artist_account(request.user):
         return HttpResponse('')
 
     if records_created_today(Venue, request.user.userprofile) >= settings.MAX_DAILY_VENUE_CREATES:
