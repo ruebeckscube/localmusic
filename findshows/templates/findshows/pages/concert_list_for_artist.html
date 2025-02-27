@@ -1,10 +1,11 @@
 {% extends "localmusic/base.html" %}
 
 {% block content %}
-    <div>
-        <a href="{% url 'findshows:create_concert' %}"> Create new show listing</a>
-    </div>
-
+    {% if is_local_artist %}
+        <div>
+            <a href="{% url 'findshows:create_concert' %}"> Create new show listing</a>
+        </div>
+    {% endif %}
     <div class="flex flex-col w-full align-middle">
         {% for concert in concerts %}
             <div class="flex">

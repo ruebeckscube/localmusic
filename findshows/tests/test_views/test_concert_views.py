@@ -77,6 +77,22 @@ class MyConcertListTests(TestCaseHelpers):
         self.assertEqual(response.context['concerts'], [concert2, concert3])
 
 
+    def test_create_link_shows_for_local_artists(self):
+        artist = create_artist_t(local=True)
+        self.create_and_login_artist_user(artist)
+
+        response = self.client.get(reverse("findshows:my_concert_list"))
+        self.assertIn(reverse('findshows:create_concert'), str(response.content))
+
+
+    def test_create_link_doesnt_show_for_nonlocal_artist(self):
+        artist = create_artist_t(local=False)
+        self.create_and_login_artist_user(artist)
+
+        response = self.client.get(reverse("findshows:my_concert_list"))
+        self.assertNotIn(reverse('findshows:create_concert'), str(response.content))
+
+
 class RecordsCreatedTodayTests(TestCaseHelpers):
     def test_venues_created_today(self):
         user1 = create_user_profile_t()

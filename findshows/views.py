@@ -89,6 +89,11 @@ def is_artist_account(user):
             and len(user.userprofile.managed_artists.all()) > 0)
 
 
+def is_local_artist_account(user):
+    return (not user.is_anonymous
+            and any(a.local for a in user.userprofile.managed_artists.all()) > 0)
+
+
 @user_passes_test(is_artist_account)
 def managed_artist_list(request):
     artists=request.user.userprofile.managed_artists.all()
@@ -228,7 +233,8 @@ def my_concert_list(request):
 
     return render(request, "findshows/pages/concert_list_for_artist.html", context = {
         "concerts": concerts,
-        "userprofile": request.user.userprofile
+        "userprofile": request.user.userprofile,
+        "is_local_artist": is_local_artist_account(request.user)
     })
 
 
