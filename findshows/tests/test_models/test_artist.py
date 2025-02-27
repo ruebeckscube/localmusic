@@ -121,10 +121,11 @@ class SaveTests(TestCaseHelpers):
 
 class LinkParserEdgeCaseTests(TestCaseHelpers):
     # Edge cases for link parsing helper functions
-    @patch('urllib.request.urlopen')
+    @patch('findshows.models.urllib.request.urlopen')
     def test_bandcamp_page_doesnt_contain_id(self, mock: MagicMock):
         mock_response = MagicMock()
         mock_response.read = MagicMock(return_value = "this is a string without an id")
         mock.return_value = mock_response
 
         self.assertEqual(_id_from_bandcamp_url('https://measuringmarigolds.bandcamp.com/track/was-it-worth-the-kiss', Artist.TRACK), "")
+        mock.assert_called_once()

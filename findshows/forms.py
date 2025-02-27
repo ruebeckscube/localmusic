@@ -184,8 +184,11 @@ class ContactForm(forms.Form):
         REPORT_BUG = "bug", "Bug report"
         OTHER = "oth", "Other"
 
-    email = forms.EmailField()
+    email = forms.EmailField(max_length=100)
     subject = forms.CharField()
     message = forms.CharField(widget=forms.Textarea)
     type = forms.ChoiceField(choices=Types)
 
+    def clean_subject(self):
+        data = self.cleaned_data["subject"]
+        return ' '.join(data.splitlines()) # Email subjects can't have \n or \r
