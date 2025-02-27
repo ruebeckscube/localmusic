@@ -158,10 +158,10 @@ def create_temp_artist(request):
     else:
         temp_artist_form = TempArtistForm()
 
-    valid = temp_artist_form.is_valid()
+    # Short-circuit means email is only sent if form is valid
+    valid = temp_artist_form.is_valid() and invite_artist(temp_artist_form)
     if valid:
         artist = temp_artist_form.save()
-        invite_artist(artist)
         temp_artist_form = TempArtistForm()
 
     response = render(request, "findshows/htmx/temp_artist_form.html", {
