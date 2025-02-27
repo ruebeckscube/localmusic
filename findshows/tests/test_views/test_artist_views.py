@@ -229,6 +229,13 @@ class CreateTempArtistTests(TestCaseHelpers):
         self.assert_records_created(Artist, 0)
 
 
+    def test_not_local_artist_user_doesnt_create(self):
+        artist = create_artist_t(local=False)
+        self.create_and_login_artist_user(artist=artist)
+        self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
+        self.assert_records_created(Artist, 1)
+
+
     def test_successful_create(self):
         self.create_and_login_artist_user()
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())

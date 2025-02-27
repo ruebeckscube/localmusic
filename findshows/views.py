@@ -155,7 +155,7 @@ def artist_search_results(request):
 
 
 def create_temp_artist(request):
-    if not is_artist_account(request.user):
+    if not is_local_artist_account(request.user):
         return HttpResponse('')
 
     if request.POST:
@@ -256,7 +256,7 @@ def venue_search_results(request):
 
 
 def create_venue(request):
-    if not is_artist_account(request.user):
+    if not is_local_artist_account(request.user):
         return HttpResponse('')
 
     if records_created_today(Venue, request.user.userprofile) >= settings.MAX_DAILY_VENUE_CREATES:

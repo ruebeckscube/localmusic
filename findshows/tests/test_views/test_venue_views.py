@@ -5,7 +5,7 @@ from django.views.generic.dates import timezone_today
 from findshows.forms import VenueForm
 from findshows.models import Venue
 
-from findshows.tests.test_helpers import TestCaseHelpers, create_venue_t
+from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_venue_t
 
 
 class VenueSearchTests(TestCaseHelpers):
@@ -51,6 +51,13 @@ class CreateVenueTests(TestCaseHelpers):
 
     def test_not_artist_user_doesnt_create(self):
         self.create_and_login_non_artist_user()
+        self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
+        self.assertEqual(Venue.objects.all().count(), 0)
+
+
+    def test_not_local_artist_user_doesnt_create(self):
+        artist = create_artist_t(local=False)
+        self.create_and_login_artist_user(artist)
         self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
         self.assertEqual(Venue.objects.all().count(), 0)
 
