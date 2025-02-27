@@ -7,7 +7,7 @@ from findshows.forms import TempArtistForm
 from findshows.models import Artist
 
 from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_concert_t, create_musicbrainz_artist_t, image_file_t
-from findshows.views import is_artist_account
+from findshows.views import is_artist_account, is_local_artist_account
 
 
 class IsArtistAccountTests(TestCaseHelpers):
@@ -25,6 +25,36 @@ class IsArtistAccountTests(TestCaseHelpers):
         response = self.client.get(reverse("findshows:home"))
         user = response.wsgi_request.user
         self.assertFalse(is_artist_account(user))
+
+
+class IsLocalArtistAccountTests(TestCaseHelpers):
+    def test_is_local_artist_account(self):
+        user_profile = self.create_and_login_artist_user(
+            artist=create_artist_t(local=True)
+        )
+        self.assertTrue(is_local_artist_account(user_profile.user))
+
+
+    def test_is_not_local_artist_account(self):
+        user_profile = self.create_and_login_artist_user(
+            artist=create_artist_t(local=False)
+        )
+        self.assertFalse(is_local_artist_account(user_profile.user))
+
+
+    def test_is_local_artist_account_multi_mixed_artists(self):
+        artist1 = create_artist_t(local=False)
+        artist2 = create_artist_t(local=True)
+        user_profile = self.create_and_login_artist_user(artist=artist1)
+        user_profile.managed_artists.add(artist2)
+        self.assertTrue(is_local_artist_account(user_profile.user))
+
+
+    def test_not_logged_in(self):
+        response = self.client.get(reverse("findshows:home"))
+        user = response.wsgi_request.user
+        self.assertFalse(is_local_artist_account(user))
+
 
 
 class ManagedArtistListTests(TestCaseHelpers):
