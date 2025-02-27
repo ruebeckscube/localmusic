@@ -130,6 +130,12 @@ class CreateConcertTests(TestCaseHelpers):
         self.assert_redirects_to_login(reverse("findshows:create_concert"))
 
 
+    def test_non_local_artist_user_create_new_concert_redirects(self):
+        artist = create_artist_t(local=False)
+        self.create_and_login_artist_user(artist)
+        self.assert_redirects_to_login(reverse("findshows:create_concert"))
+
+
     def test_artist_user_can_create_new_concert(self):
         self.create_and_login_artist_user()
         response = self.client.get(reverse("findshows:create_concert"))

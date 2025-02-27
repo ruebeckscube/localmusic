@@ -197,7 +197,7 @@ def records_created_today(model, userprofile):
     return len(records)
 
 
-@user_passes_test(is_artist_account)
+@user_passes_test(is_local_artist_account)
 def edit_concert(request, pk=None):
     if pk is None:
         if records_created_today(Concert, request.user.userprofile) >= settings.MAX_DAILY_CONCERT_CREATES:
