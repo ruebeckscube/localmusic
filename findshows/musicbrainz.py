@@ -1,6 +1,5 @@
 import requests
-from time import sleep
-import warnings
+import logging
 
 from django.conf import settings
 
@@ -10,6 +9,7 @@ AUTH_HEADER = {
     "Authorization": "Token {0}".format(settings.MUSICBRAINZ_TOKEN)
 }
 
+logger = logging.getLogger(__name__)
 
 def get_similar_artists(mbid=None):
     """Similarity scores from the Musicbrainz algorithm, described here:
@@ -25,7 +25,7 @@ def get_similar_artists(mbid=None):
     response = requests.get(url, params, headers=AUTH_HEADER)
 
     if response.status_code != 200:
-        warnings.warn("MusicBrainz API for finding similar artists was called unsuccessfully.")
+        logger.error(f"MusicBrainz API for finding similar artists returned status code {response.status_code}.")
         return None
 
     try:
@@ -35,7 +35,7 @@ def get_similar_artists(mbid=None):
         max_score = max(a['score'] for a in artist_list)
         return {a['artist_mbid']: a['score']/max_score for a in artist_list}
     except KeyError:
-        warnings.warn("MusicBrainz API for finding similar artists returned unexpected JSON.")
+        logger.error("MusicBrainz API for finding similar artists returned unexpected JSON.")
         return None
 
 

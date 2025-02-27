@@ -20,7 +20,8 @@ class GetSimilarArtistTests(TestCase):
                          {'123': 1, '456': .7, '789': .3})
 
 
-    def test_bad_status_code(self, request_mock: MagicMock):
+    @patch('findshows.musicbrainz.logger')
+    def test_bad_status_code(self, logger_mock: MagicMock, request_mock: MagicMock):
         response = MagicMock()
         response.status_code = 403
         response.json = MagicMock(return_value=[
@@ -30,11 +31,12 @@ class GetSimilarArtistTests(TestCase):
         ])
         request_mock.return_value = response
 
-        with self.assertWarnsMessage(Warning, "MusicBrainz API for finding similar artists was called unsuccessfully."):
-            self.assertEqual(musicbrainz.get_similar_artists('999'), None)
+        self.assertEqual(musicbrainz.get_similar_artists('999'), None)
+        logger_mock.error.assert_called_once_with("MusicBrainz API for finding similar artists returned status code 403.")
 
 
-    def test_bad_json(self, request_mock: MagicMock):
+    @patch('findshows.musicbrainz.logger')
+    def test_bad_json(self, logger_mock: MagicMock, request_mock: MagicMock):
         response = MagicMock()
         response.status_code = 200
         response.json = MagicMock(return_value=[
@@ -44,8 +46,8 @@ class GetSimilarArtistTests(TestCase):
         ])
         request_mock.return_value = response
 
-        with self.assertWarnsMessage(Warning, "MusicBrainz API for finding similar artists returned unexpected JSON."):
-            self.assertEqual(musicbrainz.get_similar_artists('999'), None)
+        self.assertEqual(musicbrainz.get_similar_artists('999'), None)
+        logger_mock.error.assert_called_once_with("MusicBrainz API for finding similar artists returned unexpected JSON.")
 
 
     def test_empty_response(self, request_mock: MagicMock):
