@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from findshows import musicbrainz
 
-@patch('requests.get')
+@patch('findshows.musicbrainz.requests.get')
 class GetSimilarArtistTests(TestCase):
     def test_expected_response(self, request_mock: MagicMock):
         response = MagicMock()
@@ -18,6 +18,7 @@ class GetSimilarArtistTests(TestCase):
 
         self.assertEqual(musicbrainz.get_similar_artists('999'),
                          {'123': 1, '456': .7, '789': .3})
+        request_mock.assert_called_once()
 
 
     @patch('findshows.musicbrainz.logger')
@@ -33,6 +34,7 @@ class GetSimilarArtistTests(TestCase):
 
         self.assertEqual(musicbrainz.get_similar_artists('999'), None)
         logger_mock.error.assert_called_once_with("MusicBrainz API for finding similar artists returned status code 403.")
+        request_mock.assert_called_once()
 
 
     @patch('findshows.musicbrainz.logger')
@@ -48,6 +50,7 @@ class GetSimilarArtistTests(TestCase):
 
         self.assertEqual(musicbrainz.get_similar_artists('999'), None)
         logger_mock.error.assert_called_once_with("MusicBrainz API for finding similar artists returned unexpected JSON.")
+        request_mock.assert_called_once()
 
 
     def test_empty_response(self, request_mock: MagicMock):
@@ -57,3 +60,4 @@ class GetSimilarArtistTests(TestCase):
         request_mock.return_value = response
 
         self.assertEqual(musicbrainz.get_similar_artists('999'), {})
+        request_mock.assert_called_once()
