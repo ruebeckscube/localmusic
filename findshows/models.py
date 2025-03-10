@@ -1,8 +1,11 @@
 from datetime import timedelta
+import hashlib
+import random
 from urllib.parse import urlparse, parse_qs
 import urllib.request
 import re
 from statistics import mean
+import secrets
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -140,6 +143,11 @@ class Artist(models.Model):
     local=models.BooleanField()
     temp_email=models.EmailField(blank=True)
 
+    invited_by=models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True, editable=False)
+    invited_datetime=models.DateTimeField(blank=True, null=True, editable=False)
+    requested_datetime=models.DateTimeField(blank=True, null=True, editable=False)
+    is_temp_artist=models.BooleanField(default=True)
+
     # Here we store the artist's raw input for listening links. Either an album
     # link or a line-separated list of track links (up to 3). ALSO includes Youtube Links.
     # See below for test values
@@ -259,6 +267,36 @@ def _parse_youtube_id(parsed_url):
             if len(path_list) == 2:
                 return path_list[1]
     return ""
+
+
+class ArtistLinkingInfo(models.Model):
+    invited_email=models.EmailField()
+    expiration_datetime=models.DateTimeField()
+    invite_code_hashed=models.CharField(unique=True, max_length=128)
+    artist=models.ForeignKey(Artist, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (('invited_email', 'artist'),)
+
+
+    def _calculate_stored_hash(self, invite_code, salt):
+        hash = hashlib.sha256(invite_code.encode() + salt.encode()).hexdigest()
+        return '%s$%s' % (salt, hash)
+
+
+    def check_invite_code(self, invite_code):
+        salt = self.invite_code_hashed.split('$')[0]
+        hash = self._calculate_stored_hash(invite_code, salt)
+        return hash == self.invite_code_hashed
+
+
+    def generate_invite_code(self):
+        """Model MUST be saved after this function is called."""
+        invite_code = secrets.token_urlsafe(32)
+        salt = secrets.token_urlsafe(32)
+        self.invite_code_hashed = self._calculate_stored_hash(invite_code, salt)
+        self.expiration_datetime = now() + timedelta(settings.INVITE_CODE_EXPIRATION_DAYS)
+        return invite_code
 
 
 class ConcertTags(models.TextChoices):
