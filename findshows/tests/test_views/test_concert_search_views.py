@@ -124,6 +124,20 @@ class ConcertSearchResultsTests(TestCaseHelpers):
         self.assert_equal_as_sets(response.context['concerts'], [concert1, concert2, concert3, concert4])
 
 
+    def test_temp_artist_filtering(self):
+        non_temp_artist = create_artist_t()
+        temp_artist = create_artist_t(is_temp_artist=True)
+        # at least one temp artist
+        concert1 = create_concert_t(timezone_today() + timedelta(1), artists=[temp_artist, non_temp_artist])
+        # no temp artists
+        concert2 = create_concert_t(timezone_today() + timedelta(1))
+
+        get_params = concert_GET_params(timezone_today() + timedelta(1))
+
+        response = self.client.get(reverse('findshows:concert_search_results'), get_params)
+        self.assert_equal_as_sets(response.context['concerts'], [concert2])
+
+
     def test_similarity_sorting(self):
     # Setting up clusters of similar MusicBrainz artists, where each artist
         # is .7 similar to other artists in its cluster and unrelated to other clusters.

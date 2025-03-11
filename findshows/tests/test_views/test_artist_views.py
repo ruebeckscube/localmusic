@@ -1,11 +1,14 @@
 import datetime
 import json
+from unittest.mock import patch, MagicMock
 
 from django.urls import reverse
+from django.utils import timezone
 from django.views.generic.dates import timezone_today
-from findshows.forms import TempArtistForm
-from findshows.models import Artist
+from django.conf import settings
 
+from findshows.forms import TempArtistForm
+from findshows.models import Artist, ArtistLinkingInfo
 from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_concert_t, create_musicbrainz_artist_t, image_file_t
 from findshows.views import is_artist_account, is_local_artist_account
 
@@ -199,10 +202,11 @@ class EditArtistTests(TestCaseHelpers):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/edit_artist.html')
         self.assertEqual(response.context['form'].instance, artist)
+        self.assertNotIn('This artist listing has not been filled out', str(response.content))
 
 
     def test_edit_artist_successful_POST(self):
-        artist_before = create_artist_t()
+        artist_before = create_artist_t(is_temp_artist=True)
         self.create_and_login_artist_user(artist_before)
         post_request = artist_post_request()
 
@@ -211,6 +215,14 @@ class EditArtistTests(TestCaseHelpers):
 
         artist_after = Artist.objects.get(pk=artist_before.pk)
         self.assertEqual(artist_after.name, post_request['name'])
+        self.assertFalse(artist_after.is_temp_artist)
+
+
+    def test_temp_artist_shows_banner(self):
+        artist = create_artist_t(is_temp_artist=True)
+        self.create_and_login_artist_user(artist)
+        response = self.client.get(reverse("findshows:edit_artist", args=(artist.pk,)))
+        self.assertIn('This artist listing has not been filled out', str(response.content))
 
 
 class ArtistSearchTests(TestCaseHelpers):
@@ -290,3 +302,105 @@ class CreateTempArtistTests(TestCaseHelpers):
         self.assertFalse('HX-Trigger' in response.headers)
 
         self.assert_emails_sent(0)
+
+
+class LinkArtistTests(TestCaseHelpers):
+    def test_successful_link_temp_artist(self):
+        artist = create_artist_t(is_temp_artist=True)
+        user = self.create_and_login_non_artist_user()
+        ali = ArtistLinkingInfo(invited_email=user.user.email, artist=artist)
+        invite_code = ali.generate_invite_code()
+        ali.save()
+        response = self.client.get(reverse('findshows:link_artist'),
+                                   query_params={'invite_id': str(ali.pk), 'invite_code': invite_code}
+                                   )
+        self.assertRedirects(response, reverse('findshows:edit_artist', args=(artist.pk,)))
+        self.assertIn(artist, user.managed_artists.all())
+        self.assertEqual(0, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())
+
+
+    def test_successful_link_existing_artist(self):
+        artist = create_artist_t(is_temp_artist=False)
+        user = self.create_and_login_non_artist_user()
+        ali = ArtistLinkingInfo(invited_email=user.user.email, artist=artist)
+        invite_code = ali.generate_invite_code()
+        ali.save()
+        response = self.client.get(reverse('findshows:link_artist'),
+                                   query_params={'invite_id': str(ali.pk), 'invite_code': invite_code})
+        self.assertRedirects(response, reverse('findshows:view_artist', args=(artist.pk,)))
+        self.assertIn(artist, user.managed_artists.all())
+        self.assertEqual(0, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())
+
+
+    def test_missing_params(self):
+        user = self.create_and_login_non_artist_user()
+        response = self.client.get(reverse('findshows:link_artist'),
+                                   query_params={'invite_id': ''})
+        self.assertTemplateUsed(response, 'findshows/pages/artist_link_failure.html')
+        self.assertIn('error', response.context)
+        self.assertIn('Bad invite URL', response.context['error'])
+
+
+    def test_redirects_to_login(self):
+        url = reverse('findshows:link_artist')
+        response = self.client.get(url)
+        self.assertRedirects(response, f"{reverse('login')}?next={url}")
+
+
+    def test_invite_id_doesnt_exist(self):
+        user = self.create_and_login_non_artist_user()
+        response = self.client.get(reverse('findshows:link_artist'),
+                                   query_params={'invite_id': '123', 'invite_code': 'ESOSdtoeia928y'})
+        self.assertTemplateUsed(response, 'findshows/pages/artist_link_failure.html')
+        self.assertIn('error', response.context)
+        self.assertIn('Could not find invite', response.context['error'])
+
+
+    def test_bad_invite_code(self):
+        artist = create_artist_t(is_temp_artist=True)
+        user = self.create_and_login_non_artist_user()
+        ali = ArtistLinkingInfo(invited_email=user.user.email, artist=artist)
+        invite_code = ali.generate_invite_code()
+        ali.save()
+        response = self.client.get(reverse('findshows:link_artist'),
+                                   query_params={'invite_id': str(ali.pk), 'invite_code': invite_code + '123'}
+                                   )
+        self.assertTemplateUsed(response, 'findshows/pages/artist_link_failure.html')
+        self.assertIn('error', response.context)
+        self.assertIn('Invite code invalid', response.context['error'])
+        self.assertNotIn(artist, user.managed_artists.all())
+        self.assertEqual(1, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())
+
+
+    @patch('findshows.views.timezone')
+    def test_expired_invite_code(self, mock_timezone: MagicMock):
+        artist = create_artist_t(is_temp_artist=True)
+        user = self.create_and_login_non_artist_user()
+        ali = ArtistLinkingInfo(invited_email=user.user.email, artist=artist)
+        invite_code = ali.generate_invite_code()
+        ali.save()
+        mock_timezone.now.return_value = timezone.now() + datetime.timedelta(settings.INVITE_CODE_EXPIRATION_DAYS + 2)
+        response = self.client.get(reverse('findshows:link_artist'),
+                                   query_params={'invite_id': str(ali.pk), 'invite_code': invite_code}
+                                   )
+        self.assertTemplateUsed(response, 'findshows/pages/artist_link_failure.html')
+        self.assertIn('error', response.context)
+        self.assertIn('Invite code expired', response.context['error'])
+        self.assertNotIn(artist, user.managed_artists.all())
+        self.assertEqual(1, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())
+
+
+    def test_user_email_doesnt_match(self):
+        artist = create_artist_t(is_temp_artist=True)
+        user = self.create_and_login_non_artist_user()
+        ali = ArtistLinkingInfo(invited_email='different@em.ail', artist=artist)
+        invite_code = ali.generate_invite_code()
+        ali.save()
+        response = self.client.get(reverse('findshows:link_artist'),
+                                   query_params={'invite_id': str(ali.pk), 'invite_code': invite_code}
+                                   )
+        self.assertTemplateUsed(response, 'findshows/pages/artist_link_failure.html')
+        self.assertIn('error', response.context)
+        self.assertIn("User's email does not match", response.context['error'])
+        self.assertNotIn(artist, user.managed_artists.all())
+        self.assertEqual(1, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())

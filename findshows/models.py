@@ -146,7 +146,7 @@ class Artist(models.Model):
     invited_by=models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True, editable=False)
     invited_datetime=models.DateTimeField(blank=True, null=True, editable=False)
     requested_datetime=models.DateTimeField(blank=True, null=True, editable=False)
-    is_temp_artist=models.BooleanField(default=True)
+    is_temp_artist=models.BooleanField()
 
     # Here we store the artist's raw input for listening links. Either an album
     # link or a line-separated list of track links (up to 3). ALSO includes Youtube Links.

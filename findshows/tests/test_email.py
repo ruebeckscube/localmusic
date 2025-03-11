@@ -1,11 +1,14 @@
+from datetime import timedelta
 from smtplib import SMTPConnectError
 from unittest.mock import MagicMock, patch
 from django.conf import settings
 
 from django.core import mail
 from django.urls import reverse
+from django.views.generic.dates import timezone_today
 
 from findshows.email import send_mail_helper, send_mass_html_mail, send_rec_email
+from findshows.models import UserProfile
 from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_concert_t, create_musicbrainz_artist_t, create_user_profile_t
 
 
@@ -53,9 +56,31 @@ class SendMassHtmlMailTests(TestCaseHelpers):
 
 
 class SendRecEmailTests(TestCaseHelpers):
-    def assert_concert_link_in_message_html(self, concert, message):
-        self.assertIn(f"{settings.HOST_NAME}{reverse('findshows:view_concert', args=(concert.pk,))}",
-                          message.alternatives[0][0])
+    def assert_concert_link_in_message_html(self, concert, message, assert_not = False):
+        needle = f"{settings.HOST_NAME}{reverse('findshows:view_concert', args=(concert.pk,))}"
+        haystack = message.alternatives[0][0]
+        if assert_not:
+            self.assertNotIn(needle, haystack)
+        else:
+            self.assertIn(needle, haystack)
+
+
+    def test_temp_artist_filtering(self):
+        non_temp_artist = create_artist_t()
+        temp_artist = create_artist_t(is_temp_artist=True)
+
+        concert_creator = create_user_profile_t(weekly_email=False)
+        # at least one temp artist
+        concert1 = create_concert_t(timezone_today() + timedelta(1), artists=[temp_artist, non_temp_artist], created_by=concert_creator)
+        # no temp artists
+        concert2 = create_concert_t(timezone_today() + timedelta(1), created_by = concert_creator)
+
+        create_user_profile_t(email="user1@em.ail")
+        send_rec_email('subject', 'header')
+        self.assert_emails_sent(1)
+        self.assert_concert_link_in_message_html(concert2, mail.outbox[0])
+        self.assert_concert_link_in_message_html(concert1, mail.outbox[0], True)
+
 
     def test_success(self):
         # Setting up clusters of similar MusicBrainz artists, where each artist

@@ -82,8 +82,17 @@ def create_user_profile_t(username=None,
     return user_profile
 
 
-def create_artist_t(name="Test Artist", local=True, similar_musicbrainz_artists=None, listen_links="", youtube_links=""):
-    artist = Artist.objects.create(name=name, local=local, listen_links=listen_links, youtube_links=youtube_links)
+def create_artist_t(name="Test Artist",
+                    local=True,
+                    similar_musicbrainz_artists=None,
+                    listen_links="",
+                    youtube_links="",
+                    is_temp_artist=False):
+    artist = Artist.objects.create(name=name,
+                                   local=local,
+                                   listen_links=listen_links,
+                                   youtube_links=youtube_links,
+                                   is_temp_artist=is_temp_artist)
     if similar_musicbrainz_artists is not None:
         artist.similar_musicbrainz_artists.set(similar_musicbrainz_artists)
     return artist

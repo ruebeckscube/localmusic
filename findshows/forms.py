@@ -49,6 +49,13 @@ class ArtistEditForm(forms.ModelForm):
         widgets={"similar_musicbrainz_artists": MusicBrainzArtistSearchWidget,
                  "socials_links": SocialsLinksWidget}
 
+    def save(self, commit = True):
+        artist = super().save(commit=False)
+        artist.is_temp_artist = False
+        if commit:
+            artist.save()
+        return artist
+
 
 class ConcertForm(forms.ModelForm):
     date = DatePickerField()
@@ -135,6 +142,14 @@ class TempArtistForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['temp_email'].required = True
+
+    def save(self, commit = True):
+        artist = super().save(commit=False)
+        artist.is_temp_artist = True
+        if commit:
+            artist.save()
+        return artist
+
 
 
 class ShowFinderForm(forms.Form):

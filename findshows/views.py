@@ -7,7 +7,7 @@ from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.views import generic
-from django.http import HttpResponse
+from django.http import HttpResponse, QueryDict
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
@@ -17,7 +17,7 @@ from django.conf import settings
 
 from findshows.email import contact_email, invite_artist, send_artist_setup_info
 
-from .models import Artist, Concert, ConcertTags, MusicBrainzArtist, Venue
+from .models import Artist, ArtistLinkingInfo, Concert, ConcertTags, MusicBrainzArtist, Venue
 from .forms import ArtistEditForm, ConcertForm, ContactForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
 
 
@@ -133,7 +133,8 @@ def edit_artist(request, pk):
             return redirect(reverse('findshows:view_artist', args=[pk]))
 
     context = {'form': form,
-               'pk': pk }
+               'pk': pk,
+               'is_temp_artist': artist.is_temp_artist}
 
     return render(request, 'findshows/pages/edit_artist.html', context)
 
@@ -180,6 +181,41 @@ def create_temp_artist(request):
                 "created_temp_artist_id": artist.id}})
 
     return response
+
+
+@login_required
+def link_artist(request):
+    error_template = "findshows/pages/artist_link_failure.html"
+
+    invite_id = request.GET.get('invite_id')
+    invite_code = request.GET.get('invite_code')
+
+    if not (invite_id and invite_code):
+        return render(request, error_template,
+                      {'error': 'Bad invite URL. Make sure you clicked the link in your email or copied it correctly; if this error persists, please contact site admins.'})
+    try:
+        artist_linking_info = ArtistLinkingInfo.objects.get(id=invite_id)
+    except ArtistLinkingInfo.DoesNotExist:
+        return render(request, error_template,
+                      {'error': 'Could not find invite in the database. Please reach out to the artist or mod who invited you and request they re-send it.'})
+    if request.user.email != artist_linking_info.invited_email:
+        return render(request, error_template,
+                      {'error': "User's email does not match the invited email. Please log back in with an account associated with the email that the invite was sent to, or request a new invite with the correct email."})
+    if artist_linking_info.expiration_datetime < timezone.now():
+        return render(request, error_template,
+                      {'error': "Invite code expired. Please reach out to the artist or mod who invited you and request they re-send it."})
+    if not artist_linking_info.check_invite_code(invite_code):
+        return render(request, error_template,
+                      {'error': "Invite code invalid. Make sure you clicked the link in your email or copied it correctly; if this error persists, please contact site admins."})
+
+    artist = artist_linking_info.artist
+    request.user.userprofile.managed_artists.add(artist)
+    artist_linking_info.delete()
+
+    if artist.is_temp_artist:
+        return redirect(reverse('findshows:edit_artist', args=(artist.pk,)))
+    else:
+        return redirect(reverse('findshows:view_artist', args=(artist.pk,)))
 
 
 #####################
@@ -345,6 +381,8 @@ def concert_search_results(request):
 
         if search_form.cleaned_data['concert_tags']: # no concert tags = all concert tags
             concerts = concerts.filter(reduce(or_, (Q(tags__icontains=t) for t in search_form.cleaned_data['concert_tags'])))
+
+        concerts = concerts.exclude(artists__is_temp_artist=True)
 
         searched_musicbrainz_artists = search_form.cleaned_data.get('musicbrainz_artists', [])
         concerts = list(concerts)

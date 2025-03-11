@@ -1,6 +1,13 @@
 {% extends "localmusic/base.html" %}
 
 {% block content %}
+    {% if is_temp_artist %}
+        <div>
+            NOTE: This artist listing has not been filled out; Any concerts
+            that include this artist will not be displayed publically
+            until this form is completed.
+        </div>
+    {% endif %}
     <form method="post" action="{% url 'findshows:edit_artist' pk %}">
         {% csrf_token %}
         <div>

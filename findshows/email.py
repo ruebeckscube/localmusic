@@ -86,6 +86,12 @@ def send_mass_html_mail(datatuples):
     return sent
 
 
+def artist_invite_url(artist_linking_info, invite_code):
+    qs = {'invite_id': artist_linking_info.id,
+          'invite_code': invite_code}
+    return settings.HOST_NAME + reverse("findshows:link_artist") + '?' + urlencode(qs, doseq=True)
+
+
 def rec_email_generator(header_message):
     user_profiles = UserProfile.objects.filter(weekly_email=True)
     today = datetime.date.today()
@@ -95,6 +101,7 @@ def rec_email_generator(header_message):
                       'is_date_range': True}
 
     next_week_concerts = Concert.objects.filter(date__gte=today, date__lte=week_later)
+    next_week_concerts = next_week_concerts.exclude(artists__is_temp_artist=True)
     for user_profile in user_profiles:
         search_params['musicbrainz_artists'] = [mb_artist.mbid
                                                 for mb_artist in user_profile.favorite_musicbrainz_artists.all()]
