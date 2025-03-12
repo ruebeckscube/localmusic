@@ -13,6 +13,9 @@
             <input type="submit" value="save">
         </div>
 
-    </form>
+        {% if is_local_artist_account %}
+            {% include "../partials/temp_artist_modal.html" %}
+        {% endif %}
 
+    </form>
 {% endblock %}

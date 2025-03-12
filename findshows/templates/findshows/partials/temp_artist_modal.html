@@ -25,6 +25,9 @@ modal based on https://alpinetoolbox.com/examples/modal
     <button type="button" class="bg-transparent border border-gray-500 hover:border-indigo-500 text-gray-500 hover:text-indigo-500 font-bold py-2 px-4 rounded-full" @click="open_modal()">
         Invite artist
     </button>
+    <div x-show="show_success">
+        Invite sent successfully!
+    </div>
 
     <!--Overlay-->
     <div class="overflow-auto" style="background-color: rgba(0,0,0,0.5)" x-show="show_modal" :class="{ 'absolute inset-0 z-10 flex items-center justify-center': show_modal }">
@@ -53,7 +56,7 @@ modal based on https://alpinetoolbox.com/examples/modal
                         hx-post="{% url 'findshows:create_temp_artist' %}"
                         hx-trigger="click,load"
                         hx-target="#temp-artist-form"
-                        @successfully-created-temp-artist="close_modal"
+                        @successfully-created-temp-artist="on_successful_create"
                 >Create</button>
             </div>
 
@@ -68,14 +71,21 @@ modal based on https://alpinetoolbox.com/examples/modal
  function temp_artist_modal_data() {
      return {
          show_modal: false,
+         show_success: false,
 
          open_modal() {
              this.show_modal = true;
+             this.show_success = false;
          },
 
          close_modal() {
              this.show_modal = false;
          },
+
+         on_successful_create() {
+             this.show_success = true;
+             this.close_modal();
+         }
      }
  }
 </script>

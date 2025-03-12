@@ -43,17 +43,17 @@ def contact(request):
 
 @login_required
 def user_settings(request):
-    user_profile = request.user.userprofile
     if request.POST:
-        form = UserProfileForm(request.POST, instance=user_profile)
+        form = UserProfileForm(request.POST, instance=request.user.userprofile)
         if form.is_valid():
             form.save()
             return redirect('findshows:home')
     else:
-        form = UserProfileForm(instance=user_profile)
+        form = UserProfileForm(instance=request.user.userprofile)
 
     return render(request, "findshows/pages/user_settings.html", context={
-        "form": form
+        "form": form,
+        "is_local_artist_account": is_local_artist_account(request.user)
     })
 
 

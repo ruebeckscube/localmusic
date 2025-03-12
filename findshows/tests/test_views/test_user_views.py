@@ -74,6 +74,18 @@ class UserSettingsTests(TestCaseHelpers):
         self.assertEqual(userProfile.preferred_concert_tags, data['preferred_concert_tags'])
 
 
+    def test_artist_user_can_invite(self):
+        self.create_and_login_artist_user()
+        response = self.client.get(reverse("findshows:user_settings"))
+        self.assertTemplateUsed(response, 'findshows/partials/temp_artist_modal.html')
+
+
+    def test_non_artist_user_cant_invite(self):
+        self.create_and_login_non_artist_user()
+        response = self.client.get(reverse("findshows:user_settings"))
+        self.assertTemplateNotUsed(response, 'findshows/partials/temp_artist_modal.html')
+
+
     # # Not currently any way to make this form invalid
     # def test_user_settings_POST_fail(self):
     #     user = self.create_and_login_non_artist_user()
