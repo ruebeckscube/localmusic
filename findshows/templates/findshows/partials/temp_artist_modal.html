@@ -43,7 +43,7 @@ modal based on https://alpinetoolbox.com/examples/modal
 
             <!-- content -->
             <div id="temp-artist-form" class= "flex flex-col">
-                {{ temp_artist_form }}
+                {% include "../htmx/temp_artist_form.html" %}
             </div>
 
             <!--Footer-->
@@ -51,7 +51,7 @@ modal based on https://alpinetoolbox.com/examples/modal
                 <button type="button" class="px-4  p-3 bg-transparent rounded-lg text-indigo-500 hover:bg-gray-100 hover:text-indigo-400" @click="close_modal()">Close</button>
                 <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
                         hx-post="{% url 'findshows:create_temp_artist' %}"
-                        hx-trigger="click"
+                        hx-trigger="click,load"
                         hx-target="#temp-artist-form"
                         @successfully-created-temp-artist="close_modal"
                 >Create</button>

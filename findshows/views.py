@@ -159,7 +159,11 @@ def create_temp_artist(request):
     if not is_local_artist_account(request.user):
         return HttpResponse('')
 
-    if request.POST:
+    # The latter condition is a slightly hacky way of telling whether this HTMX
+    # request is being triggered by page load (form does not exist yet, we
+    # should provide blank form) or click (we should process form and display
+    # errors if they exist)
+    if request.POST and 'temp_artist-name' in request.POST:
         temp_artist_form = TempArtistForm(request.POST)
     else:
         temp_artist_form = TempArtistForm()
