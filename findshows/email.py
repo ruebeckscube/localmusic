@@ -35,7 +35,7 @@ def send_mail_helper(subject, message, recipient_list, form=None, from_email=Non
 def invite_artist(taf: TempArtistForm):
     subject = "Make your profile on ChicagoLocalMusic.com"
     message = "This will include instructions and a code or link to create an account & link it to the specific artist provided as an argument."
-    return send_mail_helper(subject, message, [taf.cleaned_data['temp_email']], taf)
+    return send_mail_helper(subject, message, [taf.cleaned_data['email']], taf)
 
 
 def send_artist_setup_info(user_email: str):

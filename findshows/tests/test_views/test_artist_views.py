@@ -250,7 +250,7 @@ def temp_artist_post_data():
     return {
         'temp_artist-name': 'test name 123',
         'temp_artist-local': ['on'],
-        'temp_artist-temp_email': ['nht@snoth.soh']
+        'temp_artist-email': ['nht@snoth.soh']
     }
 
 class CreateTempArtistTests(TestCaseHelpers):

@@ -141,7 +141,6 @@ class Artist(models.Model):
     profile_picture=models.ImageField(blank=True)
     bio=models.TextField(blank=True)
     local=models.BooleanField()
-    temp_email=models.EmailField(blank=True)
 
     invited_by=models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True, editable=False)
     invited_datetime=models.DateTimeField(blank=True, null=True, editable=False)

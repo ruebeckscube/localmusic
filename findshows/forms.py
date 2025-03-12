@@ -134,14 +134,11 @@ class VenueForm(forms.ModelForm):
 class TempArtistForm(forms.ModelForm):
     prefix = "temp_artist"
     use_required_attribute = False
+    email=forms.EmailField(required=True)
 
     class Meta:
         model=Artist
-        fields=("name", "local", "temp_email")
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['temp_email'].required = True
+        fields=("name", "local")
 
     def save(self, commit = True):
         artist = super().save(commit=False)
