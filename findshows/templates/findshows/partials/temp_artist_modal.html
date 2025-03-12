@@ -1,0 +1,81 @@
+{% comment %}
+A re-usable button + modal for creating temp artists.
+On successful create, it raises the event successfully-created-temp-artist.
+
+To consume, include it as:
+    <div @successfully-created-temp-artist="on_temp_artist_create">
+        {% include "../partials/temp_artist_modal.html" %}
+    </div>
+
+And in your alpine data definitions:
+    on_temp_artist_create(event) {
+        name = event.detail.created_temp_artist_name
+        id = event.detail.created_temp_artist_id
+        //further processing
+    }
+
+modal based on https://alpinetoolbox.com/examples/modal
+{% endcomment %}
+
+<div x-data="temp_artist_modal_data()"
+     @keydown.escape="close_modal()"
+     x-cloak
+>
+
+    <button type="button" class="bg-transparent border border-gray-500 hover:border-indigo-500 text-gray-500 hover:text-indigo-500 font-bold py-2 px-4 rounded-full" @click="open_modal()">
+        Invite artist
+    </button>
+
+    <!--Overlay-->
+    <div class="overflow-auto" style="background-color: rgba(0,0,0,0.5)" x-show="show_modal" :class="{ 'absolute inset-0 z-10 flex items-center justify-center': show_modal }">
+        <!--Dialog-->
+        <div class="bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg py-4 text-left px-6" x-show="show_modal" @click.away="close_modal()">
+
+            <!--Title-->
+            <div class="flex justify-between items-center pb-3">
+                <p class="text-2xl font-bold">Invite artist</p>
+                <div class="cursor-pointer z-50" @click="close_modal()">
+                    <svg class="fill-current text-black" width="18" height="18" viewBox="0 0 18 18">
+                        <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- content -->
+            <div id="temp-artist-form" class= "flex flex-col">
+                {{ temp_artist_form }}
+            </div>
+
+            <!--Footer-->
+            <div class="flex justify-end pt-2">
+                <button type="button" class="px-4  p-3 bg-transparent rounded-lg text-indigo-500 hover:bg-gray-100 hover:text-indigo-400" @click="close_modal()">Close</button>
+                <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
+                        hx-post="{% url 'findshows:create_temp_artist' %}"
+                        hx-trigger="click"
+                        hx-target="#temp-artist-form"
+                        @successfully-created-temp-artist="close_modal"
+                >Create</button>
+            </div>
+
+
+        </div>
+        <!--/Dialog -->
+    </div><!-- /Overlay -->
+
+</div>
+
+<script>
+ function temp_artist_modal_data() {
+     return {
+         show_modal: false,
+
+         open_modal() {
+             this.show_modal = true;
+         },
+
+         close_modal() {
+             this.show_modal = false;
+         },
+     }
+ }
+</script>
