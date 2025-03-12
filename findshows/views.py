@@ -61,9 +61,12 @@ def create_account(request):
     if request.method != 'POST':
         user_form = UserCreationFormE()
         profile_form = UserProfileForm()
+        next = request.GET.get('next')
     else:
         user_form = UserCreationFormE(request.POST)
         profile_form = UserProfileForm(request.POST)
+        next = request.POST.get('next')
+
         if user_form.is_valid() and profile_form.is_valid():
             user = user_form.save()
             profile = profile_form.save(commit=False)
@@ -72,10 +75,14 @@ def create_account(request):
             if "sendartistinfo" in request.POST:
                 send_artist_setup_info(user.email)
             login(request, user)
-            return redirect('findshows:home')
+            if next:
+                return redirect(next)
+            else:
+                return redirect('findshows:home')
 
     context = {'user_form': user_form,
                'profile_form': profile_form,
+               'next': next,
                }
 
     return render(request, 'registration/create_account.html', context)

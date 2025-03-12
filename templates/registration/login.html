@@ -33,9 +33,12 @@
 </form>
 
 
-
-<p><a href="{% url 'create_account' %}">Create account</a></p>
-{# Assumes you set up the password_reset view in your URLconf #}
-<p><a href="{% url 'password_reset' %}">Lost password?</a></p>
+{% if next %}
+    <p><a href="{% url 'create_account' %}?next={{ next | urlencode}}">Create account</a></p>
+    <p><a href="{% url 'password_reset' %}?next={{ next | urlencode }}">Lost password?</a></p>
+{% else %}
+    <p><a href="{% url 'create_account' %}">Create account</a></p>
+    <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
+{% endif %}
 
 {% endblock %}
