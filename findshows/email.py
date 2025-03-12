@@ -5,12 +5,13 @@ from smtplib import SMTPException
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, get_connection, send_mail
+from django.forms import Form
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.http import urlencode
 
-from findshows.forms import ContactForm, TempArtistForm
-from findshows.models import Concert, UserProfile
+from findshows.forms import ContactForm
+from findshows.models import ArtistLinkingInfo, Concert, UserProfile
 
 
 logger = logging.getLogger(__name__)
@@ -32,10 +33,16 @@ def send_mail_helper(subject, message, recipient_list, form=None, from_email=Non
         return 0
 
 
-def invite_artist(taf: TempArtistForm):
-    subject = "Make your profile on ChicagoLocalMusic.com"
-    message = "This will include instructions and a code or link to create an account & link it to the specific artist provided as an argument."
-    return send_mail_helper(subject, message, [taf.cleaned_data['email']], taf)
+def artist_invite_url(link_info: ArtistLinkingInfo, invite_code):
+    qs = {'invite_id': link_info.pk,
+          'invite_code': invite_code}
+    return settings.HOST_NAME + reverse("findshows:link_artist") + '?' + urlencode(qs, doseq=True)
+
+
+def invite_artist(link_info: ArtistLinkingInfo, invite_code, form):
+    subject = "Artist profile invite"
+    message = f"You've been invited to create an artist profile on {settings.HOST_NAME}. Click the link to claim it and fill out your profile!\n\n{artist_invite_url(link_info, invite_code)}"
+    return send_mail_helper(subject, message, [link_info.invited_email], form)
 
 
 def send_artist_setup_info(user_email: str):
@@ -84,12 +91,6 @@ def send_mass_html_mail(datatuples):
             except SMTPException as e:
                 logger.error(f"Email failure: {str(e)}")
     return sent
-
-
-def artist_invite_url(artist_linking_info, invite_code):
-    qs = {'invite_id': artist_linking_info.id,
-          'invite_code': invite_code}
-    return settings.HOST_NAME + reverse("findshows:link_artist") + '?' + urlencode(qs, doseq=True)
 
 
 def rec_email_generator(header_message):

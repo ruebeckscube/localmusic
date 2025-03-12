@@ -1,5 +1,6 @@
 import datetime
 import json
+from smtplib import SMTPException
 from unittest.mock import patch, MagicMock
 
 from django.urls import reverse
@@ -283,6 +284,7 @@ class CreateTempArtistTests(TestCaseHelpers):
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
         self.assert_blank_form(response.context['temp_artist_form'], TempArtistForm)
         self.assert_records_created(Artist, 2) # create_and_login_artist_user creates one
+        self.assert_records_created(ArtistLinkingInfo, 1)
 
         self.assertTrue('HX-Trigger' in response.headers)
         hx_trigger = json.loads(response.headers['HX-Trigger'])
@@ -298,6 +300,21 @@ class CreateTempArtistTests(TestCaseHelpers):
         response = self.client.post(reverse("findshows:create_temp_artist"), data)
         self.assert_not_blank_form(response.context['temp_artist_form'], TempArtistForm)
         self.assert_records_created(Artist, 1) # create_and_login_artist_user creates one
+        self.assert_records_created(ArtistLinkingInfo, 0)
+
+        self.assertFalse('HX-Trigger' in response.headers)
+
+        self.assert_emails_sent(0)
+
+    @patch("findshows.email.send_mail")
+    def test_email_fails(self, mock_send_mail):
+        self.create_and_login_artist_user()
+        data=temp_artist_post_data()
+        mock_send_mail.side_effect = SMTPException()
+        response = self.client.post(reverse("findshows:create_temp_artist"), data)
+        self.assert_not_blank_form(response.context['temp_artist_form'], TempArtistForm)
+        self.assert_records_created(Artist, 1) # create_and_login_artist_user creates one
+        self.assert_records_created(ArtistLinkingInfo, 0)
 
         self.assertFalse('HX-Trigger' in response.headers)
 

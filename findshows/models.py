@@ -278,6 +278,14 @@ class ArtistLinkingInfo(models.Model):
         unique_together = (('invited_email', 'artist'),)
 
 
+    @classmethod
+    def create_and_get_invite_code(cls, artist, email):
+        link_info = cls(artist=artist, invited_email=email)
+        invite_code = link_info.generate_invite_code()
+        link_info.save()
+        return link_info, invite_code
+
+
     def _calculate_stored_hash(self, invite_code, salt):
         hash = hashlib.sha256(invite_code.encode() + salt.encode()).hexdigest()
         return '%s$%s' % (salt, hash)

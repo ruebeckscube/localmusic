@@ -164,18 +164,24 @@ def create_temp_artist(request):
     # should provide blank form) or click (we should process form and display
     # errors if they exist)
     if request.POST and 'temp_artist-name' in request.POST:
-        temp_artist_form = TempArtistForm(request.POST)
+        form = TempArtistForm(request.POST)
     else:
-        temp_artist_form = TempArtistForm()
+        form = TempArtistForm()
 
-    # Short-circuit means email is only sent if form is valid
-    valid = temp_artist_form.is_valid() and invite_artist(temp_artist_form)
+    valid = form.is_valid()
     if valid:
-        artist = temp_artist_form.save()
-        temp_artist_form = TempArtistForm()
+        artist = form.save()
+        link_info, invite_code = ArtistLinkingInfo.create_and_get_invite_code(artist, form.cleaned_data['email'])
+
+        if invite_artist(link_info, invite_code, form):
+            form = TempArtistForm()
+        else:
+            link_info.delete()
+            artist.delete()
+            valid = False
 
     response = render(request, "findshows/htmx/temp_artist_form.html", {
-        "temp_artist_form": temp_artist_form,
+        "temp_artist_form": form,
     })
 
     if valid:
