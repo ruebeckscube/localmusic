@@ -89,7 +89,7 @@ class ManagedArtistListTests(TestCaseHelpers):
         self.assert_equal_as_sets(response.context['artists'], [artist1, artist2])
 
 
-class ArtistViewTests(TestCaseHelpers):
+class ViewArtistTests(TestCaseHelpers):
     def test_anonymous_view(self):
         artist = create_artist_t()
         response = self.client.get(reverse("findshows:view_artist", args=(artist.pk,)))
@@ -119,15 +119,27 @@ class ArtistViewTests(TestCaseHelpers):
         artist1 = create_artist_t()
         artist2 = create_artist_t()
         artist3 = create_artist_t()
+        temp_artist = create_artist_t(is_temp_artist=True)
 
         concert12past = create_concert_t(artists=[artist1, artist2], date=timezone_today() - datetime.timedelta(1))
         concert12today = create_concert_t(artists=[artist1, artist2], date=timezone_today())
         concert12future = create_concert_t(artists=[artist1, artist2], date=timezone_today() + datetime.timedelta(1))
         concert23future = create_concert_t(artists=[artist2, artist3], date=timezone_today() + datetime.timedelta(1))
+        concert_with_temp = create_concert_t(artists=[artist1, temp_artist], date=timezone_today())
 
         response = self.client.get(reverse("findshows:view_artist", args=(artist1.pk,)))
 
         self.assert_equal_as_sets(response.context['upcoming_concerts'], [concert12today, concert12future])
+
+
+    def test_temp_artist_can_only_be_viewed_by_artist(self):
+        artist = create_artist_t(is_temp_artist=True)
+        response = self.client.get(reverse("findshows:view_artist", args=(artist.pk,)))
+        self.assertEqual(response.status_code, 403)
+        self.create_and_login_artist_user(artist)
+        response = self.client.get(reverse("findshows:view_artist", args=(artist.pk,)))
+        self.assertEqual(response.status_code, 200)
+
 
 
 def artist_post_request():

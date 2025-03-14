@@ -19,7 +19,15 @@
                         {% endfor %}
                     </div>
                     <div class="col-span-2 my-1">
-                        {% preview_player artist True %}
+                        {% if artist.is_temp_artist %}
+                            <div class="text-red-500 font-bold">
+                                This artist has not yet filled out their
+                                profile; the concert will not be publically
+                                visible until they do.
+                            </div>
+                        {% else %}
+                            {% preview_player artist True %}
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>

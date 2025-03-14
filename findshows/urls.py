@@ -11,7 +11,7 @@ urlpatterns = [
     path('contact/', views.contact, name="contact"),
 
     path("my_artists", views.managed_artist_list, name="managed_artist_list"),
-    path("artist/<int:pk>", views.ArtistView.as_view(), name="view_artist"),
+    path("artist/<int:pk>", views.view_artist, name="view_artist"),
     path("artist/<int:pk>/edit", views.edit_artist, name="edit_artist"),
     path("link_artist", views.link_artist, name="link_artist"),
 

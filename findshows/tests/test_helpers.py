@@ -16,15 +16,15 @@ from findshows.models import Ages, Artist, Concert, ConcertTags, MusicBrainzArti
 @override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
 class TestCaseHelpers(TestCase):
     def create_and_login_non_artist_user(self, **kwargs):
-        user = create_user_profile_t('name', 'pwd', **kwargs)
-        self.client.login(username='name', password='pwd')
+        user = create_user_profile_t(password='pwd', **kwargs)
+        self.client.login(username=user.user.username, password='pwd')
         return user
 
     def create_and_login_artist_user(self, artist=None, **kwargs):
-        user = create_user_profile_t('name', 'pwd', **kwargs)
+        user = create_user_profile_t(password='pwd', **kwargs)
         artist = artist or create_artist_t()
         user.managed_artists.add(artist)
-        self.client.login(username='name', password='pwd')
+        self.client.login(username=user.user.username, password='pwd')
         return user
 
 

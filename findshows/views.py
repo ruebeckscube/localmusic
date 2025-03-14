@@ -111,18 +111,22 @@ def managed_artist_list(request):
     })
 
 
-class ArtistView(generic.DetailView):
-    model = Artist
-    template_name = "findshows/pages/view_artist.html"
+def view_artist(request, pk):
+    artist = get_object_or_404(Artist, pk=pk)
+    can_edit = (not request.user.is_anonymous
+                and artist in request.user.userprofile.managed_artists.all())
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["can_edit"] = (not self.request.user.is_anonymous
-                               and self.object in self.request.user.userprofile.managed_artists.all())
-        context["musicbrainz_artists"] = self.get_object().similar_musicbrainz_artists.all()
-        context["upcoming_concerts"] = self.get_object().concert_set.filter(date__gte=timezone.now())
+    if artist.is_temp_artist and not can_edit:
+        raise PermissionDenied
 
-        return context
+    upcoming_concerts = artist.concert_set.filter(date__gte=timezone.now())
+    upcoming_concerts = upcoming_concerts.exclude(artists__is_temp_artist=True)
+
+    return render(request, "findshows/pages/view_artist.html", context={
+        'artist': artist,
+        'can_edit': can_edit,
+        'upcoming_concerts': upcoming_concerts
+    })
 
 
 @login_required
@@ -249,6 +253,14 @@ def link_artist(request):
 
 def view_concert(request, pk=None):
     concert = get_object_or_404(Concert, pk=pk)
+
+    artists = concert.artists.all()
+    if any(a.is_temp_artist for a in artists):
+        if request.user.is_anonymous:
+            raise PermissionDenied
+        if not set(artists) & set(request.user.userprofile.managed_artists.all()):
+            raise PermissionDenied
+
     return render(request, 'findshows/pages/view_concert.html', {'concert': concert})
 
 

@@ -42,6 +42,23 @@ class ViewConcertTests(TestCaseHelpers):
         response = self.client.get(reverse("findshows:view_concert", args=(1,)))
         self.assertEqual(response.status_code, 404)
 
+    def test_concert_with_temp_artist_is_only_viewable_by_artists_on_bill(self):
+        artist = create_artist_t()
+        temp_artist = create_artist_t(is_temp_artist=True)
+        concert = create_concert_t(artists=[artist, temp_artist])
+        response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
+        self.assertEqual(response.status_code, 403)
+
+        self.create_and_login_artist_user(artist)
+        response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
+        self.assertEqual(response.status_code, 200)
+
+        self.client.logout()
+        self.create_and_login_artist_user()
+        response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
+        self.assertEqual(response.status_code, 403)
+
+
 
 class MyConcertListTests(TestCaseHelpers):
     def test_not_logged_in_my_concert_list_redirects(self):
