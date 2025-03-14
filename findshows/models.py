@@ -118,7 +118,7 @@ class MusicBrainzArtist(models.Model):
         return self.name
 
 
-class Artist(models.Model):
+class Artist(CreationTrackingMixin):
     DSP = "SP"
     BANDCAMP = "BC"
     SOUNDCLOUD = "SC"
@@ -142,8 +142,6 @@ class Artist(models.Model):
     bio=models.TextField(blank=True)
     local=models.BooleanField()
 
-    invited_by=models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True, editable=False)
-    invited_datetime=models.DateTimeField(blank=True, null=True, editable=False)
     requested_datetime=models.DateTimeField(blank=True, null=True, editable=False)
     is_temp_artist=models.BooleanField()
 

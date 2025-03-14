@@ -66,14 +66,14 @@ class SendRecEmailTests(TestCaseHelpers):
 
 
     def test_temp_artist_filtering(self):
-        non_temp_artist = create_artist_t()
-        temp_artist = create_artist_t(is_temp_artist=True)
+        record_creator = create_user_profile_t(weekly_email=False)
+        non_temp_artist = create_artist_t(created_by=record_creator)
+        temp_artist = create_artist_t(is_temp_artist=True, created_by=record_creator)
 
-        concert_creator = create_user_profile_t(weekly_email=False)
         # at least one temp artist
-        concert1 = create_concert_t(timezone_today() + timedelta(1), artists=[temp_artist, non_temp_artist], created_by=concert_creator)
+        concert1 = create_concert_t(timezone_today() + timedelta(1), artists=[temp_artist, non_temp_artist], created_by=record_creator)
         # no temp artists
-        concert2 = create_concert_t(timezone_today() + timedelta(1), created_by = concert_creator)
+        concert2 = create_concert_t(timezone_today() + timedelta(1), created_by=record_creator)
 
         create_user_profile_t(email="user1@em.ail")
         send_rec_email('subject', 'header')
@@ -97,23 +97,23 @@ class SendRecEmailTests(TestCaseHelpers):
                                  if a_s != a)
                 create_musicbrainz_artist_t(mbid, mbid, {s_mbid: .7 for s_mbid in similar_mbids})
 
+        # prevent helpers from creating a bunch of user profiles
+        record_creator = create_user_profile_t(weekly_email=False)
+
         # Creating (local) artists that are similar to each cluster
-        artist_0_0 = create_artist_t("Cluster-0 Artist-0", similar_musicbrainz_artists=[f'{0}-{a}' for a in range(3)])
-        artist_0_1 = create_artist_t("Cluster-0 Artist-1", similar_musicbrainz_artists=[f'{0}-{a}' for a in range(3)])
-        artist_0_2 = create_artist_t("Cluster-0 Artist-2", similar_musicbrainz_artists=[f'{0}-{a}' for a in range(3)])
-        artist_1_0 = create_artist_t("Cluster-1 Artist-0", similar_musicbrainz_artists=[f'{1}-{a}' for a in range(3)])
-        artist_1_1 = create_artist_t("Cluster-1 Artist-1", similar_musicbrainz_artists=[f'{1}-{a}' for a in range(3)])
-        artist_2_0 = create_artist_t("Cluster-2 Artist-0", similar_musicbrainz_artists=[f'{2}-{a}' for a in range(3)])
-        artist_2_1 = create_artist_t("Cluster-2 Artist-1", similar_musicbrainz_artists=[f'{2}-{a}' for a in range(3)])
-        artist_3_0 = create_artist_t("Cluster-3 Artist-0", similar_musicbrainz_artists=[f'{3}-{a}' for a in range(3)])
+        artist_0_0 = create_artist_t("Cluster-0 Artist-0", similar_musicbrainz_artists=[f'{0}-{a}' for a in range(3)], created_by=record_creator)
+        artist_0_1 = create_artist_t("Cluster-0 Artist-1", similar_musicbrainz_artists=[f'{0}-{a}' for a in range(3)], created_by=record_creator)
+        artist_0_2 = create_artist_t("Cluster-0 Artist-2", similar_musicbrainz_artists=[f'{0}-{a}' for a in range(3)], created_by=record_creator)
+        artist_1_0 = create_artist_t("Cluster-1 Artist-0", similar_musicbrainz_artists=[f'{1}-{a}' for a in range(3)], created_by=record_creator)
+        artist_1_1 = create_artist_t("Cluster-1 Artist-1", similar_musicbrainz_artists=[f'{1}-{a}' for a in range(3)], created_by=record_creator)
+        artist_2_0 = create_artist_t("Cluster-2 Artist-0", similar_musicbrainz_artists=[f'{2}-{a}' for a in range(3)], created_by=record_creator)
+        artist_2_1 = create_artist_t("Cluster-2 Artist-1", similar_musicbrainz_artists=[f'{2}-{a}' for a in range(3)], created_by=record_creator)
+        artist_3_0 = create_artist_t("Cluster-3 Artist-0", similar_musicbrainz_artists=[f'{3}-{a}' for a in range(3)], created_by=record_creator)
 
-        # prevent concert helper from creating a bunch of user profiles
-        concert_creator = create_user_profile_t(weekly_email=False)
-
-        concert1 = create_concert_t(artists=[artist_0_0, artist_0_1, artist_0_2], created_by=concert_creator)
-        concert2 = create_concert_t(artists=[artist_0_0, artist_0_1, artist_1_0], created_by=concert_creator)
-        concert3 = create_concert_t(artists=[artist_2_0, artist_1_0, artist_1_1], created_by=concert_creator)
-        concert4 = create_concert_t(artists=[artist_2_0, artist_2_1, artist_3_0], created_by=concert_creator)
+        concert1 = create_concert_t(artists=[artist_0_0, artist_0_1, artist_0_2], created_by=record_creator)
+        concert2 = create_concert_t(artists=[artist_0_0, artist_0_1, artist_1_0], created_by=record_creator)
+        concert3 = create_concert_t(artists=[artist_2_0, artist_1_0, artist_1_1], created_by=record_creator)
+        concert4 = create_concert_t(artists=[artist_2_0, artist_2_1, artist_3_0], created_by=record_creator)
 
         create_user_profile_t(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user1@em.ail")
         create_user_profile_t(favorite_musicbrainz_artists=['4-0', '4-1', '4-2'], email="user2@em.ail")

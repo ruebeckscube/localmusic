@@ -87,12 +87,14 @@ def create_artist_t(name="Test Artist",
                     similar_musicbrainz_artists=None,
                     listen_links="",
                     youtube_links="",
-                    is_temp_artist=False):
+                    is_temp_artist=False,
+                    created_by=None):
     artist = Artist.objects.create(name=name,
                                    local=local,
                                    listen_links=listen_links,
                                    youtube_links=youtube_links,
-                                   is_temp_artist=is_temp_artist)
+                                   is_temp_artist=is_temp_artist,
+                                   created_by=created_by or create_user_profile_t())
     if similar_musicbrainz_artists is not None:
         artist.similar_musicbrainz_artists.set(similar_musicbrainz_artists)
     return artist
@@ -130,9 +132,9 @@ def create_concert_t(date=None,
     date = date or timezone_today()
     start_time = start_time or datetime.time(19,0)
     venue = venue or create_venue_t(created_by=created_by)
-    artists = artists or [create_artist_t(f"Test Artist {i}") for i in range(3)]
     created_by = created_by or create_user_profile_t()
     created_at = created_at or timezone_today()
+    artists = artists or [create_artist_t(f"Test Artist {i}", created_by=created_by) for i in range(3)]
 
     concert = Concert(
         poster=image_file_t(),

@@ -280,11 +280,14 @@ class CreateTempArtistTests(TestCaseHelpers):
 
 
     def test_successful_create(self):
-        self.create_and_login_artist_user()
+        user = self.create_and_login_artist_user()
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
         self.assert_blank_form(response.context['temp_artist_form'], TempArtistForm)
         self.assert_records_created(Artist, 2) # create_and_login_artist_user creates one
         self.assert_records_created(ArtistLinkingInfo, 1)
+        artist = ArtistLinkingInfo.objects.all()[0].artist
+        self.assertEqual(artist.created_by, user)
+        self.assertEqual(artist.created_at, timezone_today())
 
         self.assertTrue('HX-Trigger' in response.headers)
         hx_trigger = json.loads(response.headers['HX-Trigger'])
@@ -319,6 +322,30 @@ class CreateTempArtistTests(TestCaseHelpers):
         self.assertFalse('HX-Trigger' in response.headers)
 
         self.assert_emails_sent(0)
+
+
+    def test_artist_invite_limit(self):
+        """Make sure we can create the max number of concerts but no more"""
+        user = self.create_and_login_artist_user()
+        for i in range(settings.MAX_DAILY_ARTIST_CREATES - 1):
+            create_artist_t(created_by=user)
+
+        response = self.client.post(reverse("findshows:create_temp_artist"))
+        self.assertTemplateNotUsed(response, 'findshows/htmx/cant_create_artist.html')
+        self.assertTemplateUsed(response, 'findshows/htmx/temp_artist_form.html')
+
+        create_artist_t(created_by=user)
+
+        # Simulates inital page load
+        response = self.client.post(reverse("findshows:create_temp_artist"))
+        self.assertTemplateUsed(response, 'findshows/htmx/cant_create_artist.html')
+        self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
+
+        # Simulates if they managed a POST request with the correct data anyway
+        response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
+        self.assertTemplateUsed(response, 'findshows/htmx/cant_create_artist.html')
+        self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
+        self.assert_records_created(Artist, settings.MAX_DAILY_CONCERT_CREATES + 1)  # +1 for artist user
 
 
 class LinkArtistTests(TestCaseHelpers):

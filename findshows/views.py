@@ -7,7 +7,7 @@ from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.views import generic
-from django.http import HttpResponse, QueryDict
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
@@ -166,10 +166,12 @@ def create_temp_artist(request):
     if not is_local_artist_account(request.user):
         return HttpResponse('')
 
+    if records_created_today(Artist, request.user.userprofile) >= settings.MAX_DAILY_ARTIST_CREATES:
+        return render(request, 'findshows/htmx/cant_create_artist.html')
+
     # The latter condition is a slightly hacky way of telling whether this HTMX
-    # request is being triggered by page load (form does not exist yet, we
-    # should provide blank form) or click (we should process form and display
-    # errors if they exist)
+    # request is being triggered by page load (we should provide blank form) or
+    # click (we should process form and display errors if they exist)
     if request.POST and 'temp_artist-name' in request.POST:
         form = TempArtistForm(request.POST)
     else:
@@ -177,7 +179,10 @@ def create_temp_artist(request):
 
     valid = form.is_valid()
     if valid:
-        artist = form.save()
+        artist = form.save(commit=False)
+        artist.created_by = request.user.userprofile
+        artist.created_at = timezone_today()
+        artist.save()
         link_info, invite_code = ArtistLinkingInfo.create_and_get_invite_code(artist, form.cleaned_data['email'])
 
         if invite_artist(link_info, invite_code, form):
@@ -187,9 +192,12 @@ def create_temp_artist(request):
             artist.delete()
             valid = False
 
-    response = render(request, "findshows/htmx/temp_artist_form.html", {
-        "temp_artist_form": form,
-    })
+    if records_created_today(Artist, request.user.userprofile) >= settings.MAX_DAILY_ARTIST_CREATES:
+        response = render(request, 'findshows/htmx/cant_create_artist.html')
+    else:
+        response = render(request, "findshows/htmx/temp_artist_form.html", {
+            "temp_artist_form": form,
+        })
 
     if valid:
         response.headers['HX-Trigger'] = json.dumps({
@@ -247,7 +255,7 @@ def view_concert(request, pk=None):
 # Model should subclass CreationTrackingMixin
 def records_created_today(model, userprofile):
     records = model.objects.filter(created_by=userprofile, created_at=timezone_today())
-    return len(records)
+    return records.count()
 
 
 @user_passes_test(is_local_artist_account)
