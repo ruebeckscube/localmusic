@@ -58,7 +58,7 @@ class UserSettingsTests(TestCaseHelpers):
 
 
     def test_user_settings_GET(self):
-        user = self.create_and_login_non_artist_user()
+        user = self.login_static_user(self.StaticUsers.NON_ARTIST)
         response = self.client.get(reverse("findshows:user_settings"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/user_settings.html')
@@ -66,7 +66,7 @@ class UserSettingsTests(TestCaseHelpers):
 
 
     def test_user_settings_POST_success(self):
-        user = self.create_and_login_non_artist_user()
+        user = self.login_static_user(self.StaticUsers.NON_ARTIST)
         data = user_settings_post_request()
         response = self.client.post(reverse("findshows:user_settings"), data)
         self.assertRedirects(response, reverse("findshows:home"))
@@ -75,20 +75,20 @@ class UserSettingsTests(TestCaseHelpers):
 
 
     def test_artist_user_can_invite(self):
-        self.create_and_login_artist_user()
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         response = self.client.get(reverse("findshows:user_settings"))
         self.assertTemplateUsed(response, 'findshows/partials/temp_artist_modal.html')
 
 
     def test_non_artist_user_cant_invite(self):
-        self.create_and_login_non_artist_user()
+        self.login_static_user(self.StaticUsers.NON_ARTIST)
         response = self.client.get(reverse("findshows:user_settings"))
         self.assertTemplateNotUsed(response, 'findshows/partials/temp_artist_modal.html')
 
 
     # # Not currently any way to make this form invalid
     # def test_user_settings_POST_fail(self):
-    #     user = self.create_and_login_non_artist_user()
+    #     user = self.login_static_user(self.StaticUsers.NON_ARTIST)
     #     data = user_settings_post_request()
     #     data['concert_tags'] = ['not_a_concert_tag']
     #     response = self.client.post(reverse("findshows:user_settings"), data)
@@ -121,11 +121,8 @@ class CreateAccountTests(TestCaseHelpers):
         data = create_account_post_request()
         response = self.client.post(reverse("create_account"), data)
         self.assertRedirects(response, reverse("findshows:home"))
-        userProfiles = UserProfile.objects.all()
-        users = User.objects.all()
-        self.assertEqual(len(userProfiles), 1)
-        self.assertEqual(len(users), 1)
-        self.assertEqual(userProfiles[0].user.pk, users[0].pk)
+        self.assert_records_created(User, 1)
+        self.assert_records_created(UserProfile, 1)
 
 
     def test_create_account_sends_artist_email(self):
