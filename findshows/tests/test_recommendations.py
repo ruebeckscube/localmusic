@@ -1,6 +1,9 @@
+import datetime
 from django.core import mail
 from django.urls import reverse
+from django.utils.timezone import now
 from findshows.email import send_rec_email
+from findshows.models import MusicBrainzArtist
 from findshows.tests.test_helpers import TestCaseHelpers, concert_GET_params
 
 
@@ -11,15 +14,20 @@ class RecommendationTests(TestCaseHelpers):
         # is .7 similar to other artists in its cluster and unrelated to other clusters.
         # each artist has mbid/is named <cluster number>-<artist number> for easy referencing.
         # e.g. 0-0, 0-2 are in the same cluster, 1-0 is in a different cluster
+        tomorrow = now() + datetime.timedelta(1)
         clusters = 5
         mb_artists_per_cluster = 3
-        for c in range(clusters):
-            for a in range(mb_artists_per_cluster):
-                mbid = f'{c}-{a}'
-                similar_mbids = (f'{c}-{a_s}'
-                                 for a_s in range(mb_artists_per_cluster)
-                                 if a_s != a)
-                cls.create_musicbrainz_artist(mbid, mbid, {s_mbid: .7 for s_mbid in similar_mbids})
+        mb_artists = (MusicBrainzArtist(
+            mbid=f'{c}-{a}',
+            name=f'{c}-{a}',
+            similar_artists={s_mbid: .7 for s_mbid in (f'{c}-{a_s}'
+                                                       for a_s in range(mb_artists_per_cluster)
+                                                       if a_s != a)},
+            similar_artists_cache_datetime=tomorrow,
+        )
+                      for a in range(mb_artists_per_cluster)
+                      for c in range(clusters))
+        MusicBrainzArtist.objects.bulk_create(mb_artists)
 
         # Creating (local) artists that are similar to each cluster
         artist_0_0 = cls.create_artist("Cluster-0 Artist-0", similar_musicbrainz_artists=[f'{0}-{a}' for a in range(3)])
