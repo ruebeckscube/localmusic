@@ -32,6 +32,10 @@ class SocialsLinksWidget(Input):
     template_name="findshows/widgets/socials_links_widget.html"
     input_type="text"
 
+    def __init__(self, num_links=3, **kwargs):
+        super().__init__(**kwargs)
+        self.num_links = num_links
+
     def value_from_datadict(self, data, files, name):
         l = list(zip(data.getlist(name + '_display_name'), data.getlist(name + '_url')))
         while ('','') in l:
@@ -41,7 +45,7 @@ class SocialsLinksWidget(Input):
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         l = json.loads(value)
-        context['widget']['socials_links'] = l + [('','')] * (3 - len(l))
+        context['widget']['socials_links'] = l + [('','')] * (self.num_links - len(l))
         return context
 
 

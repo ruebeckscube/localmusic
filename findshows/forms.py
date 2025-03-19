@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
@@ -147,6 +148,25 @@ class TempArtistForm(forms.ModelForm):
             artist.save()
         return artist
 
+
+class RequestArtistForm(forms.ModelForm):
+    prefix = "request_artist"
+    use_required_attribute = False
+
+    class Meta:
+        model=Artist
+        fields=("name", "socials_links")
+        widgets={"similar_musicbrainz_artists": MusicBrainzArtistSearchWidget,
+                 "socials_links": SocialsLinksWidget(num_links=1)}
+
+    def save(self, commit = True):
+        artist = super().save(commit=False)
+        artist.is_temp_artist = True
+        artist.requested_datetime = now()
+        artist.local = True
+        if commit:
+            artist.save()
+        return artist
 
 
 class ShowFinderForm(forms.Form):

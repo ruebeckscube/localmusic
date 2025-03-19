@@ -18,7 +18,7 @@ from django.conf import settings
 from findshows.email import contact_email, invite_artist, send_artist_setup_info
 
 from .models import Artist, ArtistLinkingInfo, Concert, ConcertTags, MusicBrainzArtist, Venue
-from .forms import ArtistEditForm, ConcertForm, ContactForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
+from .forms import ArtistEditForm, ConcertForm, ContactForm, RequestArtistForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
 
 
 #################
@@ -185,7 +185,6 @@ def create_temp_artist(request):
     if valid:
         artist = form.save(commit=False)
         artist.created_by = request.user.userprofile
-        artist.created_at = timezone_today()
         artist.save()
         link_info, invite_code = ArtistLinkingInfo.create_and_get_invite_code(artist, form.cleaned_data['email'])
 
@@ -210,6 +209,42 @@ def create_temp_artist(request):
                 "created_record_id": artist.id}})
 
     return response
+
+
+def request_artist_access(request):
+    if request.user.is_anonymous:
+        raise PermissionDenied
+    if is_local_artist_account(request.user):
+        return HttpResponse('Something went wrong; you already have local artist access.')
+
+    has_requested = Artist.objects.filter(created_by=request.user.userprofile).count()
+    if has_requested:
+        return render(request, 'findshows/htmx/cant_request_artist.html')
+
+    # The latter condition is a slightly hacky way of telling whether this HTMX
+    # request is being triggered by page load (we should provide blank form) or
+    # click (we should process form and display errors if they exist)
+    if request.POST and 'request_artist-name' in request.POST:
+        form = RequestArtistForm(request.POST)
+    else:
+        form = RequestArtistForm()
+
+    if form.is_valid():
+        artist = form.save(commit=False)
+        artist.created_by = request.user.userprofile
+        artist.save()
+        response = render(request, 'findshows/htmx/cant_request_artist.html')
+        response.headers['HX-Trigger'] = json.dumps({
+            "modal-form-success": {
+                "created_record_name": artist.name,
+                "created_record_id": artist.id}})
+    else:
+        response = render(request, "findshows/htmx/request_artist_form.html", {
+            "request_artist_form": form,
+        })
+
+    return response
+
 
 
 @login_required

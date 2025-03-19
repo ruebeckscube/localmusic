@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.forms import TempArtistForm
+from findshows.forms import RequestArtistForm, TempArtistForm
 from findshows.models import Artist, ArtistLinkingInfo
 from findshows.tests.test_helpers import TestCaseHelpers
 from findshows.views import is_artist_account, is_local_artist_account
@@ -275,14 +275,15 @@ class CreateTempArtistTests(TestCaseHelpers):
 
 
     def test_successful_create(self):
-        user = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
         self.assert_blank_form(response.context['temp_artist_form'], TempArtistForm)
         self.assert_records_created(Artist, 1)
         self.assert_records_created(ArtistLinkingInfo, 1)
         artist = ArtistLinkingInfo.objects.all()[0].artist
-        self.assertEqual(artist.created_by, user)
+        self.assertEqual(artist.created_by, user_profile)
         self.assertEqual(artist.created_at, timezone_today())
+        self.assertTrue(artist.is_temp_artist)
 
         self.assertTrue('HX-Trigger' in response.headers)
         hx_trigger = json.loads(response.headers['HX-Trigger'])
@@ -341,6 +342,87 @@ class CreateTempArtistTests(TestCaseHelpers):
         self.assertTemplateUsed(response, 'findshows/htmx/cant_create_artist.html')
         self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
         self.assert_records_created(Artist, settings.MAX_DAILY_CONCERT_CREATES)
+
+
+def request_artist_post_data():
+    return {
+        'request_artist-name': 'Requesting artist name',
+        'request_artist-socials_links_display_name': ['Social name'],
+        'request_artist-socials_links_url': ['https://www.social.link'],
+    }
+
+
+class RequestArtistTests(TestCaseHelpers):
+    def test_get_doesnt_create(self):
+        self.login_static_user(self.StaticUsers.NON_ARTIST)
+        self.client.get(reverse("findshows:request_artist_access"))
+        self.assert_records_created(Artist, 0)
+
+
+    def test_not_logged_in_doesnt_create(self):
+        self.client.post(reverse("findshows:request_artist_access"), data=request_artist_post_data())
+        self.assert_records_created(Artist, 0)
+
+
+    def test_local_artist_user_doesnt_create(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        self.client.post(reverse("findshows:request_artist_access"), data=request_artist_post_data())
+        self.assert_records_created(Artist, 0)
+
+
+    def test_nonlocal_artist_user_creates(self):
+        self.login_static_user(self.StaticUsers.NONLOCAL_ARTIST)
+        self.client.post(reverse("findshows:request_artist_access"), data=request_artist_post_data())
+        self.assert_records_created(Artist, 1)
+
+
+    def test_successful_create(self):
+        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        response = self.client.post(reverse("findshows:request_artist_access"), data=request_artist_post_data())
+        self.assertTemplateUsed(response, "findshows/htmx/cant_request_artist.html")
+        self.assert_records_created(Artist, 1)
+        artists = Artist.objects.filter(created_by=user_profile)
+        self.assertEqual(1, len(artists))
+        self.assertEqual(artists[0].created_at, timezone_today())
+        self.assertTrue(artists[0].is_temp_artist)
+        self.assertTrue(artists[0].requested_datetime)
+
+        self.assertTrue('HX-Trigger' in response.headers)
+        hx_trigger = json.loads(response.headers['HX-Trigger'])
+        self.assertTrue('modal-form-success' in hx_trigger)
+
+
+    def test_invalid_form(self):
+        self.login_static_user(self.StaticUsers.NON_ARTIST)
+        data=request_artist_post_data()
+        data['request_artist-name'] = ''
+        response = self.client.post(reverse("findshows:request_artist_access"), data)
+        self.assert_not_blank_form(response.context['request_artist_form'], RequestArtistForm)
+        self.assert_records_created(Artist, 0)
+
+        self.assertFalse('HX-Trigger' in response.headers)
+
+
+    def test_artist_invite_limit(self):
+        """Make sure we can create the max number of concerts but no more"""
+        user = self.login_static_user(self.StaticUsers.NON_ARTIST)
+
+        response = self.client.post(reverse("findshows:request_artist_access"))
+        self.assertTemplateNotUsed(response, 'findshows/htmx/cant_request_artist.html')
+        self.assertTemplateUsed(response, 'findshows/htmx/request_artist_form.html')
+
+        self.create_artist(created_by=user)
+
+        # Simulates inital page load
+        response = self.client.post(reverse("findshows:request_artist_access"))
+        self.assertTemplateUsed(response, 'findshows/htmx/cant_request_artist.html')
+        self.assertTemplateNotUsed(response, 'findshows/htmx/request_artist_form.html')
+
+        # Simulates if they managed a POST request with the correct data anyway
+        response = self.client.post(reverse("findshows:request_artist_access"), data=request_artist_post_data())
+        self.assertTemplateUsed(response, 'findshows/htmx/cant_request_artist.html')
+        self.assertTemplateNotUsed(response, 'findshows/htmx/request_artist_form.html')
+        self.assert_records_created(Artist, 1)
 
 
 class LinkArtistTests(TestCaseHelpers):
