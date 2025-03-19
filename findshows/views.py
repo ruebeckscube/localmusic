@@ -335,7 +335,11 @@ def create_venue(request):
     if records_created_today(Venue, request.user.userprofile) >= settings.MAX_DAILY_VENUE_CREATES:
         return render(request, 'findshows/htmx/cant_create_venue.html')
 
-    if request.POST:
+    # The latter condition is a slightly hacky way of telling whether this HTMX
+    # request is being triggered by page load (we should provide blank form) or
+    # click (we should process form and display errors if they exist)
+    if request.POST and 'venue-name' in request.POST:
+        print(request.POST)
         venue_form = VenueForm(request.POST)
     else:
         venue_form = VenueForm()
@@ -353,9 +357,9 @@ def create_venue(request):
 
     if valid:
         response.headers['HX-Trigger'] = json.dumps({
-            "successfully-created-venue": {
-                "created_venue_name": venue.name,
-                "created_venue_id": venue.id}})
+            "modal-form-success": {
+                "created_record_name": venue.name,
+                "created_record_id": venue.id}})
 
     return response
 

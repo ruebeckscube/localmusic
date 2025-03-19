@@ -102,7 +102,6 @@ class VenuePickerWidget(Input):
             context['widget']['venue_name'] = Venue.objects.get(pk=value)
         else:
             context['widget']['value'] = ''
-        context['venue_form'] = findshows.forms.VenueForm()
         return context
 
 
