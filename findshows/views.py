@@ -205,9 +205,9 @@ def create_temp_artist(request):
 
     if valid:
         response.headers['HX-Trigger'] = json.dumps({
-            "successfully-created-temp-artist": {
-                "created_temp_artist_name": artist.name,
-                "created_temp_artist_id": artist.id}})
+            "modal-form-success": {
+                "created_record_name": artist.name,
+                "created_record_id": artist.id}})
 
     return response
 

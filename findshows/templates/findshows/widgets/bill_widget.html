@@ -49,8 +49,10 @@
         </ol>
     </div>
 
-    <div @successfully-created-temp-artist="on_temp_artist_create">
-        {% include "../partials/temp_artist_modal.html" %}
+    <div @modal-form-success="on_temp_artist_create">
+        {% with title_text="Invite Artist" success_text="Invite sent successfully!" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
+            {% include "findshows/partials/modal_form.html" %}
+        {% endwith %}
     </div>
 
 </div>
@@ -115,8 +117,8 @@
          },
 
          on_temp_artist_create(event) {
-             new_artist = this.artist_from_args(event.detail.created_temp_artist_name,
-                                                event.detail.created_temp_artist_id)
+             new_artist = this.artist_from_args(event.detail.created_record_name,
+                                                event.detail.created_record_id)
 
              empty_idx = this.bill_order.findIndex(artist => artist.id === "");
              if (empty_idx === -1) {

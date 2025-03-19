@@ -14,7 +14,9 @@
         </div>
 
         {% if is_local_artist_account %}
-            {% include "../partials/temp_artist_modal.html" %}
+            {% with title_text="Invite Artist" success_text="Invite sent successfully!" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
+                {% include "findshows/partials/modal_form.html" %}
+            {% endwith %}
         {% endif %}
 
     </form>

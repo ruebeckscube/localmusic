@@ -286,7 +286,7 @@ class CreateTempArtistTests(TestCaseHelpers):
 
         self.assertTrue('HX-Trigger' in response.headers)
         hx_trigger = json.loads(response.headers['HX-Trigger'])
-        self.assertTrue('successfully-created-temp-artist' in hx_trigger)
+        self.assertTrue('modal-form-success' in hx_trigger)
 
         self.assert_emails_sent(1)
 

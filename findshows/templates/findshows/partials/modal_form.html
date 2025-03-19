@@ -1,32 +1,43 @@
 {% comment %}
-A re-usable button + modal for creating temp artists.
-On successful create, it raises the event successfully-created-temp-artist.
+A re-usable button + modal for creating records with forms.
+On successful create, it raises the event modal-form-success, with the properties:
+  created_record_name
+  created_record_id
 
-To consume, include it as:
-    <div @successfully-created-temp-artist="on_temp_artist_create">
-        {% include "../partials/temp_artist_modal.html" %}
+Parameters:
+  title_text: the text displayed on the button, and as the title of the modal
+  success_text: the text displayed below the button on success
+  form_html: path to the html for the form
+  htmx_url_name: name of the URL (from urls.py)
+
+EXAMPLE:
+To consume:
+    <div @modal-form-success="on_temp_artist_create">
+        {% with title_text="Invite Artist" success_text="Invite sent successfully!" form_html="../htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
+            {% include "findshows/partials/modal_form.html" %}
+        {% endwith %}
     </div>
 
 And in your alpine data definitions:
     on_temp_artist_create(event) {
-        name = event.detail.created_temp_artist_name
-        id = event.detail.created_temp_artist_id
+        name = event.detail.created_record_name
+        id = event.detail.created_record_id
         //further processing
     }
 
 modal based on https://alpinetoolbox.com/examples/modal
 {% endcomment %}
 
-<div x-data="temp_artist_modal_data()"
+<div x-data="modal_form_data()"
      @keydown.escape="close_modal()"
      x-cloak
 >
 
     <button type="button" class="bg-transparent border border-gray-500 hover:border-indigo-500 text-gray-500 hover:text-indigo-500 font-bold py-2 px-4 rounded-full" @click="open_modal()">
-        Invite artist
+        {{ title_text }}
     </button>
     <div x-show="show_success">
-        Invite sent successfully!
+        {{ success_text }}
     </div>
 
     <!--Overlay-->
@@ -36,7 +47,7 @@ modal based on https://alpinetoolbox.com/examples/modal
 
             <!--Title-->
             <div class="flex justify-between items-center pb-3">
-                <p class="text-2xl font-bold">Invite artist</p>
+                <p class="text-2xl font-bold"> {{ title_text }}</p>
                 <div class="cursor-pointer z-50" @click="close_modal()">
                     <svg class="fill-current text-black" width="18" height="18" viewBox="0 0 18 18">
                         <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
@@ -45,19 +56,19 @@ modal based on https://alpinetoolbox.com/examples/modal
             </div>
 
             <!-- content -->
-            <div id="temp-artist-form" class= "flex flex-col">
-                {% include "../htmx/temp_artist_form.html" %}
+            <div class= "modal-form flex flex-col">
+                {% include form_html %}
             </div>
 
             <!--Footer-->
             <div class="flex justify-end pt-2">
                 <button type="button" class="px-4  p-3 bg-transparent rounded-lg text-indigo-500 hover:bg-gray-100 hover:text-indigo-400" @click="close_modal()">Close</button>
                 <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
-                        hx-post="{% url 'findshows:create_temp_artist' %}"
+                        hx-post="{% url htmx_url %}"
                         hx-trigger="click,load"
-                        hx-target="#temp-artist-form"
-                        @successfully-created-temp-artist="on_successful_create"
-                >Create</button>
+                        hx-target="previous .modal-form"
+                        @modal-form-success="on_successful_create"
+                >Submit</button>
             </div>
 
 
@@ -68,7 +79,7 @@ modal based on https://alpinetoolbox.com/examples/modal
 </div>
 
 <script>
- function temp_artist_modal_data() {
+ function modal_form_data() {
      return {
          show_modal: false,
          show_success: false,
