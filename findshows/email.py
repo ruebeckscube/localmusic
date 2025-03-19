@@ -47,8 +47,8 @@ def invite_artist(link_info: ArtistLinkingInfo, invite_code, form):
 
 def send_artist_setup_info(user_email: str):
     return send_mail_helper(
-        "Make an Artist page on Chicago Local Music",
-        "this will be a link to create an artist account linked to user",
+        f"Make an Artist page on {settings.HOST_NAME}",
+        f"To request an artist page, go to your user settings page ({settings.HOST_NAME}{reverse('findshows:user_settings')}) and click 'Request local artist access.'",
         [user_email]
     )
 
