@@ -73,7 +73,7 @@ class CreateVenueTests(TestCaseHelpers):
 
         self.assertTrue('HX-Trigger' in response.headers)
         hx_trigger = json.loads(response.headers['HX-Trigger'])
-        self.assertTrue('successfully-created-venue' in hx_trigger)
+        self.assertTrue('modal-form-success' in hx_trigger)
 
 
     def test_invalid_form(self):

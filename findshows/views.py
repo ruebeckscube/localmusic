@@ -339,7 +339,6 @@ def create_venue(request):
     # request is being triggered by page load (we should provide blank form) or
     # click (we should process form and display errors if they exist)
     if request.POST and 'venue-name' in request.POST:
-        print(request.POST)
         venue_form = VenueForm(request.POST)
     else:
         venue_form = VenueForm()
