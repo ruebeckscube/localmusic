@@ -305,8 +305,9 @@ class CreateTempArtistTests(TestCaseHelpers):
 
         self.assert_emails_sent(0)
 
+    @patch('findshows.email.logger')
     @patch("findshows.email.send_mail")
-    def test_email_fails(self, mock_send_mail):
+    def test_email_fails(self, mock_send_mail, mock_logger):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         data=temp_artist_post_data()
         mock_send_mail.side_effect = SMTPException()
@@ -318,7 +319,7 @@ class CreateTempArtistTests(TestCaseHelpers):
         self.assertFalse('HX-Trigger' in response.headers)
 
         self.assert_emails_sent(0)
-
+        mock_logger.error.assert_called_once()
 
     def test_artist_invite_limit(self):
         """Make sure we can create the max number of concerts but no more"""
