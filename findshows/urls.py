@@ -28,5 +28,6 @@ urlpatterns = [
     path("htmx/create_venue/", views.create_venue, name="create_venue"),
     path("htmx/create_temp_artist/", views.create_temp_artist, name="create_temp_artist"),
     path("htmx/request_artist_access/", views.request_artist_access, name="request_artist_access"),
+    path("htmx/manage_artist_access/<int:pk>", views.manage_artist_access, name="manage_artist_access"),
     path("htmx/artist_search_results/", views.artist_search_results, name="artist_search_results"),
 ]

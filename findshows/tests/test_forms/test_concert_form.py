@@ -2,7 +2,6 @@ import datetime
 import json
 from django.views.generic.dates import timezone_today
 from findshows.forms import ConcertForm
-from findshows.models import Concert
 
 from findshows.tests.test_helpers import TestCaseHelpers
 
@@ -13,7 +12,7 @@ class ConcertFormTestHelpers(TestCaseHelpers):
                   venue=None,
                   artists=None,
                   ticket_description="10 buckaroos",
-                  tags=None) -> Concert:
+                  tags=None):
         return {
             'date': date or timezone_today(),
             'doors_time_hour': '8',

@@ -4,7 +4,9 @@ import json
 from random import random, shuffle
 
 from django.contrib.auth import login
+from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
+from django.db import IntegrityError
 from django.urls import reverse
 from django.views import generic
 from django.http import HttpResponse
@@ -15,10 +17,11 @@ from django.utils import timezone
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.email import contact_email, invite_artist, send_artist_setup_info
+from findshows.email import contact_email, invite_artist, invite_user_to_artist, send_artist_setup_info
+from findshows.widgets import ArtistAccessWidget
 
 from .models import Artist, ArtistLinkingInfo, Concert, ConcertTags, MusicBrainzArtist, Venue
-from .forms import ArtistEditForm, ConcertForm, ContactForm, RequestArtistForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
+from .forms import ArtistAccessForm, ArtistEditForm, ConcertForm, ContactForm, RequestArtistForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
 
 
 #################
@@ -170,7 +173,7 @@ def create_temp_artist(request):
     if not is_local_artist_account(request.user):
         return HttpResponse('')
 
-    if records_created_today(Artist, request.user.userprofile) >= settings.MAX_DAILY_ARTIST_CREATES:
+    if records_created_today(ArtistLinkingInfo, request.user.userprofile) >= settings.MAX_DAILY_INVITES:
         return render(request, 'findshows/htmx/cant_create_artist.html')
 
     # The latter condition is a slightly hacky way of telling whether this HTMX
@@ -186,7 +189,7 @@ def create_temp_artist(request):
         artist = form.save(commit=False)
         artist.created_by = request.user.userprofile
         artist.save()
-        link_info, invite_code = ArtistLinkingInfo.create_and_get_invite_code(artist, form.cleaned_data['email'])
+        link_info, invite_code = ArtistLinkingInfo.create_and_get_invite_code(artist, form.cleaned_data['email'], request.user.userprofile)
 
         if invite_artist(link_info, invite_code, form):
             form = TempArtistForm()
@@ -195,7 +198,7 @@ def create_temp_artist(request):
             artist.delete()
             valid = False
 
-    if records_created_today(Artist, request.user.userprofile) >= settings.MAX_DAILY_ARTIST_CREATES:
+    if records_created_today(ArtistLinkingInfo, request.user.userprofile) >= settings.MAX_DAILY_INVITES:
         response = render(request, 'findshows/htmx/cant_create_artist.html')
     else:
         response = render(request, "findshows/htmx/temp_artist_form.html", {
@@ -245,6 +248,70 @@ def request_artist_access(request):
 
     return response
 
+
+def manage_artist_access(request, pk):
+    artist = get_object_or_404(Artist, pk=pk)
+    if artist not in request.user.userprofile.managed_artists.all():
+        raise PermissionDenied
+
+    # TODO: check for number of permission-giving actions
+
+    # The latter condition is a slightly hacky way of telling whether this HTMX
+    # request is being triggered by page load (we should provide blank form) or
+    # click (we should process form and display errors if they exist)
+    if request.POST and 'artist_access-users' in request.POST:
+        form = ArtistAccessForm(request.POST)
+    else:
+        form = ArtistAccessForm.populate_intial(request.user.userprofile, artist)
+
+    if form.is_valid():
+        for user_json in form.cleaned_data['users']:
+            match user_json['type']:
+                case ArtistAccessWidget.Types.NEW.value:
+                    if user_json['email'] in [up.user.email for up in artist.managing_users.all()]:
+                        form.add_error(None, f"The user {user_json['email']} already has edit access to this artist.")
+                        continue
+                    if records_created_today(ArtistLinkingInfo, request.user.userprofile) >= settings.MAX_DAILY_INVITES:
+                        form.add_error(None, "You have hit your max invites for the day; please try again tomorrow")
+                        continue
+                    try:
+                        link_info, invite_code = ArtistLinkingInfo.create_and_get_invite_code(artist, user_json['email'], request.user.userprofile)
+                    except IntegrityError:
+                        form.add_error(None, f"The user {user_json['email']} already has an invite to this artist; please use the re-send button instead.")
+                        continue
+                    if not invite_user_to_artist(link_info, invite_code, form):
+                        # invite_user_to_artist adds error to form
+                        link_info.delete()
+                case ArtistAccessWidget.Types.REMOVED.value:
+                    user_profiles = artist.managing_users.filter(user__email=user_json['email'])
+                    for u in user_profiles: # Should only be one, but may as well
+                        u.managed_artists.remove(artist)
+                    link_infos = ArtistLinkingInfo.objects.filter(invited_email=user_json['email'], artist=artist)
+                    for ali in link_infos:
+                        ali.delete()
+                case ArtistAccessWidget.Types.RESEND.value:
+                    link_info = ArtistLinkingInfo.objects.get(invited_email=user_json['email'], artist=artist)
+                    invite_code = link_info.regenerate_invite_code()
+                    invite_user_to_artist(link_info, invite_code, form)
+                    # NOT deleting it on email failure even though it's now out of date
+
+        partial_errors = form.non_field_errors  # added explicitly here or by the email functions
+        all_success = not partial_errors()
+        form = ArtistAccessForm.populate_intial(request.user.userprofile, artist)
+    else:
+        all_success = False
+        partial_errors = None
+
+
+    response = render(request, "findshows/htmx/artist_access_form.html", {
+        "artist_access_form": form,
+        "partial_errors": partial_errors
+    })
+
+    if all_success:
+        response.headers['HX-Trigger'] = json.dumps({"modal-form-success": {}})
+
+    return response
 
 
 @login_required

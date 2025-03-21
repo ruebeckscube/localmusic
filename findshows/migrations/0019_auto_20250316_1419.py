@@ -24,13 +24,13 @@ def create_static_test_users(apps, schema_editor):
     User.objects.create_user(
         username="NONLOCAL_ARTIST",
         password="1234",
-        email='local@artist.net',
+        email='nonlocal@artist.net',
     )
 
     User.objects.create_user(
         username="NON_ARTIST",
         password="1234",
-        email='local@artist.net',
+        email='non@artist.net',
     )
 
     User.objects.create_user(

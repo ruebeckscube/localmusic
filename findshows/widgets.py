@@ -1,3 +1,4 @@
+from enum import Enum
 import json
 from django.forms.fields import DateField, TimeField
 
@@ -112,3 +113,15 @@ class VenuePickerWidget(Input):
 class BillWidget(Input):
     template_name="findshows/widgets/bill_widget.html"
     input_type="hidden"
+
+
+class ArtistAccessWidget(Input):
+    template_name="findshows/widgets/artist_access_widget.html"
+    input_type="hidden"
+
+    class Types(Enum):
+        NEW = 'NEW'             # the email was added in this widget right now
+        LINKED = 'LINKED'       # the artist is listed in the user's managed_artists
+        UNLINKED = 'UNLINKED'   # an ArtistLinkingInfo exists for this artist + email
+        REMOVED = 'REMOVED'     # this artist should be removed from user with email on submit
+        RESEND = 'RESEND'       # the invite for this artist should be re-sent to the email

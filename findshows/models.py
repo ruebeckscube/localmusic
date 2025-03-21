@@ -7,7 +7,7 @@ import re
 from statistics import mean
 import secrets
 
-from django.db import models
+from django.db import IntegrityError, models
 from django.contrib.auth.models import User
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
@@ -266,22 +266,29 @@ def _parse_youtube_id(parsed_url):
     return ""
 
 
-class ArtistLinkingInfo(models.Model):
+class ArtistLinkingInfo(CreationTrackingMixin):
     invited_email=models.EmailField()
     expiration_datetime=models.DateTimeField()
     invite_code_hashed=models.CharField(unique=True, max_length=128)
     artist=models.ForeignKey(Artist, on_delete=models.CASCADE)
 
-    class Meta:
+    class Meta(CreationTrackingMixin.Meta):
         unique_together = (('invited_email', 'artist'),)
 
 
     @classmethod
-    def create_and_get_invite_code(cls, artist, email):
+    def create_and_get_invite_code(cls, artist, email, created_by):
         link_info = cls(artist=artist, invited_email=email)
-        invite_code = link_info.generate_invite_code()
+        invite_code = link_info._generate_invite_code()
+        link_info.created_by = created_by
         link_info.save()
         return link_info, invite_code
+
+
+    def regenerate_invite_code(self):
+        invite_code = self._generate_invite_code()
+        self.save()
+        return invite_code
 
 
     def _calculate_stored_hash(self, invite_code, salt):
@@ -295,7 +302,7 @@ class ArtistLinkingInfo(models.Model):
         return hash == self.invite_code_hashed
 
 
-    def generate_invite_code(self):
+    def _generate_invite_code(self):
         """Model MUST be saved after this function is called."""
         invite_code = secrets.token_urlsafe(32)
         salt = secrets.token_urlsafe(32)

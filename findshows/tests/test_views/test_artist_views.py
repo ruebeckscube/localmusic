@@ -2,16 +2,18 @@ import datetime
 import json
 from smtplib import SMTPException
 from unittest.mock import patch, MagicMock
+from django.db import IntegrityError
 
 from django.urls import reverse
 from django.utils import timezone
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.forms import RequestArtistForm, TempArtistForm
+from findshows.forms import ArtistAccessForm, RequestArtistForm, TempArtistForm
 from findshows.models import Artist, ArtistLinkingInfo
 from findshows.tests.test_helpers import TestCaseHelpers
 from findshows.views import is_artist_account, is_local_artist_account
+from findshows.widgets import ArtistAccessWidget
 
 
 class IsArtistAccountTests(TestCaseHelpers):
@@ -322,16 +324,16 @@ class CreateTempArtistTests(TestCaseHelpers):
         mock_logger.error.assert_called_once()
 
     def test_artist_invite_limit(self):
-        """Make sure we can create the max number of concerts but no more"""
+        """Make sure we can invite the max number of artists but no more"""
         user = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        for i in range(settings.MAX_DAILY_ARTIST_CREATES - 1):
-            self.create_artist(created_by=user)
+        for _ in range(settings.MAX_DAILY_INVITES - 1):
+            self.create_artist_linking_info(created_by=user)
 
         response = self.client.post(reverse("findshows:create_temp_artist"))
         self.assertTemplateNotUsed(response, 'findshows/htmx/cant_create_artist.html')
         self.assertTemplateUsed(response, 'findshows/htmx/temp_artist_form.html')
 
-        self.create_artist(created_by=user)
+        self.create_artist_linking_info("ahcjbn@hs.com", created_by=user)
 
         # Simulates inital page load
         response = self.client.post(reverse("findshows:create_temp_artist"))
@@ -342,7 +344,7 @@ class CreateTempArtistTests(TestCaseHelpers):
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
         self.assertTemplateUsed(response, 'findshows/htmx/cant_create_artist.html')
         self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
-        self.assert_records_created(Artist, settings.MAX_DAILY_CONCERT_CREATES)
+        self.assert_records_created(ArtistLinkingInfo, settings.MAX_DAILY_INVITES)
 
 
 def request_artist_post_data():
@@ -404,15 +406,15 @@ class RequestArtistTests(TestCaseHelpers):
         self.assertFalse('HX-Trigger' in response.headers)
 
 
-    def test_artist_invite_limit(self):
-        """Make sure we can create the max number of concerts but no more"""
-        user = self.login_static_user(self.StaticUsers.NON_ARTIST)
+    def test_artist_request_limit(self):
+        """Make sure we can request artist access at most once"""
+        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
 
         response = self.client.post(reverse("findshows:request_artist_access"))
         self.assertTemplateNotUsed(response, 'findshows/htmx/cant_request_artist.html')
         self.assertTemplateUsed(response, 'findshows/htmx/request_artist_form.html')
 
-        self.create_artist(created_by=user)
+        self.create_artist(created_by=user_profile)
 
         # Simulates inital page load
         response = self.client.post(reverse("findshows:request_artist_access"))
@@ -430,9 +432,7 @@ class LinkArtistTests(TestCaseHelpers):
     def test_successful_link_temp_artist(self):
         artist = self.create_artist(is_temp_artist=True)
         user = self.login_static_user(self.StaticUsers.NON_ARTIST)
-        ali = ArtistLinkingInfo(invited_email=user.user.email, artist=artist)
-        invite_code = ali.generate_invite_code()
-        ali.save()
+        ali, invite_code = self.create_artist_linking_info(user.user.email, artist)
         response = self.client.get(reverse('findshows:link_artist'),
                                    query_params={'invite_id': str(ali.pk), 'invite_code': invite_code}
                                    )
@@ -444,9 +444,7 @@ class LinkArtistTests(TestCaseHelpers):
     def test_successful_link_existing_artist(self):
         artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
         user = self.login_static_user(self.StaticUsers.NON_ARTIST)
-        ali = ArtistLinkingInfo(invited_email=user.user.email, artist=artist)
-        invite_code = ali.generate_invite_code()
-        ali.save()
+        ali, invite_code = self.create_artist_linking_info(user.user.email, artist)
         response = self.client.get(reverse('findshows:link_artist'),
                                    query_params={'invite_id': str(ali.pk), 'invite_code': invite_code})
         self.assertRedirects(response, reverse('findshows:view_artist', args=(artist.pk,)))
@@ -455,7 +453,7 @@ class LinkArtistTests(TestCaseHelpers):
 
 
     def test_missing_params(self):
-        user = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        self.login_static_user(self.StaticUsers.NON_ARTIST)
         response = self.client.get(reverse('findshows:link_artist'),
                                    query_params={'invite_id': ''})
         self.assertTemplateUsed(response, 'findshows/pages/artist_link_failure.html')
@@ -470,7 +468,7 @@ class LinkArtistTests(TestCaseHelpers):
 
 
     def test_invite_id_doesnt_exist(self):
-        user = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        self.login_static_user(self.StaticUsers.NON_ARTIST)
         response = self.client.get(reverse('findshows:link_artist'),
                                    query_params={'invite_id': '123', 'invite_code': 'ESOSdtoeia928y'})
         self.assertTemplateUsed(response, 'findshows/pages/artist_link_failure.html')
@@ -481,9 +479,7 @@ class LinkArtistTests(TestCaseHelpers):
     def test_bad_invite_code(self):
         artist = self.get_static_instance(self.StaticArtists.TEMP_ARTIST)
         user = self.login_static_user(self.StaticUsers.NON_ARTIST)
-        ali = ArtistLinkingInfo(invited_email=user.user.email, artist=artist)
-        invite_code = ali.generate_invite_code()
-        ali.save()
+        ali, invite_code = self.create_artist_linking_info(user.user.email, artist)
         response = self.client.get(reverse('findshows:link_artist'),
                                    query_params={'invite_id': str(ali.pk), 'invite_code': invite_code + '123'}
                                    )
@@ -498,9 +494,7 @@ class LinkArtistTests(TestCaseHelpers):
     def test_expired_invite_code(self, mock_timezone: MagicMock):
         artist = self.get_static_instance(self.StaticArtists.TEMP_ARTIST)
         user = self.login_static_user(self.StaticUsers.NON_ARTIST)
-        ali = ArtistLinkingInfo(invited_email=user.user.email, artist=artist)
-        invite_code = ali.generate_invite_code()
-        ali.save()
+        ali, invite_code = self.create_artist_linking_info(user.user.email, artist)
         mock_timezone.now.return_value = timezone.now() + datetime.timedelta(settings.INVITE_CODE_EXPIRATION_DAYS + 2)
         response = self.client.get(reverse('findshows:link_artist'),
                                    query_params={'invite_id': str(ali.pk), 'invite_code': invite_code}
@@ -514,15 +508,263 @@ class LinkArtistTests(TestCaseHelpers):
 
     def test_user_email_doesnt_match(self):
         artist = self.get_static_instance(self.StaticArtists.TEMP_ARTIST)
-        user = self.login_static_user(self.StaticUsers.NON_ARTIST)
-        ali = ArtistLinkingInfo(invited_email='different@em.ail', artist=artist)
-        invite_code = ali.generate_invite_code()
-        ali.save()
+        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        ali, invite_code = self.create_artist_linking_info("different@em.ail", artist)
         response = self.client.get(reverse('findshows:link_artist'),
                                    query_params={'invite_id': str(ali.pk), 'invite_code': invite_code}
                                    )
         self.assertTemplateUsed(response, 'findshows/pages/artist_link_failure.html')
         self.assertIn('error', response.context)
         self.assertIn("User's email does not match", response.context['error'])
-        self.assertNotIn(artist, user.managed_artists.all())
+        self.assertNotIn(artist, user_profile.managed_artists.all())
         self.assertEqual(1, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())
+
+
+def artist_access_post_request(user_jsons):
+    return {
+        f'{ArtistAccessForm.prefix}-users': json.dumps(user_jsons)
+    }
+
+
+def user_json(email, type):
+    return {'email': email, 'type': type}
+
+
+class ManageArtistAccessTests(TestCaseHelpers):
+    """Also tests ArtistAccessForm methods"""
+    def test_artist_doesnt_exist(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        response = self.client.post(reverse("findshows:manage_artist_access", args=(100,)),
+                                    data=artist_access_post_request([user_json('temp@em.ail', ArtistAccessWidget.Types.NEW.value)]))
+        self.assertEqual(response.status_code, 404)
+
+
+    def test_user_doesnt_own_artist(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        artist = self.get_static_instance(self.StaticArtists.NONLOCAL_ARTIST)
+        managers_before = artist.managing_users.all()
+        response = self.client.post(reverse("findshows:manage_artist_access", args=(artist.pk,)),
+                                    data=artist_access_post_request([user_json('temp@em.ail', ArtistAccessWidget.Types.NEW.value)]))
+        self.assertEqual(response.status_code, 403)
+
+        artist.refresh_from_db()
+        self.assert_equal_as_sets(managers_before, artist.managing_users.all())
+
+
+    def test_populate_initial(self):
+        local_artist_up = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        nonlocal_artist_up = self.get_static_instance(self.StaticUsers.NONLOCAL_ARTIST)
+        artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        nonlocal_artist_up.managed_artists.add(artist)
+        self.create_artist_linking_info('temp@em.ail', artist)
+
+        response = self.client.post(reverse("findshows:manage_artist_access", args=(artist.pk,))) # No post populates initial
+        initial_data = response.context['form'].fields['users'].initial
+
+        self.assertIn({'email': 'temp@em.ail', 'type': ArtistAccessWidget.Types.UNLINKED.value},
+                      initial_data)
+        self.assertIn({'email': nonlocal_artist_up.user.email, 'type': ArtistAccessWidget.Types.LINKED.value},
+                      initial_data)
+        self.assertNotIn({'email': local_artist_up.user.email, 'type': ArtistAccessWidget.Types.LINKED.value},
+                         initial_data)
+
+
+    def test_invalid_form(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        response = self.client.post(reverse("findshows:manage_artist_access",
+                                 args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+                         data=artist_access_post_request([
+                             user_json('notanemail', ArtistAccessWidget.Types.NEW.value),
+                             user_json('another@em.ail', ArtistAccessWidget.Types.NEW.value),
+                         ]))
+        self.assert_records_created(ArtistLinkingInfo, 0)
+        form = response.context['form']
+        errors = form.non_field_errors()
+        self.assertEqual(len(errors), 1)
+        self.assertIn("notanemail", errors[0])
+        self.assertFalse('HX-Trigger' in response.headers)
+
+
+    def test_add_email(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        response = self.client.post(reverse("findshows:manage_artist_access",
+                                 args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+                         data=artist_access_post_request([
+                             user_json('temp@em.ail', ArtistAccessWidget.Types.NEW.value),
+                             user_json('another@em.ail', ArtistAccessWidget.Types.NEW.value),
+                         ]))
+        self.assert_records_created(ArtistLinkingInfo, 2)
+        self.assertTrue('HX-Trigger' in response.headers)
+        hx_trigger = json.loads(response.headers['HX-Trigger'])
+        self.assertTrue('modal-form-success' in hx_trigger)
+
+
+    def test_invite_limit(self):
+        user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        for _ in range(settings.MAX_DAILY_INVITES-1):
+            self.create_artist_linking_info(created_by=user_profile)
+        # Should create one but not the other, and return an error
+        response = self.client.post(reverse("findshows:manage_artist_access",
+                                            args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+                                    data=artist_access_post_request([
+                                        user_json('temp@em.ail', ArtistAccessWidget.Types.NEW.value),
+                                        user_json('another@em.ail', ArtistAccessWidget.Types.NEW.value),
+                                    ]))
+        self.assert_records_created(ArtistLinkingInfo, settings.MAX_DAILY_INVITES)
+        partial_errors = response.context['partial_errors']()
+        self.assertEqual(len(partial_errors), 1)
+        self.assertIn("You have hit your max invites",
+                      partial_errors[0])
+        self.assertFalse('HX-Trigger' in response.headers)
+
+
+    def test_add_email_already_has_access(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        other_user_profile = self.get_static_instance(self.StaticUsers.NONLOCAL_ARTIST)
+        other_user_profile.managed_artists.add(artist)
+        response = self.client.post(reverse("findshows:manage_artist_access",
+                                            args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+                                    data=artist_access_post_request([
+                                        user_json(other_user_profile.user.email, ArtistAccessWidget.Types.NEW.value),
+                                    ]))
+        partial_errors = response.context['partial_errors']()
+        self.assert_records_created(ArtistLinkingInfo, 0)
+        self.assertEqual(len(partial_errors), 1)
+        self.assertIn(f"The user {other_user_profile.user.email} already has edit access",
+                      partial_errors[0])
+        self.assertFalse('HX-Trigger' in response.headers)
+
+
+    @patch('findshows.views.ArtistLinkingInfo.create_and_get_invite_code')
+    def test_add_email_already_has_invite(self, mock_ali_create: MagicMock):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        other_user_profile = self.get_static_instance(self.StaticUsers.NONLOCAL_ARTIST)
+        mock_ali_create.side_effect = IntegrityError
+
+        response = self.client.post(reverse("findshows:manage_artist_access",
+                                            args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+                                    data=artist_access_post_request([
+                                        user_json(other_user_profile.user.email, ArtistAccessWidget.Types.NEW.value),
+                                    ]))
+
+        mock_ali_create.assert_called_once()
+        partial_errors = response.context['partial_errors']()
+        self.assertEqual(len(partial_errors), 1)
+        self.assertIn(f"The user {other_user_profile.user.email} already has an invite",
+                      partial_errors[0])
+        self.assertFalse('HX-Trigger' in response.headers)
+
+
+    def test_remove_linked_email(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        other_user_profile = self.get_static_instance(self.StaticUsers.NONLOCAL_ARTIST)
+        other_user_profile.managed_artists.add(artist)
+
+        response = self.client.post(reverse("findshows:manage_artist_access",
+                                 args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+                         data=artist_access_post_request([
+                             user_json(other_user_profile.user.email, ArtistAccessWidget.Types.REMOVED.value),
+                         ]))
+
+        self.assertNotIn(artist, other_user_profile.managed_artists.all())
+        self.assertTrue('HX-Trigger' in response.headers)
+        hx_trigger = json.loads(response.headers['HX-Trigger'])
+        self.assertTrue('modal-form-success' in hx_trigger)
+
+
+    def test_remove_invited_email(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        other_user_profile = self.get_static_instance(self.StaticUsers.NONLOCAL_ARTIST)
+        self.create_artist_linking_info(other_user_profile.user.email, artist)
+
+        response = self.client.post(reverse("findshows:manage_artist_access",
+                                 args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+                         data=artist_access_post_request([
+                             user_json(other_user_profile.user.email, ArtistAccessWidget.Types.REMOVED.value),
+                         ]))
+
+        self.assert_records_created(ArtistLinkingInfo, 0)
+        self.assertTrue('HX-Trigger' in response.headers)
+        hx_trigger = json.loads(response.headers['HX-Trigger'])
+        self.assertTrue('modal-form-success' in hx_trigger)
+
+
+    def test_remove_email_neither_linked_nor_invited(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+
+        response = self.client.post(reverse("findshows:manage_artist_access",
+                                 args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+                         data=artist_access_post_request([
+                             user_json('thisdoesntexist@em.ail', ArtistAccessWidget.Types.REMOVED.value),
+                         ]))
+
+        self.assertTrue('HX-Trigger' in response.headers)
+        hx_trigger = json.loads(response.headers['HX-Trigger'])
+        self.assertTrue('modal-form-success' in hx_trigger)
+
+
+    def test_resend_invited_email(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        other_user_profile = self.get_static_instance(self.StaticUsers.NONLOCAL_ARTIST)
+        self.create_artist_linking_info(other_user_profile.user.email, artist)
+
+        response = self.client.post(reverse("findshows:manage_artist_access",
+                                 args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+                         data=artist_access_post_request([
+                             user_json(other_user_profile.user.email, ArtistAccessWidget.Types.RESEND.value),
+                         ]))
+
+        self.assert_records_created(ArtistLinkingInfo, 1)
+        self.assert_emails_sent(1)
+        self.assertTrue('HX-Trigger' in response.headers)
+        hx_trigger = json.loads(response.headers['HX-Trigger'])
+        self.assertTrue('modal-form-success' in hx_trigger)
+
+
+    @patch('findshows.email.logger')
+    @patch("findshows.email.send_mail")
+    def test_new_invite_email_fails(self, mock_send_mail, mock_logger):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        mock_send_mail.side_effect = SMTPException()
+
+        response = self.client.post(reverse("findshows:manage_artist_access",
+                                 args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+                         data=artist_access_post_request([
+                             user_json("anew@em.ail", ArtistAccessWidget.Types.NEW.value),
+                         ]))
+
+        mock_logger.error.assert_called_once()
+        self.assert_records_created(ArtistLinkingInfo, 0)
+        partial_errors = response.context['partial_errors']()
+        self.assertEqual(len(partial_errors), 1)
+        self.assertIn("Unable to send email to anew@em.ail",
+                      partial_errors[0])
+        self.assertFalse('HX-Trigger' in response.headers)
+
+
+    @patch('findshows.email.logger')
+    @patch("findshows.email.send_mail")
+    def test_resend_invite_email_fails(self, mock_send_mail, mock_logger):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        mock_send_mail.side_effect = SMTPException()
+        other_user_profile = self.get_static_instance(self.StaticUsers.NONLOCAL_ARTIST)
+        self.create_artist_linking_info(other_user_profile.user.email, artist)
+
+        response = self.client.post(reverse("findshows:manage_artist_access",
+                                 args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+                         data=artist_access_post_request([
+                             user_json(other_user_profile.user.email, ArtistAccessWidget.Types.RESEND.value),
+                         ]))
+
+        mock_logger.error.assert_called_once()
+        self.assert_records_created(ArtistLinkingInfo, 1)
+        partial_errors = response.context['partial_errors']()
+        self.assertEqual(len(partial_errors), 1)
+        self.assertIn(f"Unable to send email to {other_user_profile.user.email}",
+                      partial_errors[0])
+        self.assertFalse('HX-Trigger' in response.headers)

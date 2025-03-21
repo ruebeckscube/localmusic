@@ -13,7 +13,7 @@ from django.utils.datastructures import MultiValueDict
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 
-from findshows.models import Ages, Artist, Concert, ConcertTags, MusicBrainzArtist, SetOrder, UserProfile, Venue
+from findshows.models import Ages, Artist, ArtistLinkingInfo, Concert, ConcertTags, MusicBrainzArtist, SetOrder, UserProfile, Venue
 
 @override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
 class TestCaseHelpers(TestCase):
@@ -242,6 +242,18 @@ class TestCaseHelpers(TestCase):
                                                 name=name,
                                                 similar_artists=similar_artists or {},
                                                 similar_artists_cache_datetime=tomorrow)
+
+    @classmethod
+    def create_artist_linking_info(cls, email=None, artist=None, created_by=None):
+        while email is None:
+            email = str(uuid4())
+            if ArtistLinkingInfo.objects.filter(invited_email=email).exists():
+                email = None
+        artist = artist or cls.get_static_instance(cls.StaticArtists.LOCAL_ARTIST)
+        created_by = created_by or cls.get_static_instance(cls.StaticUsers.DEFAULT_CREATOR)
+        return ArtistLinkingInfo.create_and_get_invite_code(email=email,
+                                                            artist=artist,
+                                                            created_by=created_by)
 
 
 def concert_GET_params(date=timezone_today(),

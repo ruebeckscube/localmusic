@@ -8,7 +8,8 @@ Parameters:
   title_text: the text displayed on the button, and as the title of the modal
   success_text: the text displayed below the button on success
   form_html: path to the html for the form
-  htmx_url_name: name of the URL (from urls.py)
+  htmx_url: name of the URL (from urls.py)
+  htmx_param: any parameters to send the URL
 
 EXAMPLE:
 To consume:
@@ -64,7 +65,11 @@ modal based on https://alpinetoolbox.com/examples/modal
             <div class="flex justify-end pt-2">
                 <button type="button" class="px-4  p-3 bg-transparent rounded-lg text-indigo-500 hover:bg-gray-100 hover:text-indigo-400" @click="close_modal()">Close</button>
                 <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
-                        hx-post="{% url htmx_url %}"
+                        {% if htmx_param %}
+                            hx-post="{% url htmx_url htmx_param %}"
+                        {% else %}
+                            hx-post="{% url htmx_url %}"
+                        {% endif %}
                         hx-trigger="click,load"
                         hx-target="previous .modal-form"
                         @modal-form-success="on_successful_create"

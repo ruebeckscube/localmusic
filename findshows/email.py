@@ -28,7 +28,7 @@ def send_mail_helper(subject, message, recipient_list, form=None, from_email=Non
         return send_mail(subject, message, from_email, recipient_list, fail_silently=False)
     except SMTPException as e:
         if form:
-            form.add_error(None, f"Unable to send email. Please try again later.")
+            form.add_error(None, f"Unable to send email to {','.join(recipient_list)}. Please try again later.")
         logger.error(f"Email failure: {str(e)}")
         return 0
 
@@ -42,6 +42,12 @@ def artist_invite_url(link_info: ArtistLinkingInfo, invite_code):
 def invite_artist(link_info: ArtistLinkingInfo, invite_code, form):
     subject = "Artist profile invite"
     message = f"You've been invited to create an artist profile on {settings.HOST_NAME}. Click the link to claim it and fill out your profile!\n\n{artist_invite_url(link_info, invite_code)}"
+    return send_mail_helper(subject, message, [link_info.invited_email], form)
+
+
+def invite_user_to_artist(link_info: ArtistLinkingInfo, invite_code, form):
+    subject = "Artist profile invite"
+    message = f"You've been invited to manage an artist profile on {settings.HOST_NAME}. Click the link to claim access:\n\n{artist_invite_url(link_info, invite_code)}"
     return send_mail_helper(subject, message, [link_info.invited_email], form)
 
 

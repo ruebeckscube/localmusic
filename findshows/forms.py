@@ -3,13 +3,15 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 from django.db import models
+from django.utils.datastructures import MultiValueDict
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.models import Artist, Concert, ConcertTags, MusicBrainzArtist, UserProfile, Venue
-from findshows.widgets import BillWidget, DatePickerField, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
+from findshows.models import Artist, ArtistLinkingInfo, Concert, ConcertTags, MusicBrainzArtist, UserProfile, Venue
+from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
 
 class UserCreationFormE(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -130,6 +132,44 @@ class VenueForm(forms.ModelForm):
     class Meta:
         model=Venue
         fields=("name", "address", "ages", "website")
+
+
+class ArtistAccessForm(forms.Form):
+    users = forms.JSONField(widget=ArtistAccessWidget, required=False)
+    prefix = "artist_access"
+
+
+    @classmethod
+    def populate_intial(cls, current_user_profile, artist):
+        form = cls()
+        form.fields['users'].initial = [
+            {'email': user_profile.user.email, 'type': ArtistAccessWidget.Types.LINKED.value}
+            for user_profile in artist.managing_users.all()
+            if user_profile != current_user_profile
+        ]
+        form.fields['users'].initial.extend(
+            {'email': ali.invited_email, 'type': ArtistAccessWidget.Types.UNLINKED.value}
+            for ali in artist.artistlinkinginfo_set.all()
+        )
+        return form
+
+    @classmethod
+    def user_json_has_valid_email(cls, user_json):
+        try:
+            EmailValidator()(user_json['email'])
+        except ValidationError:
+            return False
+        return True
+
+
+    def clean_users(self):
+        invalid_emails = ','.join(u['email']
+                                  for u in self.cleaned_data['users']
+                                  if not self.user_json_has_valid_email(u))
+        if invalid_emails:
+            self.add_error(None,
+                           f"The following email addresses are invalid: {invalid_emails}; please remove them and re-enter.")
+        return self.cleaned_data['users']
 
 
 class TempArtistForm(forms.ModelForm):

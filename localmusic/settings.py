@@ -178,6 +178,6 @@ MJML_CHECK_CMD_ON_STARTUP = False
 MAX_DATE_RANGE = 31
 MAX_DAILY_CONCERT_CREATES = 3
 MAX_DAILY_VENUE_CREATES = 2
-MAX_DAILY_ARTIST_CREATES = 3  # This includes invites and adding an artist to your own account
+MAX_DAILY_INVITES = 3  # This includes invites and adding an artist to your own account
 CONCERT_RECS_PER_EMAIL = 9
 INVITE_CODE_EXPIRATION_DAYS = 7
