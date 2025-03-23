@@ -5,7 +5,6 @@ from django.forms.fields import DateField, TimeField
 from django.forms.widgets import Input
 
 from findshows.models import MusicBrainzArtist, Venue
-import findshows.forms
 
 
 class MusicBrainzArtistSearchWidget(Input):
@@ -104,7 +103,7 @@ class VenuePickerWidget(Input):
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         if value:
-            context['widget']['venue_name'] = Venue.objects.get(pk=value)
+            context['widget']['venue'] = Venue.objects.get(pk=value)
         else:
             context['widget']['value'] = ''
         return context

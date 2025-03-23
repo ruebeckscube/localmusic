@@ -80,3 +80,6 @@ venv.bak/
 
 # Secrets
 /secrets.json
+
+# Misc
+notes.org

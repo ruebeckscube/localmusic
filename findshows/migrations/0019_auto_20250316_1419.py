@@ -107,6 +107,8 @@ def create_other_static_test_data(apps, schema_editor):
         ages="21",
         website="http://www.default.com",
         created_by=default_creator_u_p,
+        is_verified=True,
+        declined_listing=False,
     )
 
 
@@ -114,7 +116,7 @@ def create_other_static_test_data(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('findshows', '0018_remove_artist_invited_by_and_more'),
+        ('findshows', '0021_venue_declined_listing_venue_is_verified'),
     ]
 
     operations = [

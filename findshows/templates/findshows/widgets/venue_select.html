@@ -1,8 +1,7 @@
 {# modal based on https://alpinetoolbox.com/examples/modal #}
 
 <div class="bg-gray-100 flex items-center justify-center"
-     x-data="venue_picker_data('{{widget.value|escapejs}}', '{{widget.venue_name|escapejs}}')"
-     @keydown.escape="close_modal()"
+     x-data="venue_picker_data('{{widget.value|escapejs}}', '{{widget.venue.name|escapejs}}', {{widget.venue.is_verified|yesno:"true,false"}}, {{widget.venue.declined_listing|yesno:"true,false"}} )"
      x-cloak>
 
     <div class="flex p-4 h-full items-center">
@@ -28,6 +27,18 @@
                 style="display: none;"
             >
             </ul>
+
+            <div x-show="!selected_venue_is_verified">
+                This venue has not yet been verified; the show will be listed
+                after verification is complete.
+            </div>
+
+            <div x-show="selected_venue_declined_listing">
+                This venue has declined to be listed on this website. This might
+                be opted for by a DIY venue that has safety, capacity, or other
+                concerns. Thanks for your understanding!
+            </div>
+
         </div>
 
         <div @modal-form-success="on_venue_create">
@@ -42,12 +53,15 @@
 </div>
 
 <script>
- function venue_picker_data(initial_venue_id, initial_venue_name) {
+ function venue_picker_data(initial_venue_id, initial_venue_name, initial_venue_is_verified, initial_venue_declined_listing) {
      return {
          search_text: initial_venue_name,
+         show_search: false,
 
          selected_venue_name: initial_venue_name,
          selected_venue_id: initial_venue_id,
+         selected_venue_is_verified: initial_venue_is_verified,
+         selected_venue_declined_listing: initial_venue_declined_listing,
 
          created_venue_name: '',
          created_venue_id: '',
@@ -66,10 +80,12 @@
              focusAfter && focusAfter.focus();
          },
 
-         select_venue(venue_name, venue_id) {
+         select_venue(venue_name, venue_id, is_verified, declined_listing) {
              this.search_text = venue_name;
              this.selected_venue_name = venue_name;
              this.selected_venue_id = venue_id;
+             this.selected_venue_is_verified = is_verified;
+             this.selected_venue_declined_listing = declined_listing;
          },
 
          on_venue_create(event) {

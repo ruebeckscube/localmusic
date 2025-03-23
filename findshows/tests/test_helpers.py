@@ -165,7 +165,9 @@ class TestCaseHelpers(TestCase):
                      ages=Ages.TWENTYONE,
                      website="https://thevenue.com",
                      created_by=None,
-                     created_at=None):
+                     created_at=None,
+                     is_verified=True,
+                     declined_listing=False):
         created_at = created_at or timezone_today()
 
         venue=Venue(
@@ -173,6 +175,8 @@ class TestCaseHelpers(TestCase):
             address=address,
             ages=ages,
             website=website,
+            is_verified=is_verified,
+            declined_listing=declined_listing,
         )
         if created_by is None:
             venue.created_by_id = cls.StaticUsers.DEFAULT_CREATOR.value

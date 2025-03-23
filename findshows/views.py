@@ -4,11 +4,9 @@ import json
 from random import random, shuffle
 
 from django.contrib.auth import login
-from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
 from django.urls import reverse
-from django.views import generic
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -515,16 +513,15 @@ def concert_search_results(request):
         search_form = ShowFinderForm()
 
     if search_form.is_valid():
+        concerts = Concert.publically_visible()
         if search_form.cleaned_data['is_date_range']:
-            concerts = Concert.objects.filter(date__gte=search_form.cleaned_data['date'])
-            concerts = concerts.filter(date__lte=search_form.cleaned_data['end_date'])
+            concerts = concerts.filter(date__gte=search_form.cleaned_data['date'],
+                                       date__lte=search_form.cleaned_data['end_date'])
         else:
-            concerts = Concert.objects.filter(date=search_form.cleaned_data['date'])
+            concerts = concerts.filter(date=search_form.cleaned_data['date'])
 
         if search_form.cleaned_data['concert_tags']: # no concert tags = all concert tags
             concerts = concerts.filter(reduce(or_, (Q(tags__icontains=t) for t in search_form.cleaned_data['concert_tags'])))
-
-        concerts = concerts.exclude(artists__is_temp_artist=True)
 
         searched_musicbrainz_artists = search_form.cleaned_data.get('musicbrainz_artists', [])
         concerts = list(concerts)

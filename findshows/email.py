@@ -1,14 +1,16 @@
 import datetime
+from functools import reduce
+from operator import or_
 from random import shuffle
 import logging
 from smtplib import SMTPException
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, get_connection, send_mail
-from django.forms import Form
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.http import urlencode
+from django.db.models import Q
 
 from findshows.forms import ContactForm
 from findshows.models import ArtistLinkingInfo, Concert, UserProfile
@@ -107,21 +109,29 @@ def rec_email_generator(header_message):
                       'end_date': week_later,
                       'is_date_range': True}
 
-    next_week_concerts = Concert.objects.filter(date__gte=today, date__lte=week_later)
-    next_week_concerts = next_week_concerts.exclude(artists__is_temp_artist=True)
+    next_week_concerts = Concert.publically_visible().filter(date__gte=today, date__lte=week_later)
     for user_profile in user_profiles:
         search_params['musicbrainz_artists'] = [mb_artist.mbid
                                                 for mb_artist in user_profile.favorite_musicbrainz_artists.all()]
         search_params['concert_tags'] = user_profile.preferred_concert_tags
         search_url = settings.HOST_NAME + reverse('findshows:concert_search') + '?' + urlencode(search_params, doseq=True)
 
-        scored_concerts = ((c.relevance_score(search_params['musicbrainz_artists']), c) for c in next_week_concerts)
+        tag_filtered_concerts = next_week_concerts.all()
+        if search_params['concert_tags']:
+            tag_filtered_concerts = next_week_concerts.filter(reduce(or_, (Q(tags__icontains=t) for t in search_params['concert_tags'])))
+
+        scored_concerts = ((c.relevance_score(search_params['musicbrainz_artists']), c) for c in tag_filtered_concerts)
+
         top_scored_concerts = sorted(s_c for s_c in scored_concerts if s_c[0] != 0)
+
         has_recs = len(top_scored_concerts) > 0
         if has_recs:
             rec_concerts = [s_c[1] for s_c in top_scored_concerts]
         else:
-            rec_concerts = list(next_week_concerts)
+            if len(tag_filtered_concerts) == 0:
+                rec_concerts = list(next_week_concerts)
+            else:
+                rec_concerts = list(tag_filtered_concerts)
             shuffle(rec_concerts)
         rec_concerts = rec_concerts[:settings.CONCERT_RECS_PER_EMAIL]
 

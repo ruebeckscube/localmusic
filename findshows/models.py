@@ -1,13 +1,13 @@
 from datetime import timedelta
 import hashlib
-import random
 from urllib.parse import urlparse, parse_qs
 import urllib.request
 import re
 from statistics import mean
 import secrets
 
-from django.db import IntegrityError, models
+from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import User
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
@@ -340,11 +340,14 @@ class Ages(models.TextChoices):
 
 
 class Venue(CreationTrackingMixin):
-    name=models.CharField()
+    name=models.CharField(unique=True)
     # For now, folks will put "DM for address" for house venues.
     address=models.CharField()
     ages=models.CharField(max_length=2, choices=Ages)
     website=models.URLField()
+
+    is_verified=models.BooleanField(default=False)
+    declined_listing=models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -362,6 +365,11 @@ class Concert(CreationTrackingMixin):
     ticket_link=models.URLField(blank=True)
     ticket_description=models.CharField()
     tags=MultiSelectField(choices=ConcertTags)
+
+
+    @classmethod
+    def publically_visible(cls):
+        return cls.objects.exclude(Q(artists__is_temp_artist=True) | Q(venue__is_verified=False) | Q(venue__declined_listing=True))
 
 
     def relevance_score(self, searched_mbids):

@@ -6,6 +6,7 @@ from django.core import mail
 from django.views.generic.dates import timezone_today
 
 from findshows.email import send_mail_helper, send_mass_html_mail, send_rec_email
+from findshows.models import ConcertTags
 from findshows.tests.test_helpers import TestCaseHelpers
 
 
@@ -67,3 +68,31 @@ class SendRecEmailTests(TestCaseHelpers):
         self.assert_emails_sent(1)
         self.assert_concert_link_in_message_html(concert2, mail.outbox[0])
         self.assert_concert_link_in_message_html(concert1, mail.outbox[0], True)
+
+
+    def test_concert_tags_filtering_no_recs(self):
+        concert1 = self.create_concert(tags=[ConcertTags.ORIGINALS])
+        concert2 = self.create_concert(tags=[ConcertTags.ORIGINALS, ConcertTags.COVERS])
+        concert3 = self.create_concert(tags=[ConcertTags.DJ, ConcertTags.COVERS])
+        self.create_user_profile(email="user1@em.ail", preferred_concert_tags=ConcertTags.ORIGINALS)
+
+        send_rec_email('subject', 'header')
+
+        self.assert_emails_sent(1)
+        self.assert_concert_link_in_message_html(concert1, mail.outbox[0])
+        self.assert_concert_link_in_message_html(concert2, mail.outbox[0])
+        self.assert_concert_link_in_message_html(concert3, mail.outbox[0], True)
+
+
+    def test_venue_filtering(self):
+        unverified_concert=self.create_concert(venue=self.create_venue(is_verified=False, declined_listing=False))
+        declined_concert=self.create_concert(venue=self.create_venue(is_verified=True, declined_listing=True))
+        verified_concert=self.create_concert(venue=self.create_venue(is_verified=True, declined_listing=False))
+        self.create_user_profile(email="user1@em.ail")
+
+        send_rec_email('subject', 'header')
+
+        self.assert_emails_sent(1)
+        self.assert_concert_link_in_message_html(verified_concert, mail.outbox[0])
+        self.assert_concert_link_in_message_html(unverified_concert, mail.outbox[0], True)
+        self.assert_concert_link_in_message_html(declined_concert, mail.outbox[0], True)

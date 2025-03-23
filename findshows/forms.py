@@ -83,6 +83,14 @@ class ConcertForm(forms.ModelForm):
     def set_editing_user(self, user):
         self.editing_user = user
 
+
+    def clean_venue(self):
+        venue = self.cleaned_data['venue']
+        if venue.declined_listing:
+            self.add_error('venue', 'You cannot list a show at a venue that has declined listings.')
+        return venue
+
+
     def clean(self):
         cleaned_data = super().clean() or {}
 

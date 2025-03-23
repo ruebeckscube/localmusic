@@ -70,3 +70,15 @@ class ValidationTests(ConcertFormTestHelpers):
         self.assertFalse(form.is_valid())
         trunc_msg = "There is already a show"
         self.assertEqual(form.errors.as_data()['__all__'][0].message[:len(trunc_msg)], trunc_msg)
+
+
+    def test_venue_declined_listing(self):
+        venue = self.create_venue(declined_listing=True)
+        artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        user_profile = self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)
+        form = ConcertForm(self.form_data(venue=venue, artists=[artist]),
+                           self.file_data())
+        form.set_editing_user(user_profile.user)
+        self.assertFalse(form.is_valid())
+        self.assertIn("declined listings",
+                      str(form.errors['venue'][0]))

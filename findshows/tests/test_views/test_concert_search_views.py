@@ -124,4 +124,12 @@ class ConcertSearchResultsTests(TestCaseHelpers):
         self.assert_equal_as_sets(response.context['concerts'], [concert2])
 
 
+    def test_venue_filtering(self):
+        unverified_concert=self.create_concert(venue=self.create_venue(is_verified=False, declined_listing=False))
+        declined_concert=self.create_concert(venue=self.create_venue(is_verified=True, declined_listing=True))
+        verified_concert=self.create_concert(venue=self.create_venue(is_verified=True, declined_listing=False))
+
+        response = self.client.get(reverse('findshows:concert_search_results'), concert_GET_params())
+        self.assert_equal_as_sets(response.context['concerts'], [verified_concert])
+
     # Similarity sorting is tested in ../test_recommendations.py
