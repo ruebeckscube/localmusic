@@ -28,7 +28,7 @@
             >
             </ul>
 
-            <div x-show="!selected_venue_is_verified">
+            <div x-show="selected_venue_name && (!selected_venue_is_verified)">
                 This venue has not yet been verified; the show will be listed
                 after verification is complete.
             </div>
