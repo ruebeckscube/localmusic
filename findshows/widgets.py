@@ -52,8 +52,13 @@ class SocialsLinksWidget(Input):
 class DatePickerWidget(Input):
     template_name="findshows/widgets/date_picker.html"
 
+    def __init__(self, allow_past_or_future=1, **kwargs):
+        super().__init__(**kwargs)
+        self.allow_past_or_future = allow_past_or_future
+
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
+        context['widget']['allow_past_or_future'] = self.allow_past_or_future
         if context['widget']['value'] is None:
             context['widget']['value'] = ''
         return context
