@@ -1,0 +1,50 @@
+<div id="daily-digest">
+    <form method="GET" action="" id="mod-digest-form">
+        <div class="flex">
+
+            {{ form }}
+
+            <input class=""
+                   type="button"
+                   name="mod-digest-button"
+                   hx-get="{% url 'findshows:mod_daily_digest' %}"
+                   hx-trigger="click"
+                   value="Submit"
+                   hx-include="#mod-digest-form"
+                   hx-target="#daily-digest"
+            >
+        </div>
+    </form>
+
+    <h2 class="my-4"> Artists </h2>
+    {% for artist in artists %}
+        {% include "findshows/partials/mod_artist_card.html" %}
+    {% empty %}
+        <div>
+            No artists created on this date.
+        </div>
+    {% endfor %}
+
+    <h2 class="my-4"> Venues </h2>
+    {% for venue in venues %}
+        {% include "findshows/partials/mod_venue_card.html" %}
+    {% empty %}
+        <div>
+            No venues created on this date.
+        </div>
+    {% endfor %}
+
+    <h2 class="my-4"> Concerts </h2>
+    {% for concert in concerts %}
+        <div class="flex">
+            {% include "findshows/partials/concert_card.html" %}
+            {% if is_admin %}
+                <a href="{% url 'admin:findshows_concert_change' concert.pk %}">Admin edit</a>
+            {% endif %}
+        </div>
+    {% empty %}
+        <div>
+            No concerts created on this date.
+        </div>
+    {% endfor %}
+</div>

@@ -167,7 +167,6 @@ LOGOUT_REDIRECT_URL = "/"
 # Email
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, '../emails')
-MODERATORS = [('Test Moderator', 'moderator@localmusic.com')]
 ADMINS = [('Test admin','admin@localmusic.com')]
 
 MJML_BACKEND_MODE = 'cmd'

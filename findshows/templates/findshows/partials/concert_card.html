@@ -13,7 +13,7 @@
             <div class="grid grid-cols-3 w-3/4 my-1 items-center">
                 {% for artist in concert.sorted_artists %}
                     <div class="text-lg text-right mr-3">
-                        <a href="{% url "findshows:view_artist" artist.pk %}"> {{artist.name}} </a>
+                        <a href="{% url 'findshows:view_artist' artist.pk %}"> {{artist.name}} </a>
                         {% for similar_musicbrainz_artist in artist.similar_musicbrainz_artists.all %}
                             {% similar_artist_name_with_relevancy similar_musicbrainz_artist searched_musicbrainz_artists %}
                         {% endfor %}

@@ -11,7 +11,7 @@ from django.views.generic.dates import timezone_today
 from django.conf import settings
 
 from findshows.models import Artist, ArtistLinkingInfo, Concert, ConcertTags, MusicBrainzArtist, UserProfile, Venue
-from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
+from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
 
 class UserCreationFormE(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -210,7 +210,7 @@ class RequestArtistForm(forms.ModelForm):
     def save(self, commit = True):
         artist = super().save(commit=False)
         artist.is_temp_artist = True
-        artist.requested_datetime = now()
+        artist.is_active_request = True
         artist.local = True
         if commit:
             artist.save()
@@ -274,3 +274,16 @@ class ContactForm(forms.Form):
     def clean_subject(self):
         data = self.cleaned_data["subject"]
         return ' '.join(data.splitlines()) # Email subjects can't have \n or \r
+
+
+class ModDailyDigestForm(forms.Form):
+    date = DatePickerField(widget=DatePickerWidget(allow_past_or_future=-1))
+
+    def clean_date(self):
+        date = self.cleaned_data['date']
+        today = timezone_today()
+        if date > today:
+            self.add_error('date',
+                "No data for future dates."
+                )
+        return date

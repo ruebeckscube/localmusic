@@ -5,6 +5,8 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.db import migrations
 
+from findshows.views import is_mod
+
 
 def create_static_test_users(apps, schema_editor):
     User = get_user_model()
@@ -37,6 +39,12 @@ def create_static_test_users(apps, schema_editor):
         username="TEMP_ARTIST",
         password="1234",
         email='temp@artist.net',
+    )
+
+    User.objects.create_user(
+        username="MOD_USER",
+        password="1234",
+        email='mod@localmusic.net',
     )
 
 
@@ -101,6 +109,12 @@ def create_other_static_test_data(apps, schema_editor):
         )
     )
 
+    mod_user_u_p = UserProfile.objects.create(
+        user=User.objects.get(username="MOD_USER"),
+        weekly_email=False,
+        is_mod=True,
+    )
+
     Venue.objects.create(
         name="DEFAULT VENUE",
         address="123 default drive",
@@ -116,7 +130,7 @@ def create_other_static_test_data(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('findshows', '0021_venue_declined_listing_venue_is_verified'),
+        ('findshows', '0023_rename_expiration_datetime_artistlinkinginfo_generated_datetime'),
     ]
 
     operations = [

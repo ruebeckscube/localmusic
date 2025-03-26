@@ -24,6 +24,7 @@ class TestCaseHelpers(TestCase):
         NONLOCAL_ARTIST = 3
         NON_ARTIST = 4
         TEMP_ARTIST = 5
+        MOD_USER = 6
 
         @classmethod
         def model(cls):
@@ -57,10 +58,9 @@ class TestCaseHelpers(TestCase):
 
 
     def assert_redirects_to_login(self, url):
-        create_concert_url = reverse("findshows:create_concert")
-        response = self.client.get(create_concert_url)
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 302) # HTTP redirect
-        self.assertEqual(response.url, f"{reverse('login')}?next={create_concert_url}")
+        self.assertEqual(response.url, f"{reverse('login')}?next={url}")
 
 
     def assert_blank_form(self, form, form_class):
@@ -119,13 +119,15 @@ class TestCaseHelpers(TestCase):
                             favorite_musicbrainz_artists=[],
                             preferred_concert_tags=[],
                             email="test@em.ail",
-                            weekly_email=True):
+                            weekly_email=True,
+                            is_mod=False,
+                            ):
         while username is None:
             username = str(uuid4())
             if User.objects.filter(username=username).exists():
                 username = None
         user = User.objects.create_user(username=username, password=password, email=email)
-        user_profile = UserProfile.objects.create(user=user, preferred_concert_tags=preferred_concert_tags, weekly_email=weekly_email)
+        user_profile = UserProfile.objects.create(user=user, preferred_concert_tags=preferred_concert_tags, weekly_email=weekly_email, is_mod=is_mod)
         user_profile.favorite_musicbrainz_artists.set(favorite_musicbrainz_artists)
         return user_profile
 
@@ -138,12 +140,15 @@ class TestCaseHelpers(TestCase):
                       listen_links="",
                       youtube_links="",
                       is_temp_artist=False,
-                      created_by=None):
+                      is_active_request=False,
+                      created_by=None,
+                      created_at=None):
         artist = Artist(name=name,
                         local=local,
                         listen_links=listen_links,
                         youtube_links=youtube_links,
                         is_temp_artist=is_temp_artist,
+                        is_active_request=is_active_request,
                         )
         if created_by is None:
             artist.created_by_id = cls.StaticUsers.DEFAULT_CREATOR.value
@@ -151,6 +156,11 @@ class TestCaseHelpers(TestCase):
             artist.created_by_id = created_by.id
 
         artist.save()
+
+        if created_at is not None:
+            artist.created_at=created_at # Can't assign in creation because default-to-now behavior takes precedence
+            artist.save()
+
 
         if similar_musicbrainz_artists is not None:
             artist.similar_musicbrainz_artists.set(similar_musicbrainz_artists)
@@ -160,7 +170,7 @@ class TestCaseHelpers(TestCase):
 
     @classmethod
     def create_venue(cls,
-                     name="Test Venue",
+                     name=None,
                      address="100 West Hollywood",
                      ages=Ages.TWENTYONE,
                      website="https://thevenue.com",
@@ -168,8 +178,11 @@ class TestCaseHelpers(TestCase):
                      created_at=None,
                      is_verified=True,
                      declined_listing=False):
-        created_at = created_at or timezone_today()
 
+        while name is None:
+            name = str(uuid4())
+            if Venue.objects.filter(name=name).exists():
+                name = None
         venue=Venue(
             name=name,
             address=address,
@@ -248,16 +261,21 @@ class TestCaseHelpers(TestCase):
                                                 similar_artists_cache_datetime=tomorrow)
 
     @classmethod
-    def create_artist_linking_info(cls, email=None, artist=None, created_by=None):
+    def create_artist_linking_info(cls, email=None, artist=None, created_by=None, generated_datetime=None):
         while email is None:
             email = str(uuid4())
             if ArtistLinkingInfo.objects.filter(invited_email=email).exists():
                 email = None
         artist = artist or cls.get_static_instance(cls.StaticArtists.LOCAL_ARTIST)
         created_by = created_by or cls.get_static_instance(cls.StaticUsers.DEFAULT_CREATOR)
-        return ArtistLinkingInfo.create_and_get_invite_code(email=email,
-                                                            artist=artist,
-                                                            created_by=created_by)
+        ali, invite_code = ArtistLinkingInfo.create_and_get_invite_code(email=email,
+                                                                        artist=artist,
+                                                                        created_by=created_by)
+        if generated_datetime is not None:
+            ali.generated_datetime = generated_datetime
+            ali.save()
+
+        return ali, invite_code
 
 
 def concert_GET_params(date=timezone_today(),

@@ -388,7 +388,7 @@ class RequestArtistTests(TestCaseHelpers):
         self.assertEqual(1, len(artists))
         self.assertEqual(artists[0].created_at, timezone_today())
         self.assertTrue(artists[0].is_temp_artist)
-        self.assertTrue(artists[0].requested_datetime)
+        self.assertTrue(artists[0].is_active_request)
 
         self.assertTrue('HX-Trigger' in response.headers)
         hx_trigger = json.loads(response.headers['HX-Trigger'])

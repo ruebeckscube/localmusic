@@ -12,7 +12,7 @@ def contact_post_request():
         'email': ['test@em.ail'],
         'subject': ['bad'],
         'message': ["wow this website sucks"],
-        'type': ['oth']
+        'type': [ContactForm.Types.OTHER]
     }
 
 

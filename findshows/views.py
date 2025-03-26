@@ -1,3 +1,4 @@
+from datetime import timedelta
 from operator import and_, or_
 from functools import reduce
 import json
@@ -19,7 +20,7 @@ from findshows.email import contact_email, invite_artist, invite_user_to_artist,
 from findshows.widgets import ArtistAccessWidget
 
 from .models import Artist, ArtistLinkingInfo, Concert, ConcertTags, MusicBrainzArtist, Venue
-from .forms import ArtistAccessForm, ArtistEditForm, ConcertForm, ContactForm, RequestArtistForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
+from .forms import ArtistAccessForm, ArtistEditForm, ConcertForm, ContactForm, ModDailyDigestForm, RequestArtistForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
 
 
 #################
@@ -330,7 +331,7 @@ def link_artist(request):
     if request.user.email != artist_linking_info.invited_email:
         return render(request, error_template,
                       {'error': "User's email does not match the invited email. Please log back in with an account associated with the email that the invite was sent to, or request a new invite with the correct email."})
-    if artist_linking_info.expiration_datetime < timezone.now():
+    if artist_linking_info.generated_datetime + timedelta(settings.INVITE_CODE_EXPIRATION_DAYS) < timezone.now():
         return render(request, error_template,
                       {'error': "Invite code expired. Please reach out to the artist or mod who invited you and request they re-send it."})
     if not artist_linking_info.check_invite_code(invite_code):
@@ -537,8 +538,116 @@ def concert_search_results(request):
         concerts = []
         searched_musicbrainz_artists = []
 
-    return render(request, "findshows/htmx/concert_search_results.html", context = {
+    return render(request, "findshows/htmx/concert_search_results.html", context={
         "concerts": concerts,
         "search_form": search_form,
         "searched_musicbrainz_artists": searched_musicbrainz_artists,
+    })
+
+
+#######################
+## Moderator views  ###
+#######################
+
+def is_mod(user):
+    return ((not user.is_anonymous) and user.userprofile.is_mod)
+
+
+@user_passes_test(is_mod)
+def mod_dashboard(request):
+    return render(request, "findshows/pages/mod_dashboard.html")
+
+
+@user_passes_test(is_mod)
+def mod_daily_digest(request):
+    if request.GET:
+        form = ModDailyDigestForm(request.GET)
+    else:
+        form = ModDailyDigestForm(initial={'date': timezone_today})
+
+    date = form.cleaned_data['date'] if form.is_valid() else timezone_today()
+
+    return render(request, "findshows/htmx/mod_daily_digest.html", context={
+        'form': form,
+        'artists': Artist.objects.filter(created_at=date),
+        'concerts': Concert.objects.filter(created_at=date),
+        'venues': Venue.objects.filter(created_at=date),
+        'is_admin': request.user.is_staff,
+    })
+
+
+@user_passes_test(is_mod)
+def mod_queue(request):
+    return render(request, "findshows/htmx/mod_queue.html", context={
+        'artists': Artist.objects.filter(is_active_request=True),
+        'venues': Venue.objects.filter(is_verified=False),
+        'is_admin': request.user.is_staff,
+    })
+
+
+@user_passes_test(is_mod)
+def mod_outstanding_invites(request):
+    return render(request, "findshows/htmx/mod_outstanding_invites.html", context={
+        'artist_linking_infos': ArtistLinkingInfo.objects.all(),
+        'is_admin': request.user.is_staff,
+    })
+
+
+@user_passes_test(is_mod)
+def venue_verification(request, pk):
+    venue = get_object_or_404(Venue, pk=pk)
+    match request.POST.get('action'):
+        case 'verify':
+            venue.is_verified = True
+        case 'decline':
+            venue.is_verified = True
+            venue.declined_listing = True
+    venue.save()
+    return render(request, "findshows/htmx/venue_verification.html", context={
+        'venue': venue,
+    })
+
+
+@user_passes_test(is_mod)
+def resend_invite(request, pk):
+    ali = get_object_or_404(ArtistLinkingInfo, pk=pk)
+    if ali.generated_datetime > timezone.now() - timedelta(minutes=5):
+        success = False
+        errorlist = ["Please wait at least five minutes before sending again."]
+    else:
+        invite_code = ali.regenerate_invite_code()
+        errorlist = []
+        success = invite_artist(ali, invite_code, errorlist=errorlist)
+    return render(request, "findshows/htmx/mod_resend_invite_button.html", context={
+        'ali': ali,
+        'success': success,
+        'errors': " ".join(errorlist),
+    })
+
+
+@user_passes_test(is_mod)
+def approve_artist_request(request, pk):
+    artist = get_object_or_404(Artist, pk=pk)
+    if not artist.is_active_request:
+        success = False
+        errorlist = ["This request has already been approved."]
+    else:
+        errorlist = []
+        try:
+            ali, invite_code = ArtistLinkingInfo.create_and_get_invite_code(artist, artist.created_by.user.email, request.user.userprofile)
+            success = invite_artist(ali, invite_code, errorlist=errorlist)
+            if not success:
+                ali.delete()
+        except IntegrityError:
+            errorlist.append(f"The user {artist.created_by.user.email} already has an invite to this artist; please use the re-send button instead.")
+            success = False
+
+    if success:
+        artist.is_active_request = False
+        artist.save()
+
+    return render(request, "findshows/htmx/mod_artist_buttons.html", context={
+        'artist': artist,
+        'success': success,
+        'errors': " ".join(errorlist),
     })

@@ -1,0 +1,22 @@
+<div class="mod-invite-button">
+    {% if success %}
+        Invite successfully sent!
+    {% else %}
+        {% if errors %}
+            <div>
+                {{ errors }}
+            </div>
+        {% endif %}
+        <form type="post">
+            {% csrf_token %}
+            <input class=""
+                   type="button"
+                   name="resend-invite"
+                   hx-post="{% url 'findshows:resend_invite' ali.id %}"
+                   hx-trigger="click"
+                   value="Resend invite"
+                   hx-target="closest .mod-invite-button"
+                   hx-swap="outerHTML"
+            >
+    {% endif %}
+</div>

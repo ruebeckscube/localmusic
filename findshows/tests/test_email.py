@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 from django.core import mail
 from django.views.generic.dates import timezone_today
 
-from findshows.email import send_mail_helper, send_mass_html_mail, send_rec_email
+from findshows.email import daily_mod_email, send_mail_helper, send_mass_html_mail, send_rec_email
 from findshows.models import ConcertTags
 from findshows.tests.test_helpers import TestCaseHelpers
 
@@ -23,12 +23,29 @@ class SendMailHelperTests(TestCaseHelpers):
         mock_send_mail.side_effect = SMTPConnectError(123, "error message")
         mock_logger.error = MagicMock()
         mock_form = MagicMock()
-        success = send_mail_helper('subject', 'message message message', ['test@em.ail'], mock_form)
+        errorlist=[]
+        success = send_mail_helper('subject', 'message message message', ['test@em.ail'], mock_form, errorlist=errorlist)
 
         mock_send_mail.assert_called_once()
         self.assertEqual(success, 0)
         mock_logger.error.assert_called_once()
         mock_form.add_error.assert_called_once()
+        self.assertEqual(len(errorlist), 1)
+
+
+class DailyModEmailTests(TestCaseHelpers):
+    def test_new_records(self):
+        # The default records we construct in test migration count
+        success = daily_mod_email()
+        self.assertTrue(success)
+        self.assert_emails_sent(1)
+
+    @patch('findshows.email.timezone_today')
+    def test_no_new_records(self, mock_today):
+        mock_today.return_value = timezone_today() + timedelta(1)
+        success = daily_mod_email()
+        self.assertTrue(success)
+        self.assert_emails_sent(0)
 
 
 class SendMassHtmlMailTests(TestCaseHelpers):

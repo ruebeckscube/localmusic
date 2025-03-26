@@ -20,6 +20,14 @@ urlpatterns = [
     path("concert/<int:pk>/edit", views.edit_concert, name="edit_concert"),
     path("concert/create", views.edit_concert, name="create_concert"),
 
+    path("mod_dashboard", views.mod_dashboard, name="mod_dashboard"),
+    path("htmx/mod_daily_digest", views.mod_daily_digest, name="mod_daily_digest"),
+    path("htmx/mod_queue", views.mod_queue, name="mod_queue"),
+    path("htmx/mod_outstanding_invites", views.mod_outstanding_invites, name="mod_outstanding_invites"),
+    path("htmx/venue_verification/<int:pk>", views.venue_verification, name="venue_verification"),
+    path("htmx/resend_invite/<int:pk>", views.resend_invite, name="resend_invite"),
+    path("htmx/approve_artist_request/<int:pk>", views.approve_artist_request, name="approve_artist_request"),
+
     path("search", views.concert_search, name="concert_search"),
     path("htmx/concert_search_results/", views.concert_search_results, name="concert_search_results"),
 

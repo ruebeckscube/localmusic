@@ -11,26 +11,30 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.db.models import Q
+from django.views.generic.dates import timezone_today
 
 from findshows.forms import ContactForm
-from findshows.models import ArtistLinkingInfo, Concert, UserProfile
+from findshows.models import Artist, ArtistLinkingInfo, Concert, UserProfile, Venue
 
 
 logger = logging.getLogger(__name__)
 
 
-def send_mail_helper(subject, message, recipient_list, form=None, from_email=None):
+def send_mail_helper(subject, message, recipient_list, form=None, from_email=None, errorlist=None):
     """
     Sends a single email.
 
     If form is provided, we will add an error to it if email fails. Assumes is_valid() has been called.
     If from_email is not provided, it will be from DEFAULT_FROM_EMAIL
+    If errorlist is provided, we will append errors to it if email fails.
     """
     try:
         return send_mail(subject, message, from_email, recipient_list, fail_silently=False)
     except SMTPException as e:
         if form:
             form.add_error(None, f"Unable to send email to {','.join(recipient_list)}. Please try again later.")
+        if errorlist is not None:
+            errorlist.append(f"Unable to send email to {','.join(recipient_list)}. Please try again later.")
         logger.error(f"Email failure: {str(e)}")
         return 0
 
@@ -41,10 +45,10 @@ def artist_invite_url(link_info: ArtistLinkingInfo, invite_code):
     return settings.HOST_NAME + reverse("findshows:link_artist") + '?' + urlencode(qs, doseq=True)
 
 
-def invite_artist(link_info: ArtistLinkingInfo, invite_code, form):
+def invite_artist(link_info: ArtistLinkingInfo, invite_code, form=None, errorlist=None):
     subject = "Artist profile invite"
     message = f"You've been invited to create an artist profile on {settings.HOST_NAME}. Click the link to claim it and fill out your profile!\n\n{artist_invite_url(link_info, invite_code)}"
-    return send_mail_helper(subject, message, [link_info.invited_email], form)
+    return send_mail_helper(subject, message, [link_info.invited_email], form, errorlist=errorlist)
 
 
 def invite_user_to_artist(link_info: ArtistLinkingInfo, invite_code, form):
@@ -66,7 +70,8 @@ def contact_email(cf: ContactForm):
         case cf.Types.REPORT_BUG:
             recipient_list = [admin[1] for admin in settings.ADMINS] # Tuples (Name, email)
         case cf.Types.OTHER:
-            recipient_list = [mod[1] for mod in settings.MODERATORS]
+            mods = UserProfile.objects.filter(is_mod=True)
+            recipient_list = [mod.user.email for mod in mods]
         case _:
             recipient_list = []
 
@@ -75,6 +80,23 @@ def contact_email(cf: ContactForm):
                             recipient_list,
                             cf,
                             cf.cleaned_data['email'])
+
+def daily_mod_email():
+    today = timezone_today()
+
+    new_artists = Artist.objects.filter(created_at=today)
+    new_concerts = Concert.objects.filter(created_at=today)
+    new_venues = Venue.objects.filter(created_at=today)
+
+    actionable_artists = Artist.objects.filter(is_active_request=True)
+    actionable_venues = Venue.objects.filter(is_verified=False)
+
+    if all(q.count()==0 for q in (new_artists, new_concerts, new_venues, actionable_artists, actionable_venues)):
+        return True
+
+    message = f"There are new or actionable listings to moderate.\n\n{settings.HOST_NAME}{reverse('findshows:mod_dashboard')}"
+    recipient_list = [mod.user.email for mod in UserProfile.objects.filter(is_mod=True)]
+    return send_mail_helper("Moderation reminder", message, recipient_list)
 
 
 # from https://stackoverflow.com/questions/7583801/send-mass-emails-with-emailmultialternatives/10215091#10215091

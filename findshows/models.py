@@ -142,7 +142,7 @@ class Artist(CreationTrackingMixin):
     bio=models.TextField(blank=True)
     local=models.BooleanField()
 
-    requested_datetime=models.DateTimeField(blank=True, null=True, editable=False)
+    is_active_request=models.BooleanField(default=False)
     is_temp_artist=models.BooleanField()
 
     # Here we store the artist's raw input for listening links. Either an album
@@ -268,8 +268,8 @@ def _parse_youtube_id(parsed_url):
 
 class ArtistLinkingInfo(CreationTrackingMixin):
     invited_email=models.EmailField()
-    expiration_datetime=models.DateTimeField()
-    invite_code_hashed=models.CharField(unique=True, max_length=128)
+    generated_datetime=models.DateTimeField()
+    invite_code_hashed=models.CharField(unique=True, max_length=128, editable=False)
     artist=models.ForeignKey(Artist, on_delete=models.CASCADE)
 
     class Meta(CreationTrackingMixin.Meta):
@@ -307,8 +307,12 @@ class ArtistLinkingInfo(CreationTrackingMixin):
         invite_code = secrets.token_urlsafe(32)
         salt = secrets.token_urlsafe(32)
         self.invite_code_hashed = self._calculate_stored_hash(invite_code, salt)
-        self.expiration_datetime = now() + timedelta(settings.INVITE_CODE_EXPIRATION_DAYS)
+        self.generated_datetime = now()
         return invite_code
+
+
+    def __str__(self):
+        return f"{self.invited_email} -> {str(self.artist)}"
 
 
 class ConcertTags(models.TextChoices):
@@ -327,6 +331,8 @@ class UserProfile(models.Model):
     followed_artists=models.ManyToManyField(Artist, related_name="followers", blank=True)
     managed_artists=models.ManyToManyField(Artist, related_name="managing_users")
     weekly_email=models.BooleanField(default=True)
+
+    is_mod=models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.user)
