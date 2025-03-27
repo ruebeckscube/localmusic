@@ -121,13 +121,21 @@ class TestCaseHelpers(TestCase):
                             email="test@em.ail",
                             weekly_email=True,
                             is_mod=False,
+                            given_artist_access_by=None,
+                            given_artist_access_datetime=None,
                             ):
         while username is None:
             username = str(uuid4())
             if User.objects.filter(username=username).exists():
                 username = None
         user = User.objects.create_user(username=username, password=password, email=email)
-        user_profile = UserProfile.objects.create(user=user, preferred_concert_tags=preferred_concert_tags, weekly_email=weekly_email, is_mod=is_mod)
+        user_profile = UserProfile.objects.create(user=user,
+                                                  preferred_concert_tags=preferred_concert_tags,
+                                                  weekly_email=weekly_email,
+                                                  is_mod=is_mod)
+        if given_artist_access_by:
+            user_profile.given_artist_access_by = given_artist_access_by
+            user_profile.given_artist_access_datetime = given_artist_access_datetime or now()
         user_profile.favorite_musicbrainz_artists.set(favorite_musicbrainz_artists)
         return user_profile
 

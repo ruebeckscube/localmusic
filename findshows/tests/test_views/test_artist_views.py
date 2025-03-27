@@ -276,6 +276,18 @@ class CreateTempArtistTests(TestCaseHelpers):
         self.assert_records_created(Artist, 0)
 
 
+    def test_new_user_cant_create(self):
+        user_profile = self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)
+        user_profile.given_artist_access_datetime = timezone.now()
+        user_profile.save()
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
+        self.assert_records_created(Artist, 0)
+        self.assertTemplateUsed(response, 'findshows/htmx/cant_create_artist.html')
+        self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
+        self.assertIn("Users newly given posting permissions", str(response.content))
+    
+
     def test_successful_create(self):
         user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
@@ -431,25 +443,31 @@ class RequestArtistTests(TestCaseHelpers):
 class LinkArtistTests(TestCaseHelpers):
     def test_successful_link_temp_artist(self):
         artist = self.create_artist(is_temp_artist=True)
-        user = self.login_static_user(self.StaticUsers.NON_ARTIST)
-        ali, invite_code = self.create_artist_linking_info(user.user.email, artist)
+        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        ali, invite_code = self.create_artist_linking_info(user_profile.user.email, artist)
         response = self.client.get(reverse('findshows:link_artist'),
                                    query_params={'invite_id': str(ali.pk), 'invite_code': invite_code}
                                    )
         self.assertRedirects(response, reverse('findshows:edit_artist', args=(artist.pk,)))
-        self.assertIn(artist, user.managed_artists.all())
+        user_profile.refresh_from_db()
+        self.assertIn(artist, user_profile.managed_artists.all())
         self.assertEqual(0, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())
+        self.assertEqual(user_profile.given_artist_access_by, self.get_static_instance(self.StaticUsers.DEFAULT_CREATOR))
+        self.assertTrue(user_profile.given_artist_access_datetime)
 
 
     def test_successful_link_existing_artist(self):
         artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
-        user = self.login_static_user(self.StaticUsers.NON_ARTIST)
-        ali, invite_code = self.create_artist_linking_info(user.user.email, artist)
+        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        ali, invite_code = self.create_artist_linking_info(user_profile.user.email, artist)
         response = self.client.get(reverse('findshows:link_artist'),
                                    query_params={'invite_id': str(ali.pk), 'invite_code': invite_code})
         self.assertRedirects(response, reverse('findshows:view_artist', args=(artist.pk,)))
-        self.assertIn(artist, user.managed_artists.all())
+        user_profile.refresh_from_db()
+        self.assertIn(artist, user_profile.managed_artists.all())
         self.assertEqual(0, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())
+        self.assertEqual(user_profile.given_artist_access_by, self.get_static_instance(self.StaticUsers.DEFAULT_CREATOR))
+        self.assertTrue(user_profile.given_artist_access_datetime)
 
 
     def test_missing_params(self):
@@ -614,6 +632,25 @@ class ManageArtistAccessTests(TestCaseHelpers):
         partial_errors = response.context['partial_errors']()
         self.assertEqual(len(partial_errors), 1)
         self.assertIn("You have hit your max invites",
+                      partial_errors[0])
+        self.assertFalse('HX-Trigger' in response.headers)
+
+
+    def test_new_user_cant_create(self):
+        user_profile = self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)
+        user_profile.given_artist_access_datetime = timezone.now()
+        user_profile.save()
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+
+        response = self.client.post(reverse("findshows:manage_artist_access",
+                                 args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+                         data=artist_access_post_request([
+                             user_json('temp@em.ail', ArtistAccessWidget.Types.NEW.value),
+                         ]))
+        self.assert_records_created(ArtistLinkingInfo, 0)
+        partial_errors = response.context['partial_errors']()
+        self.assertEqual(len(partial_errors), 1)
+        self.assertIn("Users newly given posting permissions must wait",
                       partial_errors[0])
         self.assertFalse('HX-Trigger' in response.headers)
 

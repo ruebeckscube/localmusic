@@ -266,6 +266,12 @@ def _parse_youtube_id(parsed_url):
     return ""
 
 
+class InviteDelayError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
 class ArtistLinkingInfo(CreationTrackingMixin):
     invited_email=models.EmailField()
     generated_datetime=models.DateTimeField()
@@ -278,6 +284,9 @@ class ArtistLinkingInfo(CreationTrackingMixin):
 
     @classmethod
     def create_and_get_invite_code(cls, artist, email, created_by):
+        if (not created_by.is_mod) and (not created_by.given_artist_access_datetime or
+            created_by.given_artist_access_datetime > now() - timedelta(settings.INVITE_BUFFER_DAYS)):
+            raise InviteDelayError(f"Users newly given posting permissions must wait {settings.INVITE_BUFFER_DAYS} days before inviting other users.")
         link_info = cls(artist=artist, invited_email=email)
         invite_code = link_info._generate_invite_code()
         link_info.created_by = created_by
@@ -331,6 +340,9 @@ class UserProfile(models.Model):
     followed_artists=models.ManyToManyField(Artist, related_name="followers", blank=True)
     managed_artists=models.ManyToManyField(Artist, related_name="managing_users")
     weekly_email=models.BooleanField(default=True)
+
+    given_artist_access_by=models.ForeignKey('UserProfile', related_name="gave_artist_access_to", on_delete=models.CASCADE, null=True)
+    given_artist_access_datetime=models.DateTimeField(null=True)
 
     is_mod=models.BooleanField(default=False)
 

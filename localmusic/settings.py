@@ -180,3 +180,4 @@ MAX_DAILY_VENUE_CREATES = 2
 MAX_DAILY_INVITES = 3  # This includes invites and adding an artist to your own account
 CONCERT_RECS_PER_EMAIL = 9
 INVITE_CODE_EXPIRATION_DAYS = 7
+INVITE_BUFFER_DAYS = 2

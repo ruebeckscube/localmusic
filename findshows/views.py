@@ -19,7 +19,7 @@ from django.conf import settings
 from findshows.email import contact_email, invite_artist, invite_user_to_artist, send_artist_setup_info
 from findshows.widgets import ArtistAccessWidget
 
-from .models import Artist, ArtistLinkingInfo, Concert, ConcertTags, MusicBrainzArtist, Venue
+from .models import Artist, ArtistLinkingInfo, Concert, ConcertTags, InviteDelayError, MusicBrainzArtist, Venue
 from .forms import ArtistAccessForm, ArtistEditForm, ConcertForm, ContactForm, ModDailyDigestForm, RequestArtistForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
 
 
@@ -175,6 +175,10 @@ def create_temp_artist(request):
     if records_created_today(ArtistLinkingInfo, request.user.userprofile) >= settings.MAX_DAILY_INVITES:
         return render(request, 'findshows/htmx/cant_create_artist.html')
 
+    if (not request.user.userprofile.given_artist_access_datetime or
+        request.user.userprofile.given_artist_access_datetime > timezone.now() - timedelta(settings.INVITE_BUFFER_DAYS)):
+        return render(request, 'findshows/htmx/cant_create_artist.html', context={'new_account_delay': settings.INVITE_BUFFER_DAYS})
+
     # The latter condition is a slightly hacky way of telling whether this HTMX
     # request is being triggered by page load (we should provide blank form) or
     # click (we should process form and display errors if they exist)
@@ -278,6 +282,9 @@ def manage_artist_access(request, pk):
                     except IntegrityError:
                         form.add_error(None, f"The user {user_json['email']} already has an invite to this artist; please use the re-send button instead.")
                         continue
+                    except InviteDelayError as e:
+                        form.add_error(None, e.message)
+                        continue
                     if not invite_user_to_artist(link_info, invite_code, form):
                         # invite_user_to_artist adds error to form
                         link_info.delete()
@@ -339,7 +346,12 @@ def link_artist(request):
                       {'error': "Invite code invalid. Make sure you clicked the link in your email or copied it correctly; if this error persists, please contact site admins."})
 
     artist = artist_linking_info.artist
-    request.user.userprofile.managed_artists.add(artist)
+    up = request.user.userprofile
+    if not up.given_artist_access_by:
+        up.given_artist_access_by = artist_linking_info.created_by
+        up.given_artist_access_datetime = timezone.now()
+        up.save()
+    up.managed_artists.add(artist)
     artist_linking_info.delete()
 
     if artist.is_temp_artist:

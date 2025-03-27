@@ -6,7 +6,6 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('findshows', '0019_auto_20250316_1419'),
         ('findshows', '0021_venue_declined_listing_venue_is_verified'),
     ]
 
