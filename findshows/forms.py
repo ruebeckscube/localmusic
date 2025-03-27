@@ -3,12 +3,15 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 from django.db import models
+from django.utils.datastructures import MultiValueDict
+from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.models import Artist, Concert, ConcertTags, MusicBrainzArtist, UserProfile, Venue
-from findshows.widgets import BillWidget, DatePickerField, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
+from findshows.models import Artist, ArtistLinkingInfo, Concert, ConcertTags, MusicBrainzArtist, UserProfile, Venue
+from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
 
 class UserCreationFormE(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -49,6 +52,13 @@ class ArtistEditForm(forms.ModelForm):
         widgets={"similar_musicbrainz_artists": MusicBrainzArtistSearchWidget,
                  "socials_links": SocialsLinksWidget}
 
+    def save(self, commit = True):
+        artist = super().save(commit=False)
+        artist.is_temp_artist = False
+        if commit:
+            artist.save()
+        return artist
+
 
 class ConcertForm(forms.ModelForm):
     date = DatePickerField()
@@ -72,6 +82,14 @@ class ConcertForm(forms.ModelForm):
 
     def set_editing_user(self, user):
         self.editing_user = user
+
+
+    def clean_venue(self):
+        venue = self.cleaned_data['venue']
+        if venue.declined_listing:
+            self.add_error('venue', 'You cannot list a show at a venue that has declined listings.')
+        return venue
+
 
     def clean(self):
         cleaned_data = super().clean() or {}
@@ -124,17 +142,79 @@ class VenueForm(forms.ModelForm):
         fields=("name", "address", "ages", "website")
 
 
+class ArtistAccessForm(forms.Form):
+    users = forms.JSONField(widget=ArtistAccessWidget, required=False)
+    prefix = "artist_access"
+
+
+    @classmethod
+    def populate_intial(cls, current_user_profile, artist):
+        form = cls()
+        form.fields['users'].initial = [
+            {'email': user_profile.user.email, 'type': ArtistAccessWidget.Types.LINKED.value}
+            for user_profile in artist.managing_users.all()
+            if user_profile != current_user_profile
+        ]
+        form.fields['users'].initial.extend(
+            {'email': ali.invited_email, 'type': ArtistAccessWidget.Types.UNLINKED.value}
+            for ali in artist.artistlinkinginfo_set.all()
+        )
+        return form
+
+    @classmethod
+    def user_json_has_valid_email(cls, user_json):
+        try:
+            EmailValidator()(user_json['email'])
+        except ValidationError:
+            return False
+        return True
+
+
+    def clean_users(self):
+        invalid_emails = ','.join(u['email']
+                                  for u in self.cleaned_data['users']
+                                  if not self.user_json_has_valid_email(u))
+        if invalid_emails:
+            self.add_error(None,
+                           f"The following email addresses are invalid: {invalid_emails}; please remove them and re-enter.")
+        return self.cleaned_data['users']
+
+
 class TempArtistForm(forms.ModelForm):
     prefix = "temp_artist"
+    use_required_attribute = False
+    email=forms.EmailField(required=True, help_text="Please check with the artist you're inviting and and use a personal email rather than a band email. This is the address they will need to make an account with.")
+
+    class Meta:
+        model=Artist
+        fields=("name", "local")
+
+    def save(self, commit = True):
+        artist = super().save(commit=False)
+        artist.is_temp_artist = True
+        if commit:
+            artist.save()
+        return artist
+
+
+class RequestArtistForm(forms.ModelForm):
+    prefix = "request_artist"
     use_required_attribute = False
 
     class Meta:
         model=Artist
-        fields=("name", "local", "temp_email")
+        fields=("name", "socials_links")
+        widgets={"similar_musicbrainz_artists": MusicBrainzArtistSearchWidget,
+                 "socials_links": SocialsLinksWidget(num_links=1)}
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['temp_email'].required = True
+    def save(self, commit = True):
+        artist = super().save(commit=False)
+        artist.is_temp_artist = True
+        artist.is_active_request = True
+        artist.local = True
+        if commit:
+            artist.save()
+        return artist
 
 
 class ShowFinderForm(forms.Form):
@@ -194,3 +274,16 @@ class ContactForm(forms.Form):
     def clean_subject(self):
         data = self.cleaned_data["subject"]
         return ' '.join(data.splitlines()) # Email subjects can't have \n or \r
+
+
+class ModDailyDigestForm(forms.Form):
+    date = DatePickerField(widget=DatePickerWidget(allow_past_or_future=-1))
+
+    def clean_date(self):
+        date = self.cleaned_data['date']
+        today = timezone_today()
+        if date > today:
+            self.add_error('date',
+                "No data for future dates."
+                )
+        return date

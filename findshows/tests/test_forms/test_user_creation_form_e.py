@@ -1,7 +1,6 @@
 from django.test import TestCase
 
 from findshows.forms import UserCreationFormE
-from findshows.tests.test_helpers import create_user_profile_t
 
 def form_data(username='test_username',
               email='test@em.ail',

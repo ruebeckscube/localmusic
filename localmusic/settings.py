@@ -167,7 +167,6 @@ LOGOUT_REDIRECT_URL = "/"
 # Email
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, '../emails')
-MODERATORS = [('Test Moderator', 'moderator@localmusic.com')]
 ADMINS = [('Test admin','admin@localmusic.com')]
 
 MJML_BACKEND_MODE = 'cmd'
@@ -178,4 +177,7 @@ MJML_CHECK_CMD_ON_STARTUP = False
 MAX_DATE_RANGE = 31
 MAX_DAILY_CONCERT_CREATES = 3
 MAX_DAILY_VENUE_CREATES = 2
+MAX_DAILY_INVITES = 3  # This includes invites and adding an artist to your own account
 CONCERT_RECS_PER_EMAIL = 9
+INVITE_CODE_EXPIRATION_DAYS = 7
+INVITE_BUFFER_DAYS = 2

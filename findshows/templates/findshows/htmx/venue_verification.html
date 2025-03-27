@@ -1,0 +1,31 @@
+<div class="venue-verification flex flex-col">
+    {% if venue.declined_listing %}
+        Declined listing
+    {% elif venue.is_verified %}
+        Verified
+    {% else %}
+        <form type="post">
+            {% csrf_token %}
+            <input class=""
+                   type="button"
+                   name="verify-venue"
+                   hx-post="{% url 'findshows:venue_verification' venue.id %}"
+                   hx-trigger="click"
+                   value="Verify"
+                   hx-target="closest .venue-verification"
+                   hx-swap="outerHTML"
+                   hx-vals='{"action": "verify"}'
+            >
+            <input class=""
+                   type="button"
+                   name="decline-venue"
+                   hx-post="{% url 'findshows:venue_verification' venue.id %}"
+                   hx-trigger="click"
+                   value="Declined"
+                   hx-target="closest .venue-verification"
+                   hx-swap="outerHTML"
+                   hx-vals='{"action": "decline"}'
+            >
+        </form>
+    {% endif %}
+</div>

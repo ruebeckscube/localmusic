@@ -1,12 +1,13 @@
+from datetime import timedelta
 from smtplib import SMTPConnectError
 from unittest.mock import MagicMock, patch
-from django.conf import settings
 
 from django.core import mail
-from django.urls import reverse
+from django.views.generic.dates import timezone_today
 
-from findshows.email import send_mail_helper, send_mass_html_mail, send_rec_email
-from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_concert_t, create_musicbrainz_artist_t, create_user_profile_t
+from findshows.email import daily_mod_email, send_mail_helper, send_mass_html_mail, send_rec_email
+from findshows.models import ConcertTags
+from findshows.tests.test_helpers import TestCaseHelpers
 
 
 class SendMailHelperTests(TestCaseHelpers):
@@ -22,12 +23,29 @@ class SendMailHelperTests(TestCaseHelpers):
         mock_send_mail.side_effect = SMTPConnectError(123, "error message")
         mock_logger.error = MagicMock()
         mock_form = MagicMock()
-        success = send_mail_helper('subject', 'message message message', ['test@em.ail'], mock_form)
+        errorlist=[]
+        success = send_mail_helper('subject', 'message message message', ['test@em.ail'], mock_form, errorlist=errorlist)
 
         mock_send_mail.assert_called_once()
         self.assertEqual(success, 0)
         mock_logger.error.assert_called_once()
         mock_form.add_error.assert_called_once()
+        self.assertEqual(len(errorlist), 1)
+
+
+class DailyModEmailTests(TestCaseHelpers):
+    def test_new_records(self):
+        # The default records we construct in test migration count
+        success = daily_mod_email()
+        self.assertTrue(success)
+        self.assert_emails_sent(1)
+
+    @patch('findshows.email.timezone_today')
+    def test_no_new_records(self, mock_today):
+        mock_today.return_value = timezone_today() + timedelta(1)
+        success = daily_mod_email()
+        self.assertTrue(success)
+        self.assert_emails_sent(0)
 
 
 class SendMassHtmlMailTests(TestCaseHelpers):
@@ -53,59 +71,45 @@ class SendMassHtmlMailTests(TestCaseHelpers):
 
 
 class SendRecEmailTests(TestCaseHelpers):
-    def assert_concert_link_in_message_html(self, concert, message):
-        self.assertIn(f"{settings.HOST_NAME}{reverse('findshows:view_concert', args=(concert.pk,))}",
-                          message.alternatives[0][0])
+    def test_temp_artist_filtering(self):
+        non_temp_artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        temp_artist = self.get_static_instance(self.StaticArtists.TEMP_ARTIST)
 
-    def test_success(self):
-        # Setting up clusters of similar MusicBrainz artists, where each artist
-        # is .7 similar to other artists in its cluster and unrelated to other clusters.
-        # each artist has mbid/is named <cluster number>-<artist number> for easy referencing.
-        # e.g. 0-0, 0-2 are in the same cluster, 1-0 is in a different cluster
-        clusters = 5
-        mb_artists_per_cluster = 3
-        for c in range(clusters):
-            for a in range(mb_artists_per_cluster):
-                mbid = f'{c}-{a}'
-                similar_mbids = (f'{c}-{a_s}'
-                                 for a_s in range(mb_artists_per_cluster)
-                                 if a_s != a)
-                create_musicbrainz_artist_t(mbid, mbid, {s_mbid: .7 for s_mbid in similar_mbids})
+        # at least one temp artist
+        concert1 = self.create_concert(timezone_today() + timedelta(1), artists=[temp_artist, non_temp_artist])
+        # no temp artists
+        concert2 = self.create_concert(timezone_today() + timedelta(1))
 
-        # Creating (local) artists that are similar to each cluster
-        artist_0_0 = create_artist_t("Cluster-0 Artist-0", similar_musicbrainz_artists=[f'{0}-{a}' for a in range(3)])
-        artist_0_1 = create_artist_t("Cluster-0 Artist-1", similar_musicbrainz_artists=[f'{0}-{a}' for a in range(3)])
-        artist_0_2 = create_artist_t("Cluster-0 Artist-2", similar_musicbrainz_artists=[f'{0}-{a}' for a in range(3)])
-        artist_1_0 = create_artist_t("Cluster-1 Artist-0", similar_musicbrainz_artists=[f'{1}-{a}' for a in range(3)])
-        artist_1_1 = create_artist_t("Cluster-1 Artist-1", similar_musicbrainz_artists=[f'{1}-{a}' for a in range(3)])
-        artist_2_0 = create_artist_t("Cluster-2 Artist-0", similar_musicbrainz_artists=[f'{2}-{a}' for a in range(3)])
-        artist_2_1 = create_artist_t("Cluster-2 Artist-1", similar_musicbrainz_artists=[f'{2}-{a}' for a in range(3)])
-        artist_3_0 = create_artist_t("Cluster-3 Artist-0", similar_musicbrainz_artists=[f'{3}-{a}' for a in range(3)])
+        self.create_user_profile(email="user1@em.ail")
+        send_rec_email('subject', 'header')
+        self.assert_emails_sent(1)
+        self.assert_concert_link_in_message_html(concert2, mail.outbox[0])
+        self.assert_concert_link_in_message_html(concert1, mail.outbox[0], True)
 
-        # prevent concert helper from creating a bunch of user profiles
-        concert_creator = create_user_profile_t(weekly_email=False)
 
-        concert1 = create_concert_t(artists=[artist_0_0, artist_0_1, artist_0_2], created_by=concert_creator)
-        concert2 = create_concert_t(artists=[artist_0_0, artist_0_1, artist_1_0], created_by=concert_creator)
-        concert3 = create_concert_t(artists=[artist_2_0, artist_1_0, artist_1_1], created_by=concert_creator)
-        concert4 = create_concert_t(artists=[artist_2_0, artist_2_1, artist_3_0], created_by=concert_creator)
-
-        create_user_profile_t(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user1@em.ail")
-        create_user_profile_t(favorite_musicbrainz_artists=['4-0', '4-1', '4-2'], email="user2@em.ail")
-        create_user_profile_t(favorite_musicbrainz_artists=[], email="user3@em.ail")
-        create_user_profile_t(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user4@em.ail", weekly_email=False)
+    def test_concert_tags_filtering_no_recs(self):
+        concert1 = self.create_concert(tags=[ConcertTags.ORIGINALS])
+        concert2 = self.create_concert(tags=[ConcertTags.ORIGINALS, ConcertTags.COVERS])
+        concert3 = self.create_concert(tags=[ConcertTags.DJ, ConcertTags.COVERS])
+        self.create_user_profile(email="user1@em.ail", preferred_concert_tags=ConcertTags.ORIGINALS)
 
         send_rec_email('subject', 'header')
-        self.assert_emails_sent(3)
-        for message in mail.outbox:
-            match message.recipients():
-                case ['user1@em.ail']: # Gets the two recs
-                    self.assert_concert_link_in_message_html(concert1, message)
-                    self.assert_concert_link_in_message_html(concert2, message)
-                case ['user2@em.ail'] | ['user3@em.ail']: # Gets randomized recs
-                    self.assert_concert_link_in_message_html(concert1, message)
-                    self.assert_concert_link_in_message_html(concert2, message)
-                    self.assert_concert_link_in_message_html(concert3, message)
-                    self.assert_concert_link_in_message_html(concert4, message)
-                case ['user4@em.ail']:
-                    self.assertFalse("User 4 should not receive an email")
+
+        self.assert_emails_sent(1)
+        self.assert_concert_link_in_message_html(concert1, mail.outbox[0])
+        self.assert_concert_link_in_message_html(concert2, mail.outbox[0])
+        self.assert_concert_link_in_message_html(concert3, mail.outbox[0], True)
+
+
+    def test_venue_filtering(self):
+        unverified_concert=self.create_concert(venue=self.create_venue(is_verified=False, declined_listing=False))
+        declined_concert=self.create_concert(venue=self.create_venue(is_verified=True, declined_listing=True))
+        verified_concert=self.create_concert(venue=self.create_venue(is_verified=True, declined_listing=False))
+        self.create_user_profile(email="user1@em.ail")
+
+        send_rec_email('subject', 'header')
+
+        self.assert_emails_sent(1)
+        self.assert_concert_link_in_message_html(verified_concert, mail.outbox[0])
+        self.assert_concert_link_in_message_html(unverified_concert, mail.outbox[0], True)
+        self.assert_concert_link_in_message_html(declined_concert, mail.outbox[0], True)

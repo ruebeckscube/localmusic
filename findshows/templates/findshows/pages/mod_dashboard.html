@@ -1,0 +1,37 @@
+{% extends "localmusic/base.html" %}
+
+{% block content %}
+<h1> Mod Dashboard </h1>
+
+<div class="flex">
+
+    <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
+            hx-get="{% url 'findshows:mod_daily_digest' %}"
+            hx-trigger="click,load"
+            hx-target="#mod-content"
+            hx-swap="innerHTML">
+        Daily digest
+    </button>
+
+    <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
+            hx-get="{% url 'findshows:mod_queue' %}"
+            hx-trigger="click"
+            hx-target="#mod-content"
+            hx-swap="innerHTML">
+        Action required
+    </button>
+
+    <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
+            hx-get="{% url 'findshows:mod_outstanding_invites' %}"
+            hx-trigger="click"
+            hx-target="#mod-content"
+            hx-swap="innerHTML">
+        Outstanding invites
+    </button>
+
+</div>
+
+<div id="mod-content">
+</div>
+
+{% endblock %}

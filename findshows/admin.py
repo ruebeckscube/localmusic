@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Artist, MusicBrainzArtist, UserProfile, Venue, Concert, SetOrder
+from .models import Artist, ArtistLinkingInfo, MusicBrainzArtist, UserProfile, Venue, Concert, SetOrder
 
 class SetOrderInline(admin.TabularInline):
     model = SetOrder
@@ -23,5 +23,6 @@ admin.site.register(UserProfile, UserProfileAdmin)
 admin.site.register(Artist, ArtistAdmin)
 admin.site.register(Venue)
 admin.site.register(MusicBrainzArtist, MusicBrainzArtistAdmin)
+admin.site.register(ArtistLinkingInfo)
 
 # Register your models here.

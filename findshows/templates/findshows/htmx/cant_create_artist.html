@@ -1,0 +1,9 @@
+<div class="flex h-full flex-col justify-around text-center text-gray-800">
+    {% if new_account_delay %}
+        Users newly given posting permissions must wait {{  new_account_delay }} days
+        before inviting other users.
+    {% else %}
+        You've hit the daily limit for inviting artists&mdash;please
+        try again in 24 hours or contact an admin if it's urgent.
+    {% endif %}
+</div>

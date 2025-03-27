@@ -1,0 +1,33 @@
+<div class="mod-artist-buttons flex flex-col">
+    {% if success %}
+        Request approved successfully!
+    {% elif artist.is_active_request %}
+        {% if errors %}
+            {{ errors }}
+        {% endif %}
+        <form type="post">
+            {% csrf_token %}
+            <input class=""
+                   type="button"
+                   name="approve-request"
+                   hx-post="{% url 'findshows:approve_artist_request' artist.id %}"
+                   hx-trigger="click"
+                   value="Approve request"
+                   hx-target="closest .mod-artist-buttons"
+                   hx-swap="outerHTML"
+            >
+    {% elif artist.artistlinkinginfo_set %}
+        {% for ali in artist.artistlinkinginfo_set.all %}
+            <div class="flex justify-between">
+                <div>
+                    {{ ali.invited_email }}
+                </div>
+                {% include "findshows/htmx/mod_resend_invite_button.html" %}
+            </div>
+        {% endfor %}
+    {% elif artist.is_temp_artist %}
+        Artist linked; profile incomplete
+    {% else %}
+        Artist linked & profile complete
+    {% endif %}
+</div>

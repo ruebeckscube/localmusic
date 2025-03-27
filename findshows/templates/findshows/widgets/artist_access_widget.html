@@ -1,0 +1,109 @@
+{% comment %}
+The user json has two properties, 'email' and 'type'.
+Valid values for 'type' are defined in findshows.widgets.ArtistAccessWidget.Types
+{% endcomment %}
+
+<div class="bg-gray-100 flex flex-col items-center justify-center"
+     x-data="artist_access_data()"
+     x-init="artist_access_init({{widget.value}})" {# don't need |escapejs because it's already encoded as JSON? #}
+     x-cloak>
+
+    <input type="hidden" name="{{widget.name}}" :value="JSON.stringify(users)">
+
+    <div class="flex flex-col w-full p-4 h-full">
+        <div> Add user: </div>
+        <div>
+            <input x-model="new_email" >
+            <button type="button" @click="add_user()"> Add </button>
+        </div>
+        <div> Users with access: </div>
+        <ol class="w-full">
+            <template x-for="(user, idx) in users" :key="idx">
+                <li class="flex w-full justify-between my-2">
+                    <div :class="is_removed(user) ? 'line-through' : ''" x-text="user.email"> </div>
+                    <div class="flex justify-around">
+                        <template x-if="!is_removed(user)">
+                            <button type="button" @click="remove_user(idx)">
+                                Remove
+                            </button>
+                        </template>
+                        <template x-if="is_removed(user)">
+                            <button type="button" @click="restore_user(idx)">
+                                Restore
+                            </button>
+                        </template>
+                        <template x-if="is_unlinked(user)">
+                            <button type="button" @click="resend_user(idx)">
+                                Re-send invite
+                            </button>
+                        </template>
+                        <template x-if="is_resend(user)">
+                            <button type="button" @click="unresend_user(idx)">
+                                Undo re-send
+                            </button>
+                        </template>
+
+                    </div>
+                </li>
+            </template>
+        </ol>
+    </div>
+</div>
+
+<script>
+ function artist_access_data() {
+     return {
+         new_email: '',
+         users: [],
+
+         artist_access_init(initial_widget_val) {
+             this.users = initial_widget_val;
+         },
+
+         add_user() {
+             user = {
+                 'email': this.new_email,
+                 'type': 'NEW',
+             };
+             this.users.push(user);
+             this.new_email = '';
+         },
+
+         remove_user(idx) {
+             if (this.users[idx].type === 'NEW') {
+                 this.users.splice(idx, 1);
+             }
+             else {
+                 this.users[idx].initial_type = this.users[idx].type
+                 this.users[idx].type='REMOVED';
+            }
+         },
+
+         restore_user(idx) {
+             this.users[idx].type = this.users[idx].initial_type
+         },
+
+         resend_user(idx) {
+             this.users[idx].type = 'RESEND'
+         },
+
+         unresend_user(idx) {
+             this.users[idx].type = 'UNLINKED'
+         },
+
+         is_removed(user) {
+             return user.type=='REMOVED'
+         },
+
+         is_unlinked(user) {
+             return user.type=='UNLINKED'
+         },
+
+         is_resend(user) {
+             return user.type=='RESEND'
+         },
+
+
+     }
+ }
+</script>

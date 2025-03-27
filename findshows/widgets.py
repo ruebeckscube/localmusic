@@ -1,10 +1,10 @@
+from enum import Enum
 import json
 from django.forms.fields import DateField, TimeField
 
 from django.forms.widgets import Input
 
 from findshows.models import MusicBrainzArtist, Venue
-import findshows.forms
 
 
 class MusicBrainzArtistSearchWidget(Input):
@@ -32,6 +32,10 @@ class SocialsLinksWidget(Input):
     template_name="findshows/widgets/socials_links_widget.html"
     input_type="text"
 
+    def __init__(self, num_links=3, **kwargs):
+        super().__init__(**kwargs)
+        self.num_links = num_links
+
     def value_from_datadict(self, data, files, name):
         l = list(zip(data.getlist(name + '_display_name'), data.getlist(name + '_url')))
         while ('','') in l:
@@ -41,15 +45,20 @@ class SocialsLinksWidget(Input):
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         l = json.loads(value)
-        context['widget']['socials_links'] = l + [('','')] * (3 - len(l))
+        context['widget']['socials_links'] = l + [('','')] * (self.num_links - len(l))
         return context
 
 
 class DatePickerWidget(Input):
     template_name="findshows/widgets/date_picker.html"
 
+    def __init__(self, allow_past_or_future=1, **kwargs):
+        super().__init__(**kwargs)
+        self.allow_past_or_future = allow_past_or_future
+
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
+        context['widget']['allow_past_or_future'] = self.allow_past_or_future
         if context['widget']['value'] is None:
             context['widget']['value'] = ''
         return context
@@ -99,10 +108,9 @@ class VenuePickerWidget(Input):
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         if value:
-            context['widget']['venue_name'] = Venue.objects.get(pk=value)
+            context['widget']['venue'] = Venue.objects.get(pk=value)
         else:
             context['widget']['value'] = ''
-        context['venue_form'] = findshows.forms.VenueForm()
         return context
 
 
@@ -110,7 +118,14 @@ class BillWidget(Input):
     template_name="findshows/widgets/bill_widget.html"
     input_type="hidden"
 
-    def get_context(self, name, value, attrs):
-        context = super().get_context(name, value, attrs)
-        context['temp_artist_form'] = findshows.forms.TempArtistForm()
-        return context
+
+class ArtistAccessWidget(Input):
+    template_name="findshows/widgets/artist_access_widget.html"
+    input_type="hidden"
+
+    class Types(Enum):
+        NEW = 'NEW'             # the email was added in this widget right now
+        LINKED = 'LINKED'       # the artist is listed in the user's managed_artists
+        UNLINKED = 'UNLINKED'   # an ArtistLinkingInfo exists for this artist + email
+        REMOVED = 'REMOVED'     # this artist should be removed from user with email on submit
+        RESEND = 'RESEND'       # the invite for this artist should be re-sent to the email

@@ -1,8 +1,7 @@
 {# modal based on https://alpinetoolbox.com/examples/modal #}
 
 <div class="bg-gray-100 flex items-center justify-center"
-     x-data="venue_picker_data('{{widget.value|escapejs}}', '{{widget.venue_name|escapejs}}')"
-     @keydown.escape="close_modal()"
+     x-data="venue_picker_data('{{widget.value|escapejs}}', '{{widget.venue.name|escapejs}}', {{widget.venue.is_verified|yesno:"true,false"}}, {{widget.venue.declined_listing|yesno:"true,false"}} )"
      x-cloak>
 
     <div class="flex p-4 h-full items-center">
@@ -28,58 +27,41 @@
                 style="display: none;"
             >
             </ul>
+
+            <div x-show="selected_venue_name && (!selected_venue_is_verified)">
+                This venue has not yet been verified; the show will be listed
+                after verification is complete.
+            </div>
+
+            <div x-show="selected_venue_declined_listing">
+                This venue has declined to be listed on this website. This might
+                be opted for by a DIY venue that has safety, capacity, or other
+                concerns. Thanks for your understanding!
+            </div>
+
         </div>
 
-        <button type="button" class="bg-transparent border border-gray-500 hover:border-indigo-500 text-gray-500 hover:text-indigo-500 font-bold py-2 px-4 rounded-full" @click="open_modal()">Create new</button>
-
-        <!--Overlay-->
-        <div class="overflow-auto" style="background-color: rgba(0,0,0,0.5)" x-show="show_modal" :class="{ 'absolute inset-0 z-10 flex items-center justify-center': show_modal }">
-            <!--Dialog-->
-            <div class="bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg py-4 text-left px-6" x-show="show_modal" @click.away="close_modal()">
-
-                <!--Title-->
-                <div class="flex justify-between items-center pb-3">
-                    <p class="text-2xl font-bold">New Venue</p>
-                    <div class="cursor-pointer z-50" @click="close_modal()">
-                        <svg class="fill-current text-black" width="18" height="18" viewBox="0 0 18 18">
-                            <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
-                        </svg>
-                    </div>
-                </div>
-
-                <!-- content -->
-                <div id="venue-form" class= "flex flex-col">
-                    {% include "../htmx/venue_form.html" %}
-                </div>
-
-                <!--Footer-->
-                <div class="flex justify-end pt-2">
-                    <button type="button" class="px-4  p-3 bg-transparent rounded-lg text-indigo-500 hover:bg-gray-100 hover:text-indigo-400" @click="close_modal()">Close</button>
-                    <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
-                            hx-post="{% url 'findshows:create_venue' %}"
-                            hx-trigger="click"
-                            hx-target="#venue-form"
-                            @successfully-created-venue="on_venue_create"
-                    >Create</button>
-                </div>
+        <div @modal-form-success="on_venue_create">
+            {% with title_text="New Venue" success_text="Venue created successfully!" form_html="findshows/htmx/venue_form.html" htmx_url="findshows:create_venue" %}
+                {% include "findshows/partials/modal_form.html" %}
+            {% endwith %}
+        </div>
 
 
-            </div>
-            <!--/Dialog -->
-        </div><!-- /Overlay -->
     </div>
 
 </div>
 
 <script>
- function venue_picker_data(initial_venue_id, initial_venue_name) {
+ function venue_picker_data(initial_venue_id, initial_venue_name, initial_venue_is_verified, initial_venue_declined_listing) {
      return {
-         show_modal: false,
-         show_search: false,
          search_text: initial_venue_name,
+         show_search: false,
 
          selected_venue_name: initial_venue_name,
          selected_venue_id: initial_venue_id,
+         selected_venue_is_verified: initial_venue_is_verified,
+         selected_venue_declined_listing: initial_venue_declined_listing,
 
          created_venue_name: '',
          created_venue_id: '',
@@ -98,26 +80,18 @@
              focusAfter && focusAfter.focus();
          },
 
-         select_venue(venue_name, venue_id) {
+         select_venue(venue_name, venue_id, is_verified, declined_listing) {
              this.search_text = venue_name;
              this.selected_venue_name = venue_name;
              this.selected_venue_id = venue_id;
-         },
-
-         open_modal() {
-             this.show_modal = true;
+             this.selected_venue_is_verified = is_verified;
+             this.selected_venue_declined_listing = declined_listing;
          },
 
          on_venue_create(event) {
-             this.selected_venue_name = event.detail.created_venue_name;
-             this.selected_venue_id = event.detail.created_venue_id;
-             this.search_text = this.selected_venue_name;
-             this.close_modal()
+             this.select_venue(event.detail.created_record_name, event.detail.created_record_id)
          },
 
-         close_modal() {
-             this.show_modal = false;
-         },
      }
  }
 </script>

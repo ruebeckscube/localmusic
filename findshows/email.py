@@ -1,4 +1,6 @@
 import datetime
+from functools import reduce
+from operator import or_
 from random import shuffle
 import logging
 from smtplib import SMTPException
@@ -8,40 +10,57 @@ from django.core.mail import EmailMultiAlternatives, get_connection, send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.http import urlencode
+from django.db.models import Q
+from django.views.generic.dates import timezone_today
 
-from findshows.forms import ContactForm, TempArtistForm
-from findshows.models import Concert, UserProfile
+from findshows.forms import ContactForm
+from findshows.models import Artist, ArtistLinkingInfo, Concert, UserProfile, Venue
 
 
 logger = logging.getLogger(__name__)
 
 
-def send_mail_helper(subject, message, recipient_list, form=None, from_email=None):
+def send_mail_helper(subject, message, recipient_list, form=None, from_email=None, errorlist=None):
     """
     Sends a single email.
 
     If form is provided, we will add an error to it if email fails. Assumes is_valid() has been called.
     If from_email is not provided, it will be from DEFAULT_FROM_EMAIL
+    If errorlist is provided, we will append errors to it if email fails.
     """
     try:
         return send_mail(subject, message, from_email, recipient_list, fail_silently=False)
     except SMTPException as e:
         if form:
-            form.add_error(None, f"Unable to send email. Please try again later.")
+            form.add_error(None, f"Unable to send email to {','.join(recipient_list)}. Please try again later.")
+        if errorlist is not None:
+            errorlist.append(f"Unable to send email to {','.join(recipient_list)}. Please try again later.")
         logger.error(f"Email failure: {str(e)}")
         return 0
 
 
-def invite_artist(taf: TempArtistForm):
-    subject = "Make your profile on ChicagoLocalMusic.com"
-    message = "This will include instructions and a code or link to create an account & link it to the specific artist provided as an argument."
-    return send_mail_helper(subject, message, [taf.cleaned_data['temp_email']], taf)
+def artist_invite_url(link_info: ArtistLinkingInfo, invite_code):
+    qs = {'invite_id': link_info.pk,
+          'invite_code': invite_code}
+    return settings.HOST_NAME + reverse("findshows:link_artist") + '?' + urlencode(qs, doseq=True)
+
+
+def invite_artist(link_info: ArtistLinkingInfo, invite_code, form=None, errorlist=None):
+    subject = "Artist profile invite"
+    message = f"You've been invited to create an artist profile on {settings.HOST_NAME}. Click the link to claim it and fill out your profile!\n\n{artist_invite_url(link_info, invite_code)}"
+    return send_mail_helper(subject, message, [link_info.invited_email], form, errorlist=errorlist)
+
+
+def invite_user_to_artist(link_info: ArtistLinkingInfo, invite_code, form):
+    subject = "Artist profile invite"
+    message = f"You've been invited to manage an artist profile on {settings.HOST_NAME}. Click the link to claim access:\n\n{artist_invite_url(link_info, invite_code)}"
+    return send_mail_helper(subject, message, [link_info.invited_email], form)
 
 
 def send_artist_setup_info(user_email: str):
     return send_mail_helper(
-        "Make an Artist page on Chicago Local Music",
-        "this will be a link to create an artist account linked to user",
+        f"Make an Artist page on {settings.HOST_NAME}",
+        f"To request an artist page, go to your user settings page ({settings.HOST_NAME}{reverse('findshows:user_settings')}) and click 'Request local artist access.'",
         [user_email]
     )
 
@@ -51,7 +70,8 @@ def contact_email(cf: ContactForm):
         case cf.Types.REPORT_BUG:
             recipient_list = [admin[1] for admin in settings.ADMINS] # Tuples (Name, email)
         case cf.Types.OTHER:
-            recipient_list = [mod[1] for mod in settings.MODERATORS]
+            mods = UserProfile.objects.filter(is_mod=True)
+            recipient_list = [mod.user.email for mod in mods]
         case _:
             recipient_list = []
 
@@ -60,6 +80,23 @@ def contact_email(cf: ContactForm):
                             recipient_list,
                             cf,
                             cf.cleaned_data['email'])
+
+def daily_mod_email():
+    today = timezone_today()
+
+    new_artists = Artist.objects.filter(created_at=today)
+    new_concerts = Concert.objects.filter(created_at=today)
+    new_venues = Venue.objects.filter(created_at=today)
+
+    actionable_artists = Artist.objects.filter(is_active_request=True)
+    actionable_venues = Venue.objects.filter(is_verified=False)
+
+    if all(q.count()==0 for q in (new_artists, new_concerts, new_venues, actionable_artists, actionable_venues)):
+        return True
+
+    message = f"There are new or actionable listings to moderate.\n\n{settings.HOST_NAME}{reverse('findshows:mod_dashboard')}"
+    recipient_list = [mod.user.email for mod in UserProfile.objects.filter(is_mod=True)]
+    return send_mail_helper("Moderation reminder", message, recipient_list)
 
 
 # from https://stackoverflow.com/questions/7583801/send-mass-emails-with-emailmultialternatives/10215091#10215091
@@ -94,20 +131,29 @@ def rec_email_generator(header_message):
                       'end_date': week_later,
                       'is_date_range': True}
 
-    next_week_concerts = Concert.objects.filter(date__gte=today, date__lte=week_later)
+    next_week_concerts = Concert.publically_visible().filter(date__gte=today, date__lte=week_later)
     for user_profile in user_profiles:
         search_params['musicbrainz_artists'] = [mb_artist.mbid
                                                 for mb_artist in user_profile.favorite_musicbrainz_artists.all()]
         search_params['concert_tags'] = user_profile.preferred_concert_tags
         search_url = settings.HOST_NAME + reverse('findshows:concert_search') + '?' + urlencode(search_params, doseq=True)
 
-        scored_concerts = ((c.relevance_score(search_params['musicbrainz_artists']), c) for c in next_week_concerts)
+        tag_filtered_concerts = next_week_concerts.all()
+        if search_params['concert_tags']:
+            tag_filtered_concerts = next_week_concerts.filter(reduce(or_, (Q(tags__icontains=t) for t in search_params['concert_tags'])))
+
+        scored_concerts = ((c.relevance_score(search_params['musicbrainz_artists']), c) for c in tag_filtered_concerts)
+
         top_scored_concerts = sorted(s_c for s_c in scored_concerts if s_c[0] != 0)
+
         has_recs = len(top_scored_concerts) > 0
         if has_recs:
             rec_concerts = [s_c[1] for s_c in top_scored_concerts]
         else:
-            rec_concerts = list(next_week_concerts)
+            if len(tag_filtered_concerts) == 0:
+                rec_concerts = list(next_week_concerts)
+            else:
+                rec_concerts = list(tag_filtered_concerts)
             shuffle(rec_concerts)
         rec_concerts = rec_concerts[:settings.CONCERT_RECS_PER_EMAIL]
 

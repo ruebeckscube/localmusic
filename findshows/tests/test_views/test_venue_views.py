@@ -5,7 +5,7 @@ from django.views.generic.dates import timezone_today
 from findshows.forms import VenueForm
 from findshows.models import Venue
 
-from findshows.tests.test_helpers import TestCaseHelpers, create_artist_t, create_venue_t
+from findshows.tests.test_helpers import TestCaseHelpers
 
 
 class VenueSearchTests(TestCaseHelpers):
@@ -14,9 +14,9 @@ class VenueSearchTests(TestCaseHelpers):
         self.assertEqual(response.content, b'')
 
     def test_search(self):
-        bottle = create_venue_t(name="Empty Bottle")
-        thalia = create_venue_t(name="Thalia Hall")
-        lincoln = create_venue_t(name="Lincoln Hall")
+        bottle = self.create_venue(name="Empty Bottle")
+        thalia = self.create_venue(name="Thalia Hall")
+        lincoln = self.create_venue(name="Lincoln Hall")
 
         query = 'hall'
         response = self.client.get(reverse("findshows:venue_search_results"),
@@ -39,46 +39,45 @@ def venue_post_data():
 
 class CreateVenueTests(TestCaseHelpers):
     def test_get_doesnt_create(self):
-        self.create_and_login_artist_user()
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         self.client.get(reverse("findshows:create_venue"))
-        self.assertEqual(Venue.objects.all().count(), 0)
+        self.assert_records_created(Venue, 0)
 
 
     def test_not_logged_in_doesnt_create(self):
         self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
-        self.assertEqual(Venue.objects.all().count(), 0)
+        self.assert_records_created(Venue, 0)
 
 
     def test_not_artist_user_doesnt_create(self):
-        self.create_and_login_non_artist_user()
+        self.login_static_user(self.StaticUsers.NON_ARTIST)
         self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
-        self.assertEqual(Venue.objects.all().count(), 0)
+        self.assert_records_created(Venue, 0)
 
 
     def test_not_local_artist_user_doesnt_create(self):
-        artist = create_artist_t(local=False)
-        self.create_and_login_artist_user(artist)
+        self.login_static_user(self.StaticUsers.NONLOCAL_ARTIST)
         self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
-        self.assertEqual(Venue.objects.all().count(), 0)
+        self.assert_records_created(Venue, 0)
 
 
     def test_successful_create(self):
-        user = self.create_and_login_artist_user()
+        user = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         response = self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
         self.assert_blank_form(response.context['venue_form'], VenueForm)
 
-        venues = Venue.objects.all()
+        self.assert_records_created(Venue, 1)
+        venues = Venue.objects.filter(created_by=user)
         self.assertEqual(len(venues), 1)
-        self.assertEqual(venues[0].created_by, user)
         self.assertEqual(venues[0].created_at, timezone_today())
 
         self.assertTrue('HX-Trigger' in response.headers)
         hx_trigger = json.loads(response.headers['HX-Trigger'])
-        self.assertTrue('successfully-created-venue' in hx_trigger)
+        self.assertTrue('modal-form-success' in hx_trigger)
 
 
     def test_invalid_form(self):
-        self.create_and_login_artist_user()
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         data=venue_post_data()
         data['venue-name'] = ''
         response = self.client.post(reverse("findshows:create_venue"), data)
@@ -89,10 +88,10 @@ class CreateVenueTests(TestCaseHelpers):
 
 
     def test_daily_limit(self):
-        user = self.create_and_login_artist_user()
+        user = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
 
         for i in range(settings.MAX_DAILY_VENUE_CREATES):
-            create_venue_t(created_by=user)
+            self.create_venue(created_by=user)
 
         response = self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
         self.assertTemplateUsed(response, 'findshows/htmx/cant_create_venue.html')

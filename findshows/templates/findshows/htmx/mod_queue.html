@@ -1,0 +1,19 @@
+<div>
+    <h2 class="my-4"> Artists </h2>
+    {% for artist in artists %}
+        {% include "findshows/partials/mod_artist_card.html" %}
+    {% empty %}
+        <div>
+            No artists need approval.
+        </div>
+    {% endfor %}
+
+    <h2 class="my-4"> Venues </h2>
+    {% for venue in venues %}
+        {% include "findshows/partials/mod_venue_card.html" %}
+    {% empty %}
+        <div>
+            No venues need verification.
+        </div>
+    {% endfor %}
+</div>

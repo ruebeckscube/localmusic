@@ -1,10 +1,13 @@
 from datetime import timedelta
+import hashlib
 from urllib.parse import urlparse, parse_qs
 import urllib.request
 import re
 from statistics import mean
+import secrets
 
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import User
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
@@ -115,7 +118,7 @@ class MusicBrainzArtist(models.Model):
         return self.name
 
 
-class Artist(models.Model):
+class Artist(CreationTrackingMixin):
     DSP = "SP"
     BANDCAMP = "BC"
     SOUNDCLOUD = "SC"
@@ -138,7 +141,9 @@ class Artist(models.Model):
     profile_picture=models.ImageField(blank=True)
     bio=models.TextField(blank=True)
     local=models.BooleanField()
-    temp_email=models.EmailField(blank=True)
+
+    is_active_request=models.BooleanField(default=False)
+    is_temp_artist=models.BooleanField()
 
     # Here we store the artist's raw input for listening links. Either an album
     # link or a line-separated list of track links (up to 3). ALSO includes Youtube Links.
@@ -261,6 +266,64 @@ def _parse_youtube_id(parsed_url):
     return ""
 
 
+class InviteDelayError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
+class ArtistLinkingInfo(CreationTrackingMixin):
+    invited_email=models.EmailField()
+    generated_datetime=models.DateTimeField()
+    invite_code_hashed=models.CharField(unique=True, max_length=128, editable=False)
+    artist=models.ForeignKey(Artist, on_delete=models.CASCADE)
+
+    class Meta(CreationTrackingMixin.Meta):
+        unique_together = (('invited_email', 'artist'),)
+
+
+    @classmethod
+    def create_and_get_invite_code(cls, artist, email, created_by):
+        if (not created_by.is_mod) and (not created_by.given_artist_access_datetime or
+            created_by.given_artist_access_datetime > now() - timedelta(settings.INVITE_BUFFER_DAYS)):
+            raise InviteDelayError(f"Users newly given posting permissions must wait {settings.INVITE_BUFFER_DAYS} days before inviting other users.")
+        link_info = cls(artist=artist, invited_email=email)
+        invite_code = link_info._generate_invite_code()
+        link_info.created_by = created_by
+        link_info.save()
+        return link_info, invite_code
+
+
+    def regenerate_invite_code(self):
+        invite_code = self._generate_invite_code()
+        self.save()
+        return invite_code
+
+
+    def _calculate_stored_hash(self, invite_code, salt):
+        hash = hashlib.sha256(invite_code.encode() + salt.encode()).hexdigest()
+        return '%s$%s' % (salt, hash)
+
+
+    def check_invite_code(self, invite_code):
+        salt = self.invite_code_hashed.split('$')[0]
+        hash = self._calculate_stored_hash(invite_code, salt)
+        return hash == self.invite_code_hashed
+
+
+    def _generate_invite_code(self):
+        """Model MUST be saved after this function is called."""
+        invite_code = secrets.token_urlsafe(32)
+        salt = secrets.token_urlsafe(32)
+        self.invite_code_hashed = self._calculate_stored_hash(invite_code, salt)
+        self.generated_datetime = now()
+        return invite_code
+
+
+    def __str__(self):
+        return f"{self.invited_email} -> {str(self.artist)}"
+
+
 class ConcertTags(models.TextChoices):
     # DJ, originals, cover set/BG music, diy/house show
     ORIGINALS = "OG", "Original music"
@@ -278,6 +341,11 @@ class UserProfile(models.Model):
     managed_artists=models.ManyToManyField(Artist, related_name="managing_users")
     weekly_email=models.BooleanField(default=True)
 
+    given_artist_access_by=models.ForeignKey('UserProfile', related_name="gave_artist_access_to", on_delete=models.CASCADE, null=True)
+    given_artist_access_datetime=models.DateTimeField(null=True)
+
+    is_mod=models.BooleanField(default=False)
+
     def __str__(self):
         return str(self.user)
 
@@ -290,11 +358,14 @@ class Ages(models.TextChoices):
 
 
 class Venue(CreationTrackingMixin):
-    name=models.CharField()
+    name=models.CharField(unique=True)
     # For now, folks will put "DM for address" for house venues.
     address=models.CharField()
     ages=models.CharField(max_length=2, choices=Ages)
     website=models.URLField()
+
+    is_verified=models.BooleanField(default=False)
+    declined_listing=models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -312,6 +383,11 @@ class Concert(CreationTrackingMixin):
     ticket_link=models.URLField(blank=True)
     ticket_description=models.CharField()
     tags=MultiSelectField(choices=ConcertTags)
+
+
+    @classmethod
+    def publically_visible(cls):
+        return cls.objects.exclude(Q(artists__is_temp_artist=True) | Q(venue__is_verified=False) | Q(venue__declined_listing=True))
 
 
     def relevance_score(self, searched_mbids):
