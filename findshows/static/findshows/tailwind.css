@@ -668,26 +668,6 @@ video {
   margin-bottom: 0.5rem;
 }
 
-.my-10 {
-  margin-top: 2.5rem;
-  margin-bottom: 2.5rem;
-}
-
-.my-5 {
-  margin-top: 1.25rem;
-  margin-bottom: 1.25rem;
-}
-
-.my-8 {
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-}
-
-.my-20 {
-  margin-top: 5rem;
-  margin-bottom: 5rem;
-}
-
 .my-4 {
   margin-top: 1rem;
   margin-bottom: 1rem;
@@ -769,10 +749,6 @@ video {
   height: 100%;
 }
 
-.h-5 {
-  height: 1.25rem;
-}
-
 .max-h-14 {
   max-height: 3.5rem;
 }
@@ -835,10 +811,6 @@ video {
 
 .w-full {
   width: 100%;
-}
-
-.w-80 {
-  width: 20rem;
 }
 
 .min-w-14 {
@@ -1228,6 +1200,28 @@ video {
 
 .ease-in-out {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input[type=text], input[type=url], input[type=search], input[type=email], textarea {
+  border: solid;
+  border-width: .5px;
+  margin: 2px;
+  width: 90%;
+}
+
+button, input[type=button], input[type=submit] {
+  box-shadow: 1px 1px 1px 1px slategray;
+  background-color: mediumpurple;
+  border-radius: 10%;
+  margin: 2px;
+  cursor: pointer;
+  color: white;
+  padding: 2px;
+}
+
+a {
+  color: mediumpurple;
+  font-weight: bold;
 }
 
 .odd\:bg-white:nth-child(odd) {
