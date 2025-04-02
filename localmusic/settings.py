@@ -168,9 +168,10 @@ EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, '../emails')
 ADMINS = [('Test admin','admin@localmusic.com')]
 
-MJML_BACKEND_MODE = 'cmd'
-MJML_EXEC_CMD = ['node_modules/.bin/mjml', '--config.minify', 'true', '--config.validationLevel', 'strict']
-MJML_CHECK_CMD_ON_STARTUP = False
+MJML_BACKEND_MODE = 'tcpserver'
+MJML_TCPSERVERS = [
+    ('mjml', 28101),  # the host and port of MJML TCP-Server
+]
 
 # Misc
 MAX_DATE_RANGE = 31

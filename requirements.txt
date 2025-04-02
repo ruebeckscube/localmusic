@@ -1,7 +1,10 @@
-Django>=4.0,<5.0
+django
 psycopg2-binary
 mjml
+django-mjml
 django-multiselectfield
 requests
 pymemcache
 Pillow
+tblib
+coverage
