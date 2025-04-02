@@ -137,20 +137,8 @@ class Artist(CreationTrackingMixin):
         NOLISTEN: "Not configured"
     }
 
-    LISTEN_PLATFORM_CHOICES = [
-        ('SP', 'Spotify'),
-        ('BC', 'Bandcamp'),
-        ('SC', 'Soundcloud'),
-        ('NL', 'Not configured'),
-    ]
-    LISTEN_TYPE_CHOICES = [
-        ('AL', 'Album'),
-        ('TR', 'Track'),
-        ('NL', 'Not configured'),
-    ]
-
     name=models.CharField()
-    profile_picture=models.ImageField(upload_to='artist_pictures/', blank=True)
+    profile_picture=models.ImageField(blank=True)
     bio=models.TextField(blank=True)
     local=models.BooleanField()
 
@@ -162,9 +150,9 @@ class Artist(CreationTrackingMixin):
     # See below for test values
     listen_links=models.TextField(blank=True, validators=[MultiURLValidator(MultiURLValidator.LISTEN, 3),])
     listen_platform=models.CharField(editable=False, max_length=2,
-                                     choices=LISTEN_PLATFORM_CHOICES, default='NL')
+                                     choices=LISTEN_PLATFORMS, default=NOLISTEN)
     listen_type=models.CharField(editable=False, max_length=2,
-                                 choices=LISTEN_TYPE_CHOICES, default='NL')
+                                 choices=LISTEN_TYPES, default=NOLISTEN)
     listen_ids=models.JSONField(editable=False, default=list)
 
     youtube_links=models.TextField(blank=True, validators=[MultiURLValidator(MultiURLValidator.YOUTUBE, 2),])
@@ -347,13 +335,8 @@ class UserProfile(models.Model):
     user=models.OneToOneField(User, on_delete=models.CASCADE)
 
     favorite_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist, blank=True)
-    TAG_CHOICES = [
-        ('OG', 'Original music'),
-        ('CV', 'Cover set'),
-        ('DJ', 'DJ set'),
-    ]
 
-    preferred_concert_tags=MultiSelectField(choices=TAG_CHOICES)
+    preferred_concert_tags=MultiSelectField(choices=ConcertTags)
 
     followed_artists=models.ManyToManyField(Artist, related_name="followers", blank=True)
     managed_artists=models.ManyToManyField(Artist, related_name="managing_users")
@@ -379,13 +362,7 @@ class Venue(CreationTrackingMixin):
     name=models.CharField(unique=True)
     # For now, folks will put "DM for address" for house venues.
     address=models.CharField()
-    AGE_CHOICES = [
-        ('AA', 'All ages'),
-        ('17', '17+'),
-        ('18', '18+'),
-        ('21', '21+'),
-    ]
-    ages=models.CharField(max_length=2, choices=AGE_CHOICES)
+    ages=models.CharField(max_length=2, choices=Ages)
     website=models.URLField()
 
     is_verified=models.BooleanField(default=False)
@@ -396,28 +373,17 @@ class Venue(CreationTrackingMixin):
 
 
 class Concert(CreationTrackingMixin):
-    poster=models.ImageField(upload_to='concert_posters/')
+    poster=models.ImageField()
     date=models.DateField()
     doors_time=models.TimeField(blank=True, null=True)
     start_time=models.TimeField()
     end_time=models.TimeField(blank=True, null=True)
     venue=models.ForeignKey(Venue, on_delete=models.CASCADE)
-    AGE_CHOICES = [
-        ('AA', 'All ages'),
-        ('17', '17+'),
-        ('18', '18+'),
-        ('21', '21+'),
-    ]
-    ages=models.CharField(max_length=2, choices=AGE_CHOICES, blank=True)
+    ages=models.CharField(max_length=2, choices=Ages, blank=True)
     artists=models.ManyToManyField(Artist, through="SetOrder")
     ticket_link=models.URLField(blank=True)
     ticket_description=models.CharField()
-    TAG_CHOICES = [
-        ('OG', 'Original music'),
-        ('CV', 'Cover set'),
-        ('DJ', 'DJ set'),
-    ]
-    tags=MultiSelectField(choices=TAG_CHOICES)
+    tags=MultiSelectField(choices=ConcertTags)
 
     @classmethod
     def publically_visible(cls):
