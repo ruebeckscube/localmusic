@@ -83,12 +83,11 @@ WSGI_APPLICATION = 'localmusic.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        "NAME": "localmusicdb",
-        # "HOST": "/tmp/.s.PGSQL.5432",
-        # "PORT": "5432",
-        "USER": "django",
-        "PASSWORD": secrets["DB_PASSWORD"]
-
+        'NAME': secrets['DATABASE_NAME'],
+        'USER': secrets['DATABASE_USER'],
+        'PASSWORD': secrets['DATABASE_PASSWORD'],
+        'HOST': secrets['DATABASE_HOST'],
+        'PORT': secrets['DATABASE_PORT'],
     }
 }
 
