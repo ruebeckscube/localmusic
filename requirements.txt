@@ -8,3 +8,4 @@ pymemcache
 Pillow
 tblib
 coverage
+gunicorn
