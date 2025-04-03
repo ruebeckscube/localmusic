@@ -12,19 +12,15 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
-import json
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-with open(os.path.join(BASE_DIR, 'secrets.json')) as f:
-    secrets = json.load(f)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = secrets["SECRET_KEY"]
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -83,14 +79,13 @@ WSGI_APPLICATION = 'localmusic.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': secrets['DATABASE_NAME'],
-        'USER': secrets['DATABASE_USER'],
-        'PASSWORD': secrets['DATABASE_PASSWORD'],
-        'HOST': secrets['DATABASE_HOST'],
-        'PORT': secrets['DATABASE_PORT'],
+        'NAME': os.getenv('DATABASE_NAME'),
+        'USER': os.getenv('DATABASE_USER'),
+        'PASSWORD': os.getenv('DATABASE_PASSWORD'),
+        'HOST': os.getenv('DATABASE_HOST'),
+        'PORT': os.getenv('DATABASE_PORT'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -139,12 +134,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 # Spotify API credentials
-SPOTIFY_CLIENT_ID=secrets["SPOTIFY_CLIENT_ID"]
-SPOTIFY_CLIENT_SECRET=secrets["SPOTIFY_CLIENT_SECRET"]
+SPOTIFY_CLIENT_ID=os.getenv("SPOTIFY_CLIENT_ID")
+SPOTIFY_CLIENT_SECRET=os.getenv("SPOTIFY_CLIENT_SECRET")
 
 # MusicBrainz
-MUSICBRAINZ_TOKEN=secrets["MUSICBRAINZ_TOKEN"]
-USER_AGENT_HEADER=secrets["USER_AGENT_HEADER"]
+MUSICBRAINZ_TOKEN=os.getenv("MUSICBRAINZ_TOKEN")
+USER_AGENT_HEADER=os.getenv("USER_AGENT_HEADER")
 # This must be at least 14, since that's how often the dataset updates. Higher
 # to minimize API calls and be a responsible consumer of their data.
 LISTENBRAINZ_SIMILAR_ARTIST_CACHE_DAYS=30
@@ -170,14 +165,14 @@ ADMINS = [('Test admin','admin@localmusic.com')]
 
 MJML_BACKEND_MODE = 'tcpserver'
 MJML_TCPSERVERS = [
-    ('mjml', 28101),  # the host and port of MJML TCP-Server
+    (os.getenv("MJML_HOST"), int(os.getenv("MJML_PORT", 0))),
 ]
 
 # Misc
-MAX_DATE_RANGE = 31
-MAX_DAILY_CONCERT_CREATES = 3
-MAX_DAILY_VENUE_CREATES = 2
-MAX_DAILY_INVITES = 3  # This includes invites and adding an artist to your own account
-CONCERT_RECS_PER_EMAIL = 9
-INVITE_CODE_EXPIRATION_DAYS = 7
-INVITE_BUFFER_DAYS = 2
+MAX_DATE_RANGE = os.getenv("MAX_DATE_RANGE", 7)
+MAX_DAILY_CONCERT_CREATES = os.getenv("MAX_DAILY_CONCERT_CREATES", 3)
+MAX_DAILY_VENUE_CREATES = os.getenv("MAX_DAILY_VENUE_CREATES", 2)
+MAX_DAILY_INVITES = os.getenv("MAX_DAILY_INVITES", 3)
+CONCERT_RECS_PER_EMAIL = os.getenv("CONCERT_RECS_PER_EMAIL", 9)
+INVITE_CODE_EXPIRATION_DAYS = os.getenv("INVITE_CODE_EXPIRATION_DAYS", 7)
+INVITE_BUFFER_DAYS = os.getenv("INVITE_BUFFER_DAYS", 2)

@@ -1,60 +1,59 @@
 # Installation
 
-Clone the repo, navigate to project root.
+1. Clone the repo, navigate to project root.
 
-Create `secrets.json` with the properties `DB_PASSWORD`, `SECRET_KEY`,
-`SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `MUSICBRAINZ_TOKEN`,
-`USER_AGENT_HEADER` (or get a copy from someone).
+2. Install [Docker](https://www.docker.com) (including docker-compose)
 
-Install Python dependencies:
-```
-pipenv install --dev
-```
-(leave out the `--dev` flag for production environment)
+3. Copy `example.env` to a new file named `.env`, and set any field that says
+   "set_this". `SECRET_KEY` and `DATABASE_PASSWORD` are arbitrary but should be
+   set to secure strings. See [MusicBrainz API
+   documentation](https://musicbrainz.org/doc/MusicBrainz_API) for instructions
+   on obtaining a `MUSICBRAINZ_TOKEN` and choosing a meaningful
+   `USER_AGENT_HEADER`.
 
-Install [PostgreSQL](https://www.postgresql.org), create a database named
-`localmusicdb` and run
+4. Build images and containers with:
 ```
-CREATE USER django PASSWORD '<db password from secrets.json>';
-ALTER DATABASE localmusicdb OWNER TO django;
+docker-compose up --build
+```
+In another terminal window, apply migrations:
+```
+docker-compose exec web ./manage.py migrate
 ```
 
-Install TailwindCSS (for development environment only):
+5. Run  data from MusicBrainz (~2.5 million artists, it will let you know its progress, should take about 10 minutes):
+```
+docker-compose exec web ./manage.py update_musicbrainz_data
+```
+
+6. Install TailwindCSS (for development environment only):
 ```
 npm install -D tailwindcss
 ```
 
-Run Django database migrations, and donwload data from MusicBrainz (2.5 million artists, it will let you know its progress, should take about 10 minutes):
-```
-pipenv shell
-python manage.py migrate
-python manage.py update_musicbrainz_data
-```
 
 
 # Create/load data dump
-If you want to send/load some test data from your database, in the pipenv shell, run
+If you want to send/load some test data from your database, run
 ```
-python manage.py dumpdata --natural-foreign --natural-primary -e contenttypes -e auth.Permission -e admin -e sessions -e findshows.MusicBrainzArtist --indent 4 > localmusic-db-dump.json
+docker-compose exec web ./manage.py dumpdata --natural-foreign --natural-primary -e contenttypes -e auth.Permission -e admin -e sessions -e findshows.MusicBrainzArtist --indent 4 > localmusic-db-dump.json
 ```
 to dump and
 ```
-python manage.py loaddata ./localmusic-db-dump.json
+docker-compose exec web ./manage.py loaddata ./localmusic-db-dump.json
 ```
 to load.
 
 
-# Running the server (development)
+# Running the server
 
 Run Tailwind CLI:
 ```
 npx tailwindcss -i findshows/static/findshows/style.css -o findshows/static/findshows/tailwind.css --watch
 ```
 
-Run Django development server:
+Run the server:
 ```
-pipenv shell
-python manage.py runserver
+docker-compose up
 ```
 
 # Releases
