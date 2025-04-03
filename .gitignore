@@ -78,8 +78,8 @@ db.sqlite3-journal
 venv/
 venv.bak/
 
-# Secrets
-/secrets.json
+# Secrets/local settings
+.env
 
 # Misc
 notes.org

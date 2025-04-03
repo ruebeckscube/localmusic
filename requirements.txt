@@ -1,0 +1,11 @@
+django
+psycopg2-binary
+mjml
+django-mjml
+django-multiselectfield
+requests
+pymemcache
+Pillow
+tblib
+coverage
+gunicorn
