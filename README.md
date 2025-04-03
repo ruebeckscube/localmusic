@@ -12,23 +12,23 @@
    `USER_AGENT_HEADER`.
 
 4. Build images and containers with:
-```
-docker-compose up --build
-```
-In another terminal window, apply migrations:
-```
-docker-compose exec web ./manage.py migrate
-```
+   ```
+   docker-compose up --build
+   ```
+   In another terminal window, apply migrations:
+   ```
+   docker-compose exec web ./manage.py migrate
+   ```
 
-5. Run  data from MusicBrainz (~2.5 million artists, it will let you know its progress, should take about 10 minutes):
-```
-docker-compose exec web ./manage.py update_musicbrainz_data
-```
+5. Run the following to download data from MusicBrainz (~2.5 million artists, it will let you know its progress, should take about 10 minutes):
+   ```
+   docker-compose exec web ./manage.py update_musicbrainz_data
+   ```
 
 6. Install TailwindCSS (for development environment only):
-```
-npm install -D tailwindcss
-```
+   ```
+   npm install -D tailwindcss
+   ```
 
 
 
@@ -46,7 +46,7 @@ to load.
 
 # Running the server
 
-Run Tailwind CLI:
+Run Tailwind CLI (development only):
 ```
 npx tailwindcss -i findshows/static/findshows/style.css -o findshows/static/findshows/tailwind.css --watch
 ```
