@@ -23,11 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+IS_DEV = os.getenv("IS_DEV", "False") == "True"
+DEBUG = IS_DEV
 
-ALLOWED_HOSTS = []
-
-HOST_NAME = "http://localhost:8000"
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split(',')
+HOST_NAME = ALLOWED_HOSTS[0]
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "http://localhost:8001").split(',')
 
 # Application definition
 
@@ -122,6 +123,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
