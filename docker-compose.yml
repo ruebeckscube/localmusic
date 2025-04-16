@@ -19,7 +19,7 @@ services:
   proxy:
     image: nginx:latest
     ports:
-      - "8001:80"
+      - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./static:/static:ro
