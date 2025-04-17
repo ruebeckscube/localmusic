@@ -1,0 +1,24 @@
+# Sets the max number of simultaneous connections that can be opened by a worker process
+events {
+   worker_connections 1024;
+}
+
+http {
+   server {
+       # Redirect all HTTP traffic to HTTPS
+       listen 80;
+
+       server_name TEMPLATE_HOST_NAME www.TEMPLATE_HOST_NAME;
+       server_tokens off;
+
+       location /.well-known/acme-challenge/ {
+           root /var/www/certbot;
+       }
+
+       location / {
+           return 301 https://TEMPLATE_HOST_NAME$request_uri;
+       }
+
+   }
+
+}
