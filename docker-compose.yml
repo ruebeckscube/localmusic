@@ -13,16 +13,27 @@ services:
     depends_on:
       - db
       - mjml
+    restart: always
 
   proxy:
     image: nginx:latest
     ports:
-      - "80:80"
+      - 80:80
+      - 443:443
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - certbot_www:/var/www/certbot/:ro
+      - certbot_conf:/etc/nginx/ssl/:ro
       - static:/static:ro
     depends_on:
       - web
+    restart: always
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - certbot_www:/var/www/certbot/:rw
+      - certbot_conf:/etc/letsencrypt/:rw
 
   db:
     image: postgres:15
@@ -32,6 +43,7 @@ services:
       POSTGRES_DB: ${DATABASE_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    restart: always
 
   mjml:
     image: liminspace/mjml-tcpserver:1
@@ -41,3 +53,5 @@ services:
 volumes:
    postgres_data:
    static:
+   certbot_www:
+   certbot_conf:

@@ -5,12 +5,33 @@ events {
 
 http {
    server {
+       # Redirect all HTTP traffic to HTTPS
+       listen 80;
+
        server_name TEMPLATE_HOST_NAME www.TEMPLATE_HOST_NAME;
+       server_tokens off;
+
+       location /.well-known/acme-challenge/ {
+           root /var/www/certbot;
+       }
+
+       location / {
+           return 301 https://TEMPLATE_HOST_NAME$request_uri;
+       }
+
+   }
+
+   server {
+       listen 443 ssl http2;
+       server_name TEMPLATE_HOST_NAME www.TEMPLATE_HOST_NAME;
+
        include mime.types;
        default_type application/octet-stream;
        sendfile on;
        keepalive_timeout 65;
-       listen 80;
+
+       ssl_certificate /etc/nginx/ssl/live/TEMPLATE_HOST_NAME/fullchain.pem;
+       ssl_certificate_key /etc/nginx/ssl/live/TEMPLATE_HOST_NAME/privkey.pem;
 
        # Requests to /static/ are served directly from the /static/ directory
        location /static/ {
@@ -38,6 +59,7 @@ http {
 
    server {
        listen 80 default_server;
+       listen 443 default_server;
        return 444;
    }
 
