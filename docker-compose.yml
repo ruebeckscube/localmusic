@@ -2,9 +2,7 @@ services:
   web:
     build: .
     volumes:
-      - ./static:/app/staticfiles
-    ports:
-      - "8000:8000"
+      - static:/app/staticfiles
     env_file:
       - .env
     environment:
@@ -22,7 +20,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./static:/static:ro
+      - static:/static:ro
     depends_on:
       - web
 
@@ -32,17 +30,14 @@ services:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   mjml:
     image: liminspace/mjml-tcpserver:1
     restart: always
-    ports:
-      - "28101:28101"
     command: ["--mjml.validationLevel=strict"]
 
 volumes:
    postgres_data:
+   static:
