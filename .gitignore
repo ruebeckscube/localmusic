@@ -81,6 +81,8 @@ venv.bak/
 
 # Secrets/local settings
 .env
+# nginx configuration will be templated out
+nginx.conf
 
 # Misc
 notes.org

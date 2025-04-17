@@ -5,6 +5,7 @@ events {
 
 http {
    server {
+       server_name TEMPLATE_HOST_NAME www.TEMPLATE_HOST_NAME;
        include mime.types;
        default_type application/octet-stream;
        sendfile on;
@@ -34,4 +35,10 @@ http {
            proxy_set_header X-Forwarded-Proto $scheme;          # Original protocol (http/https)
        }
    }
+
+   server {
+       listen 80 default_server;
+       return 444;
+   }
+
 }
