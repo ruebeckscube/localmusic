@@ -22,8 +22,8 @@ services:
       - 443:443
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - certbot_www:/var/www/certbot/:ro
-      - certbot_conf:/etc/nginx/ssl/:ro
+      - ./certbot/www:/var/www/certbot/:ro
+      - ./certbot/conf:/etc/nginx/ssl/:ro
       - static:/static:ro
     depends_on:
       - web
@@ -32,8 +32,8 @@ services:
   certbot:
     image: certbot/certbot:latest
     volumes:
-      - certbot_www:/var/www/certbot/:rw
-      - certbot_conf:/etc/letsencrypt/:rw
+      - ./certbot/www:/var/www/certbot/:rw
+      - ./certbot/conf:/etc/letsencrypt/:rw
 
   db:
     image: postgres:15
@@ -53,5 +53,3 @@ services:
 volumes:
    postgres_data:
    static:
-   certbot_www:
-   certbot_conf:
