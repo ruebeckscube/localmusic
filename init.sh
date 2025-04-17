@@ -11,7 +11,7 @@ echo "Building Docker containers"
 docker compose up -d --build
 
 echo "Setting up SSL certificates"
-docker compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ -d "$HOST_NAME"
+docker compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ -d "$HOST_NAME" -d "www.$HOST_NAME"
 
 echo "Updating nginx config"
 sh ./update_config.sh nginx.template
