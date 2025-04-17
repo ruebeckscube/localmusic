@@ -26,9 +26,11 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 IS_DEV = os.getenv("IS_DEV", "False") == "True"
 DEBUG = IS_DEV
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split(',')
-HOST_NAME = ALLOWED_HOSTS[0]
-CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "http://localhost:8001").split(',')
+HOST_NAME = os.getenv("HOST_NAME", "localhost")
+ALLOWED_HOSTS = [HOST_NAME, f"www.{HOST_NAME}"]
+CSRF_TRUSTED_ORIGINS = [f"https://{HOST_NAME}", f"https://www.{HOST_NAME}"]
+CSRF_COOKIE_SECURE = not IS_DEV
+SESSION_COOKIE_SECURE = not IS_DEV
 
 # Application definition
 
