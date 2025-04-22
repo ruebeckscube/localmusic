@@ -28,15 +28,22 @@ def send_mail_helper(subject, message, recipient_list, form=None, from_email=Non
     If from_email is not provided, it will be from DEFAULT_FROM_EMAIL
     If errorlist is provided, we will append errors to it if email fails.
     """
-    try:
-        return send_mail(subject, message, from_email, recipient_list, fail_silently=False)
-    except SMTPException as e:
-        if form:
-            form.add_error(None, f"Unable to send email to {','.join(recipient_list)}. Please try again later.")
-        if errorlist is not None:
-            errorlist.append(f"Unable to send email to {','.join(recipient_list)}. Please try again later.")
-        logger.error(f"Email failure: {str(e)}")
-        return 0
+    if not recipient_list:
+        display_error = "Internal error; please try again later"
+        log_error = "Email failure: no recipients specified for email."
+    else:
+        try:
+            return send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+        except SMTPException as e:
+            display_error = f"Unable to send email to {','.join(recipient_list)}. Please try again later."
+            log_error = f"Email failure: {str(e)}"
+
+    if form:
+        form.add_error(None, display_error)
+    if errorlist is not None:
+        errorlist.append(display_error)
+    logger.error(log_error)
+    return 0
 
 
 def artist_invite_url(link_info: ArtistLinkingInfo, invite_code):
