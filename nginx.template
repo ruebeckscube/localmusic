@@ -40,10 +40,10 @@ http {
            expires 7d;
        }
 
-       # Configuration for serving media files
-       # location /media/ {
-       #     alias /home/app/web/mediafiles/;
-       # }
+       Configuration for serving media files
+       location /media/ {
+           alias /media/;
+       }
 
        # Handles all other requests
        location / {
