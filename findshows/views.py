@@ -140,7 +140,7 @@ def edit_artist(request, pk):
     if request.method != 'POST':
         form = ArtistEditForm(instance=artist)
     else:
-        form = ArtistEditForm(request.POST, instance=artist)
+        form = ArtistEditForm(request.POST, request.FILES, instance=artist)
         if form.is_valid():
             form.save()
             return redirect(reverse('findshows:view_artist', args=[pk]))

@@ -8,7 +8,7 @@
             until this form is completed.
         </div>
     {% endif %}
-    <form method="post" action="{% url 'findshows:edit_artist' pk %}">
+    <form method="post" enctype="multipart/form-data" action="{% url 'findshows:edit_artist' pk %}">
         {% csrf_token %}
         <div>
             <div>

@@ -57,6 +57,7 @@ class ArtistEditForm(forms.ModelForm):
         artist.is_temp_artist = False
         if commit:
             artist.save()
+            self.save_m2m()
         return artist
 
 
