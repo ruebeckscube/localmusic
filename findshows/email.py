@@ -28,6 +28,7 @@ def send_mail_helper(subject, message, recipient_list, form=None, from_email=Non
     If from_email is not provided, it will be from DEFAULT_FROM_EMAIL
     If errorlist is provided, we will append errors to it if email fails.
     """
+    recipient_list = [r for r in recipient_list if r]
     if not recipient_list:
         display_error = "Internal error; please try again later"
         log_error = "Email failure: no recipients specified for email."
