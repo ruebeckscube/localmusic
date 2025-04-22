@@ -339,11 +339,11 @@ class UserProfile(models.Model):
     preferred_concert_tags=MultiSelectField(choices=ConcertTags)
 
     followed_artists=models.ManyToManyField(Artist, related_name="followers", blank=True)
-    managed_artists=models.ManyToManyField(Artist, related_name="managing_users")
+    managed_artists=models.ManyToManyField(Artist, related_name="managing_users", blank=True)
     weekly_email=models.BooleanField(default=True)
 
-    given_artist_access_by=models.ForeignKey('UserProfile', related_name="gave_artist_access_to", on_delete=models.CASCADE, null=True)
-    given_artist_access_datetime=models.DateTimeField(null=True)
+    given_artist_access_by=models.ForeignKey('UserProfile', related_name="gave_artist_access_to", on_delete=models.CASCADE, null=True, blank=True)
+    given_artist_access_datetime=models.DateTimeField(null=True, blank=True)
 
     is_mod=models.BooleanField(default=False)
 
