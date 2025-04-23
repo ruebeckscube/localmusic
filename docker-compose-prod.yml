@@ -1,19 +1,11 @@
 services:
   web:
-    build: .
+    extends:
+      file: docker-compose-base.yml
+      service: web
     volumes:
       - static:/app/staticfiles
       - media:/app/media
-    env_file:
-      - .env
-    environment:
-      - DATABASE_HOST=db
-      - DATABASE_PORT=5432
-      - MJML_HOST=mjml
-      - MJML_PORT=28101
-    depends_on:
-      - db
-      - mjml
     restart: always
 
   proxy:
@@ -38,19 +30,16 @@ services:
       - ./certbot/conf:/etc/letsencrypt/:rw
 
   db:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_NAME}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    extends:
+      file: docker-compose-base.yml
+      service: db
     restart: always
 
   mjml:
-    image: liminspace/mjml-tcpserver:1
+    extends:
+      file: docker-compose-base.yml
+      service: mjml
     restart: always
-    command: ["--mjml.validationLevel=strict"]
 
 volumes:
    postgres_data:

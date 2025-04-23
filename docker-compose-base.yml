@@ -1,21 +1,13 @@
 services:
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
     env_file:
       - .env
     environment:
-      - PYTHONDONTWRITEBYTECODE=1
-      - PYTHONUNBUFFERED=1
       - DATABASE_HOST=db
       - DATABASE_PORT=5432
       - MJML_HOST=mjml
       - MJML_PORT=28101
-      - IS_DEV=True
     depends_on:
       - db
       - mjml
@@ -26,16 +18,11 @@ services:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   mjml:
     image: liminspace/mjml-tcpserver:1
-    restart: always
-    ports:
-      - "28101:28101"
     command: ["--mjml.validationLevel=strict"]
 
 volumes:

@@ -5,7 +5,7 @@
 
 if [ ! -f "manage.py" ]; then
     echo "This script must be run from the top level directory of the localmusic project."
-    exit -1
+    exit 1
 fi
 
 if docker compose version >/dev/null 2>&1; then
@@ -19,10 +19,10 @@ fi
 invoke_docker_compose() {
     if [ "$IS_DEV" = "True" ]; then
         echo "Using development compose file."
-        COMPOSE_FILE="dev-docker-compose.yml"
+        COMPOSE_FILE="docker-compose-dev.yml"
     else
         echo "Using production compose file."
-        COMPOSE_FILE="docker-compose.yml"
+        COMPOSE_FILE="docker-compose-prod.yml"
     fi
 
     $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE \

@@ -1,0 +1,23 @@
+services:
+  web:
+    extends:
+      file: docker-compose-base.yml
+      service: web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+
+  db:
+    extends:
+      file: docker-compose-base.yml
+      service: db
+
+  mjml:
+    extends:
+      file: docker-compose-base.yml
+      service: mjml
+
+volumes:
+   postgres_data:
