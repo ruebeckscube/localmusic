@@ -17,6 +17,8 @@ from findshows.models import Ages, Artist, ArtistLinkingInfo, Concert, ConcertTa
 
 @override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
 class TestCaseHelpers(TestCase):
+    fixtures = ["findshows/test-fixture.json"]
+
     class StaticUsers(Enum):
         # These must match migration 0019 usernames and ID (i.e. the order they're created in database)
         DEFAULT_CREATOR = 1

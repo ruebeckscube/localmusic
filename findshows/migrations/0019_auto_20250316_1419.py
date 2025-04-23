@@ -145,6 +145,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(create_static_test_users),
-        migrations.RunPython(create_other_static_test_data),
+        # migrations.RunPython(create_static_test_users),
+        # migrations.RunPython(create_other_static_test_data),
     ]
