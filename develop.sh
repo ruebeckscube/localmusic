@@ -57,6 +57,11 @@ setup_initial_server() {
     invoke_docker_compose restart
 }
 
+biweekly_tasks() {
+    invoke_docker_compose run --rm certbot renew
+    invoke_manage update_musicbrainz_data
+}
+
 # Arguments following "manage" are passed to manage.py inside a new web container.
 if [ "$1" = "manage" ]; then shift
     echo "Running manage.py..."
@@ -65,6 +70,8 @@ elif [ "$1" = "update-config" ]; then shift
     update_config "$@"
 elif [ "$1" = "init" ]; then
     setup_initial_server
+elif [ "$1" = "biweekly-tasks" ]; then
+    biweekly_tasks
 else
     echo "Running docker-compose with the given command..."
     invoke_docker_compose "$@"
