@@ -14,9 +14,7 @@ else
     DOCKER_COMPOSE_CMD="docker-compose"
 fi
 
-if [ -f .env ]; then
-    . .env
-fi
+. ./.env
 
 invoke_docker_compose() {
     if [ "$IS_DEV" = "True" ]; then
