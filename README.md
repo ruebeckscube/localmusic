@@ -13,16 +13,13 @@
 
 4. Build images and containers with:
    ```
-   docker-compose up --build
+   ./develop.sh up --build
    ```
-   In another terminal window, apply migrations:
-   ```
-   docker-compose exec web ./manage.py migrate
-   ```
+   (Django migrations will automatically be applied)
 
 5. Run the following to download data from MusicBrainz (~2.5 million artists, it will let you know its progress, should take about 10 minutes):
    ```
-   docker-compose exec web ./manage.py update_musicbrainz_data
+   ./develop.sh manage  update_musicbrainz_data
    ```
 
 6. Install TailwindCSS (for development environment only):
@@ -35,11 +32,11 @@
 # Create/load data dump
 If you want to send/load some test data from your database, run
 ```
-docker-compose exec web ./manage.py dumpdata --natural-foreign --natural-primary -e contenttypes -e auth.Permission -e admin -e sessions -e findshows.MusicBrainzArtist --indent 4 > localmusic-db-dump.json
+./develop.sh dump-data  > localmusic-db-dump.json
 ```
 to dump and
 ```
-docker-compose exec web ./manage.py loaddata ./localmusic-db-dump.json
+./develop.sh manage loaddata ./localmusic-db-dump.json
 ```
 to load.
 
@@ -53,7 +50,7 @@ npx tailwindcss -i findshows/static/findshows/style.css -o findshows/static/find
 
 Run the server:
 ```
-docker-compose up
+./develop.sh up
 ```
 
 # Releases

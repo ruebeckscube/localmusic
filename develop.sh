@@ -57,6 +57,14 @@ setup_initial_server() {
     invoke_docker_compose restart
 }
 
+dump_data() {
+    invoke_manage dumpdata \
+        --natural-foreign --natural-primary \
+        -e contenttypes -e auth.Permission -e admin -e sessions \
+        -e findshows.MusicBrainzArtist \
+        --indent 4
+}
+
 biweekly_tasks() {
     invoke_docker_compose run --rm certbot renew
     invoke_manage update_musicbrainz_data
@@ -72,6 +80,8 @@ elif [ "$1" = "init" ]; then
     setup_initial_server
 elif [ "$1" = "biweekly-tasks" ]; then
     biweekly_tasks
+elif [ "$1" = "dump-data" ]; then
+    dump_data
 else
     echo "Running docker-compose with the given command..."
     invoke_docker_compose "$@"

@@ -19,10 +19,6 @@ from multiselectfield import MultiSelectField
 from findshows import musicbrainz
 
 
-def empty_list():
-    return []
-
-
 class CreationTrackingMixin(models.Model):
     created_at=models.DateField(auto_now_add=True)
     created_by=models.ForeignKey('UserProfile', on_delete=models.CASCADE)
