@@ -122,8 +122,7 @@ class UserSettingsTests(TestCaseHelpers):
 
 def create_account_post_request():
     return {
-        'username': 'thisisausername',
-        'email': 'sth@snht.onehut',
+        'username': 'sth@snht.onehut',
         'password1': ['sn384ydi9hs43i03489d4sa'],
         'password2': ['sn384ydi9hs43i03489d4sa'],
         'weekly_email': ['on'],
@@ -153,8 +152,7 @@ class CreateAccountTests(TestCaseHelpers):
         data = create_account_post_request()  # No sendartistinfo flag
         self.client.post(reverse("create_account"), data)
         self.assert_emails_sent(0)
-        data['username'] = 'asnoetihaoeirasoehuanoet'
-        data['email'] = 'another@unique.eml'
+        data['username'] = 'another@unique.eml'
         data['sendartistinfo'] = ''
         self.client.post(reverse("create_account"), data)
         self.assert_emails_sent(1)
@@ -162,7 +160,7 @@ class CreateAccountTests(TestCaseHelpers):
 
     def test_create_account_POST_fail(self):
         data = create_account_post_request()
-        data['email'] = 'notanemail'
+        data['username'] = 'notanemail'
         response = self.client.post(reverse("create_account"), data)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'registration/create_account.html')

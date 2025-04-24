@@ -5,34 +5,34 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
 from django.db import models
-from django.utils.datastructures import MultiValueDict
-from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.models import Artist, ArtistLinkingInfo, Concert, ConcertTags, MusicBrainzArtist, UserProfile, Venue
+from findshows.models import Artist, Concert, ConcertTags, MusicBrainzArtist, UserProfile, Venue
 from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
 
 class UserCreationFormE(UserCreationForm):
-    email = forms.EmailField(required=True)
-
     class Meta:
         model = User
-        fields = ("username", "email", "password1", "password2")
+        fields = ("username", "password1", "password2")
+        labels = {
+            "username": "Email"
+        }
 
-    def clean(self):
-        cleaned_data = super().clean()
-        email = cleaned_data.get('email')
+    def clean_username(self):
+        # Enforce username-as-email
+        username = super().clean_username()
+        if not username:
+            return username
 
-        if User.objects.filter(email=email).exists():
-            msg = 'A user with that email already exists.'
-            self.add_error('email', msg)
-
-        return self.cleaned_data
+        EmailValidator()(username)
+        if User.objects.filter(email=username).exists(): # This should be redundant, but might as well be careful
+            raise ValidationError('A user with that email already exists.')
+        return username
 
     def save(self, commit=True):
         user = super(UserCreationForm, self).save(commit=False)
-        user.email = self.cleaned_data["email"]
+        user.email = self.cleaned_data["username"]
         if commit:
             user.save()
         return user

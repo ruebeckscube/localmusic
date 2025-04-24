@@ -26,7 +26,9 @@
 
         <div>
             <input type="submit" value="createaccount">
-            <input type="hidden" name="next" value="{{ next }}">
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
         </div>
 
     </form>
