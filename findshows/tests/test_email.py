@@ -35,7 +35,7 @@ class SendMailHelperTests(TestCaseHelpers):
 
 class DailyModEmailTests(TestCaseHelpers):
     def test_new_records(self):
-        # The default records we construct in test migration count
+        self.create_artist(created_at=timezone_today())
         success = daily_mod_email()
         self.assertTrue(success)
         self.assert_emails_sent(1)

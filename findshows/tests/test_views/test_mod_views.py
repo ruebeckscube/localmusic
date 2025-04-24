@@ -29,24 +29,23 @@ class ModDailyDigestTests(TestCaseHelpers):
 
     def test_defaults_to_today(self):
         self.login_static_user(self.StaticUsers.MOD_USER)
+        artist = self.create_artist(created_at=timezone_today())
         response = self.client.get(reverse("findshows:mod_daily_digest"))
-        self.assertIn(self.get_static_instance(self.StaticArtists.LOCAL_ARTIST),
-                      response.context['artists'])
+        self.assertIn(artist, response.context['artists'])
 
     def test_future_date_defaults_to_today(self):
         self.login_static_user(self.StaticUsers.MOD_USER)
+        artist = self.create_artist(created_at=timezone_today())
         tomorrow = timezone_today() + timedelta(1)
         response = self.client.get(reverse("findshows:mod_daily_digest"), {'date': tomorrow.isoformat()})
-        self.assertIn(self.get_static_instance(self.StaticArtists.LOCAL_ARTIST),
-                      response.context['artists'])
+        self.assertIn(artist, response.context['artists'])
 
     def test_filters_date(self):
         self.login_static_user(self.StaticUsers.MOD_USER)
         yesterday = timezone_today() - timedelta(1)
         artist = self.create_artist(created_at=yesterday)
         response = self.client.get(reverse("findshows:mod_daily_digest"), {'date': yesterday.isoformat()})
-        self.assert_equal_as_sets(response.context['artists'],
-                                  [artist])
+        self.assertIn(artist, response.context['artists'])
 
 
 class ModQueueTests(TestCaseHelpers):

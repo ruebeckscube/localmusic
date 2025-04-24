@@ -20,7 +20,7 @@ class TestCaseHelpers(TestCase):
     fixtures = ["findshows/test-fixture.json"]
 
     class StaticUsers(Enum):
-        # These must match migration 0019 usernames and ID (i.e. the order they're created in database)
+        # These must match usernames and ID/pk from the fixture listed above
         DEFAULT_CREATOR = 1
         LOCAL_ARTIST = 2
         NONLOCAL_ARTIST = 3
@@ -33,7 +33,7 @@ class TestCaseHelpers(TestCase):
             return UserProfile
 
     class StaticArtists(Enum):
-        # These must match migration 0019 artist IDs (i.e. the order they're created in database)
+        # These must match usernames and ID/pk from the fixture listed above
         LOCAL_ARTIST = 1
         NONLOCAL_ARTIST = 2
         TEMP_ARTIST = 3
