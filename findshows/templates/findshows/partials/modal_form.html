@@ -44,7 +44,7 @@ modal based on https://alpinetoolbox.com/examples/modal
     <!--Overlay-->
     <div class="overflow-auto" style="background-color: rgba(0,0,0,0.5)" x-show="show_modal" :class="{ 'absolute inset-0 z-10 flex items-center justify-center': show_modal }">
         <!--Dialog-->
-        <div class="bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg py-4 text-left px-6" x-show="show_modal" @click.away="close_modal()">
+        <div class="bg-white w-11/12 md:max-w-md mx-auto rounded-sm shadow-lg py-4 text-left px-6" x-show="show_modal" @click.away="close_modal()">
 
             <!--Title-->
             <div class="flex justify-between items-center pb-3">
