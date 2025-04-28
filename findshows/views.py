@@ -121,8 +121,8 @@ def view_artist(request, pk):
     if artist.is_temp_artist and not can_edit:
         raise PermissionDenied
 
-    upcoming_concerts = artist.concert_set.filter(date__gte=timezone.now())
-    upcoming_concerts = upcoming_concerts.exclude(artists__is_temp_artist=True)
+    upcoming_concerts = Concert.objects.all() if can_edit else Concert.publically_visible()
+    upcoming_concerts = upcoming_concerts.filter(date__gte=timezone.now(), artists__in=artist)
 
     return render(request, "findshows/pages/view_artist.html", context={
         'artist': artist,
