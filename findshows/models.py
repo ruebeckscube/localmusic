@@ -412,3 +412,18 @@ class SetOrder(models.Model):
     concert=models.ForeignKey(Concert, on_delete=models.CASCADE)
     artist=models.ForeignKey(Artist, on_delete=models.CASCADE, related_name="set_order")
     order_number=models.IntegerField()
+
+
+class CustomText(models.Model):
+    BANNER = "BR"
+    ABOUT = "AB"
+    TEXT_TYPES = {
+        BANNER: "Warning/announcement banner",
+        ABOUT: "About page",
+    }
+
+    type = models.CharField(choices=TEXT_TYPES, unique=True)
+    text = models.TextField()
+
+    def __str__(self):
+        return self.get_type_display()

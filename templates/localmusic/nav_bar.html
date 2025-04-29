@@ -1,3 +1,5 @@
+{% load findshows_tags %}
+
 <div class="flex justify-between h-10">
     <div>
         <a href="{% url 'findshows:home' %}">Chicago Local Music</a>
@@ -20,4 +22,7 @@
         <a href="{% url 'login' %}">Login</a>
     {% endif %}
     </div>
+</div>
+<div class="bg-red-500 text-center">
+    {% custom_text 'BR' %}
 </div>

@@ -1,6 +1,8 @@
 import datetime
 from django import template
 
+from findshows.models import CustomText
+
 register = template.Library()
 
 @register.inclusion_tag("findshows/partials/preview_player.html")
@@ -34,3 +36,11 @@ def similar_artist_name_with_relevancy(similar_musicbrainz_artist, searched_musi
         'name': similar_musicbrainz_artist.name,
         'relevant_names': relevant_names,
     }
+
+
+@register.simple_tag
+def custom_text(type: str):
+    try:
+        return CustomText.objects.get(type=type).text
+    except CustomText.DoesNotExist:
+        return ""
