@@ -19,5 +19,14 @@ services:
       file: docker-compose-base.yml
       service: mjml
 
+  tailwind:
+    volumes:
+      - .:/project
+    build:
+      context: .
+      dockerfile: tailwind-dockerfile
+    stdin_open: true
+    command: ["-i", "findshows/static/findshows/style.css", "-o", "findshows/static/findshows/tailwind.css"]
+
 volumes:
    postgres_data:
