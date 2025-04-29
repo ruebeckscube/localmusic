@@ -78,6 +78,8 @@ db.sqlite3-journal
 .venv
 venv/
 venv.bak/
+Pipfile
+Pipfile.lock
 
 # Secrets/local settings
 .env
