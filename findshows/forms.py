@@ -189,7 +189,9 @@ class ArtistAccessForm(forms.Form):
 class TempArtistForm(forms.ModelForm):
     prefix = "temp_artist"
     use_required_attribute = False
-    email=forms.EmailField(required=True, help_text="Please check with the artist you're inviting and and use a personal email rather than a band email. This is the address they will need to make an account with.")
+    email=forms.EmailField(required=True, help_text="""Please check with the
+    artist you're inviting and and use a personal email rather than a band
+    email. This address must match the one on their account.""")
 
     class Meta:
         model=Artist
@@ -227,12 +229,17 @@ class ShowFinderForm(forms.Form):
     date = DatePickerField()
     end_date = DatePickerField(required=False)
     is_date_range = forms.BooleanField(required=False)
-    musicbrainz_artists = forms.ModelMultipleChoiceField(queryset=MusicBrainzArtist.objects.all(),
-                                                         widget=MusicBrainzArtistSearchWidget,
-                                                         required=False)
-    concert_tags = forms.MultipleChoiceField(choices=ConcertTags,
-                                             widget=forms.CheckboxSelectMultiple,
-                                             required=False)
+    musicbrainz_artists = forms.ModelMultipleChoiceField(
+        queryset=MusicBrainzArtist.objects.all(),
+        widget=MusicBrainzArtistSearchWidget,
+        required=False,
+        label="Sounds like",
+        help_text="""We'll recommend some concerts based on the artists you
+        select here. Leave blank to get a randomly sorted list.""",
+    )
+    concert_tags = forms.MultipleChoiceField( choices=ConcertTags,
+                                              widget=forms.CheckboxSelectMultiple, required=False, label="Categories",
+                                              help_text="Leave blank to include all show categories.", )
 
     def clean(self):
         cleaned_data = super().clean() or {}

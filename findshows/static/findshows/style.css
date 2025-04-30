@@ -19,4 +19,8 @@
   .helptext {
     @apply text-xs
   }
+
+  .link-base {
+    @apply text-purple-600 font-bold cursor-pointer;
+  }
 }

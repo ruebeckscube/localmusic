@@ -796,6 +796,12 @@
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
   }
+  .link-base {
+    cursor: pointer;
+    --tw-font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-purple-600);
+  }
 }
 @property --tw-space-x-reverse {
   syntax: "*";
