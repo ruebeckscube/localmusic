@@ -181,7 +181,8 @@ match os.getenv("EMAIL_BACKEND", "CONSOLE"):
 
 SERVER_EMAIL=os.getenv("SERVER_EMAIL", "root@localhost")
 DEFAULT_FROM_EMAIL=os.getenv("DEFAULT_FROM_EMAIL", "webmaster@localhost")
-ADMINS = [('Test admin','admin@localmusic.com')]
+
+ADMINS = [('Admin', os.getenv('ADMIN_EMAIL', 'admin@localhost'))]
 
 MJML_BACKEND_MODE = 'tcpserver'
 MJML_TCPSERVERS = [
