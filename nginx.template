@@ -68,7 +68,7 @@ http {
        http2 on;
        return 444;
 
-       ssl_certificate /etc/nginx/ssl/live/chicagolocalmusic.net/fullchain.pem;
-       ssl_certificate_key /etc/nginx/ssl/live/chicagolocalmusic.net/privkey.pem;
+       ssl_certificate /etc/nginx/ssl/live/TEMPLATE_HOST_NAME/fullchain.pem;
+       ssl_certificate_key /etc/nginx/ssl/live/TEMPLATE_HOST_NAME/privkey.pem;
    }
 }
