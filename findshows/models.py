@@ -80,7 +80,7 @@ class MultiURLValidator(URLValidator):
 
 
 class MusicBrainzArtist(models.Model):
-    mbid = models.CharField(primary_key=True)
+    mbid = models.CharField(primary_key=True, max_length=40)
     name = models.CharField()
     similar_artists = models.JSONField(editable=False, null=True)
     similar_artists_cache_datetime = models.DateTimeField(editable=False, null=True)
@@ -133,10 +133,10 @@ class Artist(CreationTrackingMixin):
         NOLISTEN: "Not configured"
     }
 
-    name=models.CharField()
-    profile_picture=models.ImageField(blank=True)
-    bio=models.TextField(blank=True)
-    local=models.BooleanField()
+    name=models.CharField(verbose_name="Artist Name", max_length=60)
+    profile_picture=models.ImageField(blank=True, help_text="JPG/JPEG preferred, max file size 1MB. Profile pictures will be cropped to a circle.")
+    bio=models.TextField(blank=True, max_length=800)
+    local=models.BooleanField(help_text="Check if this is a local artist. It will give them permission to list shows and invite other artists.")
 
     is_active_request=models.BooleanField(default=False)
     is_temp_artist=models.BooleanField()
@@ -144,20 +144,33 @@ class Artist(CreationTrackingMixin):
     # Here we store the artist's raw input for listening links. Either an album
     # link or a line-separated list of track links (up to 3). ALSO includes Youtube Links.
     # See below for test values
-    listen_links=models.TextField(blank=True, validators=[MultiURLValidator(MultiURLValidator.LISTEN, 3),])
+    LISTEN_LINK_HELP="""
+        Supports Spotify, Bandcamp, and SoundCloud links. Please provide either one
+        album link or up to three song links on separate lines.
+
+        A preview player for all songs will be displayed on your artist page,
+        and the first track from the album or the first song link will be
+        displayed on concerts. """
+
+    listen_links=models.TextField(blank=True, validators=[MultiURLValidator(MultiURLValidator.LISTEN, 3),],
+                                  help_text=LISTEN_LINK_HELP, max_length=400)
     listen_platform=models.CharField(editable=False, max_length=2,
                                      choices=LISTEN_PLATFORMS, default=NOLISTEN)
     listen_type=models.CharField(editable=False, max_length=2,
                                  choices=LISTEN_TYPES, default=NOLISTEN)
     listen_ids=models.JSONField(editable=False, default=list)
 
-    youtube_links=models.TextField(blank=True, validators=[MultiURLValidator(MultiURLValidator.YOUTUBE, 2),])
+    youtube_links=models.TextField(blank=True, validators=[MultiURLValidator(MultiURLValidator.YOUTUBE, 2),],
+                                   help_text="(Optional) Enter up to two youtube links on separate lines.",
+                                   max_length=300)
     youtube_ids=models.JSONField(editable=False, default=list, blank=True)
 
     # List of tuples [ (display_name, url), ... ]
-    socials_links=models.JSONField(default=list, blank=True, validators=[LabeledURLsValidator(),])
+    socials_links=models.JSONField(default=list, blank=True, validators=[LabeledURLsValidator(),],
+                                   help_text="Enter links to socials, website, etc.")
 
-    similar_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist)
+    similar_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist, verbose_name="Sounds like",
+                                                       help_text="Select 3 artists whose fans might also like to listen to this artist.")
 
 
     def similarity_score(self, searched_mbids):
