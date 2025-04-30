@@ -13,6 +13,7 @@
     --color-blue-500: oklch(62.3% 0.214 259.815);
     --color-indigo-400: oklch(67.3% 0.182 276.935);
     --color-indigo-500: oklch(58.5% 0.233 277.117);
+    --color-purple-600: oklch(55.8% 0.288 302.321);
     --color-slate-50: oklch(98.4% 0.003 247.858);
     --color-slate-200: oklch(92.9% 0.013 255.508);
     --color-gray-100: oklch(96.7% 0.003 264.542);
@@ -767,28 +768,28 @@
   }
 }
 @layer base {
-  *, ::after, ::before, ::backdrop, ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+  input[type=text], input[type=url], input[type=search], input[type=email], textarea {
+    margin: calc(var(--spacing) * 0.5);
+    width: 90%;
+    border-radius: 0.25rem;
+    border-style: var(--tw-border-style);
+    border-width: 1px;
   }
-}
-input[type=text], input[type=url], input[type=search], input[type=email], textarea {
-  border: solid;
-  border-width: .5px;
-  margin: 2px;
-  width: 90%;
-}
-button, input[type=button], input[type=submit] {
-  box-shadow: 1px 1px 1px 1px slategray;
-  background-color: mediumpurple;
-  border-radius: 10%;
-  margin: 2px;
-  cursor: pointer;
-  color: white;
-  padding: 2px;
-}
-a {
-  color: mediumpurple;
-  font-weight: bold;
+  button, input[type=button], input[type=submit] {
+    margin: calc(var(--spacing) * 0.5);
+    cursor: pointer;
+    border-radius: 0.25rem;
+    background-color: var(--color-purple-600);
+    padding: calc(var(--spacing) * 0.5);
+    color: var(--color-white);
+    --tw-shadow: 0 1px var(--tw-shadow-color, rgb(0 0 0 / 0.05));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  a {
+    --tw-font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-purple-600);
+  }
 }
 @property --tw-space-x-reverse {
   syntax: "*";

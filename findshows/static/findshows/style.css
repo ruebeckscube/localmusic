@@ -1,43 +1,15 @@
 @import 'tailwindcss';
 
-@config '../../../tailwind.config.js';
-
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
 @layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+  input[type=text], input[type=url], input[type=search], input[type=email], textarea {
+    @apply w-[90%] m-0.5 border rounded;
   }
-}
 
-input[type=text], input[type=url], input[type=search], input[type=email], textarea {
-  border: solid;
-  border-width: .5px;
-  margin: 2px;
-  width: 90%;
-}
+  button, input[type=button], input[type=submit] {
+    @apply shadow-2xs bg-purple-600 cursor-pointer text-white m-0.5 p-0.5 rounded;
+  }
 
-button, input[type=button], input[type=submit] {
-  box-shadow: 1px 1px 1px 1px slategray;
-  background-color: mediumpurple;
-  border-radius: 10%;
-  margin: 2px;
-  cursor: pointer;
-  color: white;
-  padding: 2px;
-}
-
-a {
-  color: mediumpurple;
-  font-weight: bold;
+  a {
+    @apply text-purple-600 font-bold;
+  }
 }
