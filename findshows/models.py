@@ -397,17 +397,26 @@ class Venue(CreationTrackingMixin):
 
 
 class Concert(CreationTrackingMixin):
-    poster=models.ImageField()
+    poster=models.ImageField(help_text="""JPG/JPEG preferred, max file size 1MB.
+    Vertical or square orientations display best.""")
     date=models.DateField()
     doors_time=models.TimeField(blank=True, null=True)
     start_time=models.TimeField()
     end_time=models.TimeField(blank=True, null=True)
-    venue=models.ForeignKey(Venue, on_delete=models.CASCADE)
-    ages=models.CharField(max_length=2, choices=Ages, blank=True)
+    venue=models.ForeignKey(Venue, on_delete=models.CASCADE, help_text="""Select
+    a venue from the database; if it doesn't show up, create a new venue listing
+    with the New Venue button.""")
+    ages=models.CharField(max_length=2, choices=Ages, blank=True,
+                          help_text="Leave blank to use the venue's default.")
     artists=models.ManyToManyField(Artist, through="SetOrder")
     ticket_link=models.URLField(blank=True)
-    ticket_description=models.CharField()
-    tags=MultiSelectField(choices=ConcertTags)
+    ticket_description=models.CharField(max_length=25, help_text="""A short
+    description of the price, e.g. '$10 adv $12 door' or '$15 suggested'""")
+    tags=MultiSelectField(choices=ConcertTags, max_length=2, help_text="""
+    Select what best represents the show. If you're playing all original music
+    except for one song, don't check Cover Set. If two bands are playing all
+    originals and one is playing a full cover set, check both Originals and
+    Cover Set.""")
 
     @classmethod
     def publically_visible(cls):

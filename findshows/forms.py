@@ -66,7 +66,12 @@ class ConcertForm(forms.ModelForm):
     doors_time = TimePickerField(required=False)
     start_time = TimePickerField()
     end_time = TimePickerField(required=False)
-    bill = forms.JSONField(widget=BillWidget) # NOT a model field, we parse this and save to the artists field through the SetOrder through-model
+    # NOT a model field, we parse this and save to the artists field through the SetOrder through-model
+    bill = forms.JSONField(widget=BillWidget, help_text="""The artists will be
+    listed in the order they're entered; the artist performing first should be
+    at the bottom of the bill and the artist performing last should be at the
+    top of the bill. If the artist does not already have a profile, invite them
+    to create one with the Invite Artist button.""")
 
     class Meta:
         model=Concert
