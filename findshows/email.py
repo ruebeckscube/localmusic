@@ -20,6 +20,11 @@ from findshows.models import Artist, ArtistLinkingInfo, Concert, UserProfile, Ve
 logger = logging.getLogger(__name__)
 
 
+PROTOCOL = "http" if settings.IS_DEV else "https"
+def local_url_to_email(local_url):
+    return f"{PROTOCOL}://{settings.HOST_NAME}{local_url}"
+
+
 def send_mail_helper(subject, message, recipient_list, form=None, from_email=None, errorlist=None):
     """
     Sends a single email.
@@ -50,7 +55,7 @@ def send_mail_helper(subject, message, recipient_list, form=None, from_email=Non
 def artist_invite_url(link_info: ArtistLinkingInfo, invite_code):
     qs = {'invite_id': link_info.pk,
           'invite_code': invite_code}
-    return settings.HOST_NAME + reverse("findshows:link_artist") + '?' + urlencode(qs, doseq=True)
+    return local_url_to_email(reverse("findshows:link_artist", query=qs))
 
 
 def invite_artist(link_info: ArtistLinkingInfo, invite_code, form=None, errorlist=None):
@@ -68,7 +73,7 @@ def invite_user_to_artist(link_info: ArtistLinkingInfo, invite_code, form):
 def send_artist_setup_info(user_email: str):
     return send_mail_helper(
         f"Make an Artist page on {settings.HOST_NAME}",
-        f"To request an artist page, go to your user settings page ({settings.HOST_NAME}{reverse('findshows:user_settings')}) and click 'Request local artist access.'",
+        f"To request an artist page, go to your user settings page ({local_url_to_email(reverse('findshows:user_settings'))}) and click 'Request local artist access.'",
         [user_email]
     )
 
@@ -102,7 +107,7 @@ def daily_mod_email():
     if all(q.count()==0 for q in (new_artists, new_concerts, new_venues, actionable_artists, actionable_venues)):
         return True
 
-    message = f"There are new or actionable listings to moderate.\n\n{settings.HOST_NAME}{reverse('findshows:mod_dashboard')}"
+    message = f"There are new or actionable listings to moderate.\n\n{local_url_to_email(reverse('findshows:mod_dashboard'))}"
     recipient_list = [mod.user.email for mod in UserProfile.objects.filter(is_mod=True)]
     return send_mail_helper("Moderation reminder", message, recipient_list)
 
@@ -144,7 +149,7 @@ def rec_email_generator(header_message):
         search_params['musicbrainz_artists'] = [mb_artist.mbid
                                                 for mb_artist in user_profile.favorite_musicbrainz_artists.all()]
         search_params['concert_tags'] = user_profile.preferred_concert_tags
-        search_url = settings.HOST_NAME + reverse('findshows:concert_search') + '?' + urlencode(search_params, doseq=True)
+        search_url = local_url_to_email(reverse('findshows:concert_search', query=search_params))
 
         tag_filtered_concerts = next_week_concerts.all()
         if search_params['concert_tags']:
@@ -169,7 +174,6 @@ def rec_email_generator(header_message):
                                         context={'header_message': header_message,
                                                  'user_profile': user_profile,
                                                  'concerts': rec_concerts,
-                                                 'host_name': settings.HOST_NAME,
                                                  'search_url': search_url,
                                                  'has_recs': has_recs})
         text_message = f'{header_message}\n\nGo to {search_url} to see your weekly concert recommendations.'

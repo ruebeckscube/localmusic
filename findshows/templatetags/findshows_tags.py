@@ -1,6 +1,11 @@
 import datetime
-from django import template
+import json
 
+from django import template
+from django.conf import settings
+from django.urls import reverse
+
+from findshows.email import local_url_to_email
 from findshows.models import CustomText
 
 register = template.Library()
@@ -44,3 +49,11 @@ def custom_text(type: str):
         return CustomText.objects.get(type=type).text
     except CustomText.DoesNotExist:
         return ""
+
+@register.simple_tag
+def email_url(url_name: str, *args, **kwargs):
+    return local_url_to_email(reverse(url_name, args=args, query=kwargs))
+
+@register.simple_tag
+def email_raw_url(raw_url: str):
+    return local_url_to_email(raw_url)

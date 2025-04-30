@@ -20,7 +20,7 @@
                         We don't have any specific show recommendations for you
                         this week, so we've listed some random shows. Try adding
                         some more artists you like on your
-                        <a href="{{host_name}}{% url 'findshows:user_settings' %}">settings page</a>
+                        <a href="{% email_url 'findshows:user_settings' %}">settings page</a>
                         for personalized recommendations!
                     {% endif %}
                     Click a concert poster to view details and listen to previews,
@@ -29,8 +29,8 @@
 
                 {% for concert in concerts %}
                     <mj-image alt="{{concert}}" width="300px"
-                              src="{{host_name}}{{concert.poster.url}}"
-                              href="{{host_name}}{% url 'findshows:view_concert' concert.pk %}"/>
+                              src="{% email_raw_url  concert.poster.url %}"
+                              href="{% email_url 'findshows:view_concert' concert.pk %}"/>
                 {% empty %}
                     <mj-text>
                         No shows listed for this week!
@@ -43,7 +43,7 @@
             <mj-column>
                 <mj-text>
                     To unsubscribe, please visit your
-                    <a href="{{host_name}}{% url 'findshows:user_settings' %}">settings page</a>
+                    <a href="{% email_url 'findshows:user_settings' %}">settings page</a>
                     and uncheck the "Weekly Email" option.
                 </mj-text>
             </mj-column>
