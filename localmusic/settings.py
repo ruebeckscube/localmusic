@@ -169,7 +169,13 @@ LOGOUT_REDIRECT_URL = "/"
 match os.getenv("EMAIL_BACKEND", "CONSOLE"):
     case "FILEBASED":
         EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-        EMAIL_FILE_PATH = os.path.join(BASE_DIR, '../emails')
+        EMAIL_FILE_PATH = os.path.join(BASE_DIR, '/emails')
+    case "SMTP":
+        EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+        EMAIL_HOST = os.getenv("EMAIL_HOST")
+        EMAIL_PORT = os.getenv("EMAIL_PORT")
+        EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+        EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
     case _:
         EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 

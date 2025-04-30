@@ -66,6 +66,7 @@ db.sqlite3
 db.sqlite3-journal
 /media/
 /staticfiles/
+/emails/
 
 # pipenv
 #   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
