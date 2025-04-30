@@ -791,6 +791,12 @@
     color: var(--color-purple-600);
   }
 }
+@layer components {
+  .helptext {
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+}
 @property --tw-space-x-reverse {
   syntax: "*";
   inherits: false;

@@ -12,4 +12,11 @@
   a {
     @apply text-purple-600 font-bold;
   }
+
+}
+
+@layer components {
+  .helptext {
+    @apply text-xs
+  }
 }
