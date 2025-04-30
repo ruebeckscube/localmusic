@@ -31,7 +31,8 @@ ALLOWED_HOSTS = [HOST_NAME, f"www.{HOST_NAME}"]
 CSRF_TRUSTED_ORIGINS = [f"https://{HOST_NAME}", f"https://www.{HOST_NAME}"]
 CSRF_COOKIE_SECURE = not IS_DEV
 SESSION_COOKIE_SECURE = not IS_DEV
-
+SESSION_ENGINE = 'django.contrib.sessions.backends.db' if IS_DEV else "django.contrib.sessions.backends.cached_db"
+SESSION_COOKIE_AGE = 1209600 * 2  # 4 weeks total
 # Application definition
 
 INSTALLED_APPS = [
@@ -89,6 +90,7 @@ DATABASES = {
         'PORT': os.getenv('DATABASE_PORT'),
     }
 }
+CONN_MAX_AGE = 60*(not IS_DEV)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -149,12 +151,13 @@ USER_AGENT_HEADER=os.getenv("USER_AGENT_HEADER")
 LISTENBRAINZ_SIMILAR_ARTIST_CACHE_DAYS=30
 
 # Memcache
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
-        "LOCATION": "127.0.0.1:11211",
+if not IS_DEV:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
+            "LOCATION": os.getenv("CACHE_LOCATION"),
+        }
     }
-}
 
 
 LOGIN_REDIRECT_URL = "/"
