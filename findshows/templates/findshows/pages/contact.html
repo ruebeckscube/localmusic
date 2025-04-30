@@ -2,6 +2,8 @@
 
 {% block content %}
 
+    <h1>Contact</h1>
+
     {% if success %}
         <p> Thank you for your message! </p>
     {% endif %}
@@ -9,7 +11,9 @@
     <form method="post" action="{% url 'findshows:contact' %}">
         {% csrf_token %}
         <div class="flex flex-col">
-            {{ form  }}
+            {% for field in form %}
+                {{ field.as_field_group }}
+            {% endfor %}
         </div>
         <div>
             <input type="submit" value="send">

@@ -13,6 +13,10 @@
     @apply text-purple-600 font-bold;
   }
 
+  h1 {
+    @apply text-3xl mb-4;
+  }
+
 }
 
 @layer components {

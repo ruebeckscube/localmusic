@@ -279,10 +279,10 @@ class ContactForm(forms.Form):
         REPORT_BUG = "bug", "Bug report"
         OTHER = "oth", "Other"
 
-    email = forms.EmailField(max_length=100)
+    email = forms.EmailField(max_length=100, label="Your email")
+    type = forms.ChoiceField(choices=Types)
     subject = forms.CharField()
     message = forms.CharField(widget=forms.Textarea)
-    type = forms.ChoiceField(choices=Types)
 
     def clean_subject(self):
         data = self.cleaned_data["subject"]
