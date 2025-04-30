@@ -343,18 +343,31 @@ class ConcertTags(models.TextChoices):
 class UserProfile(models.Model):
     user=models.OneToOneField(User, on_delete=models.CASCADE)
 
-    favorite_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist, blank=True)
+    favorite_musicbrainz_artists=models.ManyToManyField(
+        MusicBrainzArtist,
+        blank=True,
+        verbose_name="Favorite artists",
+        help_text="""Select some artists that you like, and we'll include
+        personalized recommendations in your weekly email (and default them into
+        the main search page). The more you include, the more likely we'll find
+        a good match.""",
+    )
 
-    preferred_concert_tags=MultiSelectField(choices=ConcertTags)
+    preferred_concert_tags=MultiSelectField(choices=ConcertTags, max_length=2,
+                                            verbose_name="Categories",
+                                            help_text="""Select which types of
+                                            shows you'd like to see in your
+                                            search results and weekly email.""")
 
     followed_artists=models.ManyToManyField(Artist, related_name="followers", blank=True)
-    managed_artists=models.ManyToManyField(Artist, related_name="managing_users", blank=True)
-    weekly_email=models.BooleanField(default=True)
+    managed_artists=models.ManyToManyField(Artist, related_name="managing_users", blank=True,
+                                           help_text="Artists that this user manages.")
+    weekly_email=models.BooleanField(default=True, help_text="Subscribe to an email with concert recommendations for the upcoming week")
 
     given_artist_access_by=models.ForeignKey('UserProfile', related_name="gave_artist_access_to", on_delete=models.CASCADE, null=True, blank=True)
     given_artist_access_datetime=models.DateTimeField(null=True, blank=True)
 
-    is_mod=models.BooleanField(default=False)
+    is_mod=models.BooleanField(default=False, help_text="Gives the user access to the mod dashboard and associated permissions.")
 
     def __str__(self):
         return str(self.user)
