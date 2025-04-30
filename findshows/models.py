@@ -454,9 +454,11 @@ class SetOrder(models.Model):
 class CustomText(models.Model):
     BANNER = "BR"
     ABOUT = "AB"
+    SITE_TITLE = "ST"
     TEXT_TYPES = {
         BANNER: "Warning/announcement banner",
         ABOUT: "About page",
+        SITE_TITLE: "Site title",
     }
 
     type = models.CharField(choices=TEXT_TYPES, unique=True)

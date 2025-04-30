@@ -2,7 +2,7 @@
 
 <div class="flex justify-between h-10">
     <div>
-        <a href="{% url 'findshows:home' %}">Chicago Local Music</a>
+        <a href="{% url 'findshows:home' %}">{% custom_text 'ST' %}</a>
     </div>
     <div class="flex justify-between space-x-5">
     {% if user.is_authenticated %}
