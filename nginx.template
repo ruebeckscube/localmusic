@@ -63,4 +63,12 @@ http {
        return 444;
    }
 
+   server {
+       listen 443 default_server ssl;
+       http2 on;
+       return 444;
+
+       ssl_certificate /etc/nginx/ssl/live/chicagolocalmusic.net/fullchain.pem;
+       ssl_certificate_key /etc/nginx/ssl/live/chicagolocalmusic.net/privkey.pem;
+   }
 }
