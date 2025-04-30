@@ -381,14 +381,16 @@ class Ages(models.TextChoices):
 
 
 class Venue(CreationTrackingMixin):
-    name=models.CharField(unique=True)
-    # For now, folks will put "DM for address" for house venues.
-    address=models.CharField()
+    name=models.CharField(unique=True, max_length=30)
+    address=models.CharField(max_length=30, help_text="For DIY venues, please enter 'DM for address'")
     ages=models.CharField(max_length=2, choices=Ages)
-    website=models.URLField()
+    website=models.URLField(help_text="""Venues must have a public-facing
+    internet presence, even if it's just an Instagram page. This is for safety
+    reasons, as well as the means by which users will get DIY venue addresses.""")
 
     is_verified=models.BooleanField(default=False)
-    declined_listing=models.BooleanField(default=False)
+    declined_listing=models.BooleanField(default=False,
+                                         help_text="If true, this venue has decided not to allow listings on this site.")
 
     def __str__(self):
         return self.name
