@@ -179,6 +179,8 @@ match os.getenv("EMAIL_BACKEND", "CONSOLE"):
     case _:
         EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+SERVER_EMAIL=os.getenv("SERVER_EMAIL", "root@localhost")
+DEFAULT_FROM_EMAIL=os.getenv("DEFAULT_FROM_EMAIL", "webmaster@localhost")
 ADMINS = [('Test admin','admin@localmusic.com')]
 
 MJML_BACKEND_MODE = 'tcpserver'
