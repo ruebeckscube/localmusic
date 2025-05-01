@@ -190,7 +190,7 @@ class TestCaseHelpers(TestCase):
                      declined_listing=False):
 
         while name is None:
-            name = str(uuid4())
+            name = str(uuid4())[:20]
             if Venue.objects.filter(name=name).exists():
                 name = None
         venue=Venue(

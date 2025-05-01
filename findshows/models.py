@@ -412,7 +412,7 @@ class Concert(CreationTrackingMixin):
     ticket_link=models.URLField(blank=True)
     ticket_description=models.CharField(max_length=25, help_text="""A short
     description of the price, e.g. '$10 adv $12 door' or '$15 suggested'""")
-    tags=MultiSelectField(choices=ConcertTags, max_length=2, help_text="""
+    tags=MultiSelectField(choices=ConcertTags, max_length=15, help_text="""
     Select what best represents the show. If you're playing all original music
     except for one song, don't check Cover Set. If two bands are playing all
     originals and one is playing a full cover set, check both Originals and
