@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 
 from django.urls import reverse
 from findshows.forms import ContactForm
-from findshows.models import UserProfile
+from findshows.models import ConcertTags, UserProfile
 
 from findshows.tests.test_helpers import TestCaseHelpers
 
@@ -42,13 +42,11 @@ class ContactTests(TestCaseHelpers):
         self.assert_not_blank_form(response.context['form'], ContactForm)
 
 
-def user_settings_post_request():
+def user_settings_post_request(musicbrainz_artists=[], weekly_email=True, preferred_concert_tags=[]):
     return {
-        'favorite_spotify_artists': [
-            '{"id":"40iG1d2wC4KdBLb8wXNq33","name":"Jake Xerxes Fussell","img_url":"https://i.scdn.co/image/ab6761610000e5eb015193a76957aaabe0b1cc86"}'
-        ],
-        'weekly_email': ['on'],
-        'preferred_concert_tags': ['OG', 'CV']
+        'favorite_musicbrainz_artists': musicbrainz_artists,
+        'weekly_email': ['on'] if weekly_email else ['off'],
+        'preferred_concert_tags': preferred_concert_tags
     }
 
 
@@ -67,8 +65,9 @@ class UserSettingsTests(TestCaseHelpers):
 
     def test_user_settings_POST_success(self):
         user = self.login_static_user(self.StaticUsers.NON_ARTIST)
-        data = user_settings_post_request()
-        response = self.client.post(reverse("findshows:user_settings"), data)
+        self.create_musicbrainz_artist('22', 'Jim Croce')
+        data = user_settings_post_request(['22'], True, [ConcertTags.ORIGINALS.value, ConcertTags.COVERS.value])
+        response = self.client.post(reverse("findshows:user_settings"), data=data)
         self.assertRedirects(response, reverse("findshows:home"))
         userProfile = UserProfile.objects.get(pk=user.pk)
         self.assertEqual(userProfile.preferred_concert_tags, data['preferred_concert_tags'])

@@ -1,6 +1,10 @@
 <div id = "socials-links-widget"
 >
     <table>
+        <tr>
+            <th> Display name </th>
+            <th> URL </th>
+        </tr>
         {% for display_name, url in widget.socials_links %} {# num_links is included in data prep (fill w empty strings) #}
         <tr>
             <td> <input name="{{widget.name}}_display_name" type="text" value="{{ display_name }}"> </td>

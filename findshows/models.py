@@ -61,17 +61,17 @@ class MultiURLValidator(URLValidator):
         match self.listen_or_youtube:
             case self.YOUTUBE:
                 if any(_parse_youtube_id(pu) == "" for pu in parsed_urls):
-                    raise ValidationError("Invalid Youtube URLs. Make sure they look like the examples.", code=self.code, params={"value": value})
+                    raise ValidationError("Invalid Youtube URLs.", code=self.code, params={"value": value})
             case self.LISTEN:
                 listen_platforms = [_parse_listen_platform(pu) for pu in parsed_urls]
                 if any(lp == Artist.NOLISTEN for lp in listen_platforms):
-                    raise ValidationError("Links must be from one of the supported domains.", code=self.code, params={"value": value})
+                    raise ValidationError("Links must be from one of the supported sites.", code=self.code, params={"value": value})
                 if any(lp != listen_platforms[0] for lp in listen_platforms):
-                    raise ValidationError("Links must be from the same domain.", code=self.code, params={"value": value})
+                    raise ValidationError("Links must be from the same site.", code=self.code, params={"value": value})
 
                 listen_types = [_parse_listen_type(pu, listen_platforms[0]) for pu in parsed_urls]
                 if any(lt == Artist.NOLISTEN for lt in listen_types):
-                    raise ValidationError("Link not formatted correctly. Make sure it looks like the examples", code=self.code, params={"value": value})
+                    raise ValidationError("Link not formatted correctly.", code=self.code, params={"value": value})
                 if len(urls) > 1 and any(lt == Artist.ALBUM for lt in listen_types):
                     raise ValidationError("If multiple links are provided, they must all be song links.", code=self.code, params={"value": value})
 
@@ -80,7 +80,7 @@ class MultiURLValidator(URLValidator):
 
 
 class MusicBrainzArtist(models.Model):
-    mbid = models.CharField(primary_key=True)
+    mbid = models.CharField(primary_key=True, max_length=40)
     name = models.CharField()
     similar_artists = models.JSONField(editable=False, null=True)
     similar_artists_cache_datetime = models.DateTimeField(editable=False, null=True)
@@ -133,10 +133,10 @@ class Artist(CreationTrackingMixin):
         NOLISTEN: "Not configured"
     }
 
-    name=models.CharField()
-    profile_picture=models.ImageField(blank=True)
-    bio=models.TextField(blank=True)
-    local=models.BooleanField()
+    name=models.CharField(verbose_name="Artist Name", max_length=60)
+    profile_picture=models.ImageField(blank=True, help_text="JPG/JPEG preferred, max file size 1MB. Profile pictures will be cropped to a circle.")
+    bio=models.TextField(blank=True, max_length=800)
+    local=models.BooleanField(help_text="Check if this is a local artist. It will give them permission to list shows and invite other artists.")
 
     is_active_request=models.BooleanField(default=False)
     is_temp_artist=models.BooleanField()
@@ -144,20 +144,33 @@ class Artist(CreationTrackingMixin):
     # Here we store the artist's raw input for listening links. Either an album
     # link or a line-separated list of track links (up to 3). ALSO includes Youtube Links.
     # See below for test values
-    listen_links=models.TextField(blank=True, validators=[MultiURLValidator(MultiURLValidator.LISTEN, 3),])
+    LISTEN_LINK_HELP="""
+        Supports Spotify, Bandcamp, and SoundCloud links. Please provide either one
+        album link or up to three song links on separate lines.
+
+        A preview player for all songs will be displayed on your artist page,
+        and the first track from the album or the first song link will be
+        displayed on concerts. """
+
+    listen_links=models.TextField(blank=True, validators=[MultiURLValidator(MultiURLValidator.LISTEN, 3),],
+                                  help_text=LISTEN_LINK_HELP, max_length=400)
     listen_platform=models.CharField(editable=False, max_length=2,
                                      choices=LISTEN_PLATFORMS, default=NOLISTEN)
     listen_type=models.CharField(editable=False, max_length=2,
                                  choices=LISTEN_TYPES, default=NOLISTEN)
     listen_ids=models.JSONField(editable=False, default=list)
 
-    youtube_links=models.TextField(blank=True, validators=[MultiURLValidator(MultiURLValidator.YOUTUBE, 2),])
+    youtube_links=models.TextField(blank=True, validators=[MultiURLValidator(MultiURLValidator.YOUTUBE, 2),],
+                                   help_text="(Optional) Enter up to two youtube links on separate lines.",
+                                   max_length=300)
     youtube_ids=models.JSONField(editable=False, default=list, blank=True)
 
     # List of tuples [ (display_name, url), ... ]
-    socials_links=models.JSONField(default=list, blank=True, validators=[LabeledURLsValidator(),])
+    socials_links=models.JSONField(default=list, blank=True, validators=[LabeledURLsValidator(),],
+                                   help_text="Enter links to socials, website, etc.")
 
-    similar_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist)
+    similar_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist, verbose_name="Sounds like",
+                                                       help_text="Select 3 artists whose fans might also like to listen to this artist.")
 
 
     def similarity_score(self, searched_mbids):
@@ -282,7 +295,7 @@ class ArtistLinkingInfo(CreationTrackingMixin):
     def create_and_get_invite_code(cls, artist, email, created_by):
         if (not created_by.is_mod) and (not created_by.given_artist_access_datetime or
             created_by.given_artist_access_datetime > now() - timedelta(settings.INVITE_BUFFER_DAYS)):
-            raise InviteDelayError(f"Users newly given posting permissions must wait {settings.INVITE_BUFFER_DAYS} days before inviting other users.")
+            raise InviteDelayError(f"Users newly given artist access must wait {settings.INVITE_BUFFER_DAYS} days before inviting other users.")
         link_info = cls(artist=artist, invited_email=email)
         invite_code = link_info._generate_invite_code()
         link_info.created_by = created_by
@@ -330,18 +343,31 @@ class ConcertTags(models.TextChoices):
 class UserProfile(models.Model):
     user=models.OneToOneField(User, on_delete=models.CASCADE)
 
-    favorite_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist, blank=True)
+    favorite_musicbrainz_artists=models.ManyToManyField(
+        MusicBrainzArtist,
+        blank=True,
+        verbose_name="Favorite artists",
+        help_text="""Select some artists that you like, and we'll include
+        personalized recommendations in your weekly email (and default them into
+        the main search page). The more you include, the more likely we'll find
+        a good match.""",
+    )
 
-    preferred_concert_tags=MultiSelectField(choices=ConcertTags)
+    preferred_concert_tags=MultiSelectField(choices=ConcertTags, max_length=15,
+                                            verbose_name="Categories",
+                                            help_text="""Select which types of
+                                            shows you'd like to see in your
+                                            search results and weekly email.""")
 
     followed_artists=models.ManyToManyField(Artist, related_name="followers", blank=True)
-    managed_artists=models.ManyToManyField(Artist, related_name="managing_users", blank=True)
-    weekly_email=models.BooleanField(default=True)
+    managed_artists=models.ManyToManyField(Artist, related_name="managing_users", blank=True,
+                                           help_text="Artists that this user manages.")
+    weekly_email=models.BooleanField(default=True, help_text="Subscribe to an email with concert recommendations for the upcoming week")
 
     given_artist_access_by=models.ForeignKey('UserProfile', related_name="gave_artist_access_to", on_delete=models.CASCADE, null=True, blank=True)
     given_artist_access_datetime=models.DateTimeField(null=True, blank=True)
 
-    is_mod=models.BooleanField(default=False)
+    is_mod=models.BooleanField(default=False, help_text="Gives the user access to the mod dashboard and associated permissions.")
 
     def __str__(self):
         return str(self.user)
@@ -355,31 +381,42 @@ class Ages(models.TextChoices):
 
 
 class Venue(CreationTrackingMixin):
-    name=models.CharField(unique=True)
-    # For now, folks will put "DM for address" for house venues.
-    address=models.CharField()
+    name=models.CharField(unique=True, max_length=30)
+    address=models.CharField(max_length=30, help_text="For DIY venues, please enter 'DM for address'")
     ages=models.CharField(max_length=2, choices=Ages)
-    website=models.URLField()
+    website=models.URLField(help_text="""Venues must have a public-facing
+    internet presence, even if it's just an Instagram page. This is for safety
+    reasons, as well as the means by which users will get DIY venue addresses.""")
 
     is_verified=models.BooleanField(default=False)
-    declined_listing=models.BooleanField(default=False)
+    declined_listing=models.BooleanField(default=False,
+                                         help_text="If true, this venue has decided not to allow listings on this site.")
 
     def __str__(self):
         return self.name
 
 
 class Concert(CreationTrackingMixin):
-    poster=models.ImageField()
+    poster=models.ImageField(help_text="""JPG/JPEG preferred, max file size 1MB.
+    Vertical or square orientations display best.""")
     date=models.DateField()
     doors_time=models.TimeField(blank=True, null=True)
     start_time=models.TimeField()
     end_time=models.TimeField(blank=True, null=True)
-    venue=models.ForeignKey(Venue, on_delete=models.CASCADE)
-    ages=models.CharField(max_length=2, choices=Ages, blank=True)
+    venue=models.ForeignKey(Venue, on_delete=models.CASCADE, help_text="""Select
+    a venue from the database; if it doesn't show up, create a new venue listing
+    with the New Venue button.""")
+    ages=models.CharField(max_length=2, choices=Ages, blank=True,
+                          help_text="Leave blank to use the venue's default.")
     artists=models.ManyToManyField(Artist, through="SetOrder")
     ticket_link=models.URLField(blank=True)
-    ticket_description=models.CharField()
-    tags=MultiSelectField(choices=ConcertTags)
+    ticket_description=models.CharField(max_length=25, help_text="""A short
+    description of the price, e.g. '$10 adv $12 door' or '$15 suggested'""")
+    tags=MultiSelectField(choices=ConcertTags, max_length=15, help_text="""
+    Select what best represents the show. If you're playing all original music
+    except for one song, don't check Cover Set. If two bands are playing all
+    originals and one is playing a full cover set, check both Originals and
+    Cover Set.""")
 
     @classmethod
     def publically_visible(cls):
@@ -417,13 +454,26 @@ class SetOrder(models.Model):
 class CustomText(models.Model):
     BANNER = "BR"
     ABOUT = "AB"
+    SITE_TITLE = "ST"
+    WEEKLY_EMAIL_SUBJECT = "ES"
+    WEEKLY_EMAIL_HEADER = "EH"
     TEXT_TYPES = {
         BANNER: "Warning/announcement banner",
         ABOUT: "About page",
+        SITE_TITLE: "Site title",
+        WEEKLY_EMAIL_SUBJECT: "Subject for weekly email",
+        WEEKLY_EMAIL_HEADER: "Header message for weekly email",
     }
 
-    type = models.CharField(choices=TEXT_TYPES, unique=True)
+    type = models.CharField(choices=TEXT_TYPES, unique=True, max_length=2)
     text = models.TextField()
+
+    @classmethod
+    def get_text(cls, type):
+        try:
+            return cls.objects.get(type=type).text
+        except cls.DoesNotExist:
+            return ""
 
     def __str__(self):
         return self.get_type_display()

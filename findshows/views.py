@@ -275,7 +275,7 @@ def manage_artist_access(request, pk):
                         form.add_error(None, f"The user {user_json['email']} already has edit access to this artist.")
                         continue
                     if records_created_today(ArtistLinkingInfo, request.user.userprofile) >= settings.MAX_DAILY_INVITES:
-                        form.add_error(None, "You have hit your max invites for the day; please try again tomorrow")
+                        form.add_error(None, "You have reached your max invites for the day; please try again tomorrow")
                         continue
                     try:
                         link_info, invite_code = ArtistLinkingInfo.create_and_get_invite_code(artist, user_json['email'], request.user.userprofile)

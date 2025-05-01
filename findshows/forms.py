@@ -66,7 +66,12 @@ class ConcertForm(forms.ModelForm):
     doors_time = TimePickerField(required=False)
     start_time = TimePickerField()
     end_time = TimePickerField(required=False)
-    bill = forms.JSONField(widget=BillWidget) # NOT a model field, we parse this and save to the artists field through the SetOrder through-model
+    # NOT a model field, we parse this and save to the artists field through the SetOrder through-model
+    bill = forms.JSONField(widget=BillWidget, help_text="""The artists will be
+    listed in the order they're entered; the artist performing first should be
+    at the bottom of the bill and the artist performing last should be at the
+    top of the bill. If the artist does not already have a profile, invite them
+    to create one with the Invite Artist button.""")
 
     class Meta:
         model=Concert
@@ -99,9 +104,8 @@ class ConcertForm(forms.ModelForm):
                                  for a in self.editing_user.userprofile.managed_artists.all()
                                  if a.local)
         if not local_user_artists.intersection(str(a['id']) for a in cleaned_data['bill']):
-            self.add_error('bill',
-                           "You may only post shows where the bill includes one of the local artists \
-                           that your account manages.")
+            self.add_error('bill', """The bill must include one of the local
+            artists that your account manages.""")
 
         venue = cleaned_data.get("venue")
         date = cleaned_data.get("date")
@@ -110,10 +114,11 @@ class ConcertForm(forms.ModelForm):
             if self.instance:
                 conflict_concerts = conflict_concerts.exclude(pk=self.instance.pk)
             if conflict_concerts:
-                self.add_error(None,
-                               "There is already a show in the database for the specified venue and date.\
-                               If you think this is in error, or there are in fact two events on the same\
-                               date, please contact site admins for an override.")
+                self.add_error(None, """There is already a show in the database
+                               for the specified venue and date. If you think
+                               this is in error, or there are in fact two events
+                               on the same date, please contact site admins for
+                               an override.""")
         return cleaned_data
 
     def save(self, commit = True): # saving this without a commit is gonna be weird, hope it doesn't happen
@@ -177,14 +182,16 @@ class ArtistAccessForm(forms.Form):
                                   if not self.user_json_has_valid_email(u))
         if invalid_emails:
             self.add_error(None,
-                           f"The following email addresses are invalid: {invalid_emails}; please remove them and re-enter.")
+                           f"Invalid email addresses: {invalid_emails}.")
         return self.cleaned_data['users']
 
 
 class TempArtistForm(forms.ModelForm):
     prefix = "temp_artist"
     use_required_attribute = False
-    email=forms.EmailField(required=True, help_text="Please check with the artist you're inviting and and use a personal email rather than a band email. This is the address they will need to make an account with.")
+    email=forms.EmailField(required=True, help_text="""Please check with the
+    artist you're inviting and and use a personal email rather than a band
+    email. This address must match the one on their account.""")
 
     class Meta:
         model=Artist
@@ -222,12 +229,17 @@ class ShowFinderForm(forms.Form):
     date = DatePickerField()
     end_date = DatePickerField(required=False)
     is_date_range = forms.BooleanField(required=False)
-    musicbrainz_artists = forms.ModelMultipleChoiceField(queryset=MusicBrainzArtist.objects.all(),
-                                                         widget=MusicBrainzArtistSearchWidget,
-                                                         required=False)
-    concert_tags = forms.MultipleChoiceField(choices=ConcertTags,
-                                             widget=forms.CheckboxSelectMultiple,
-                                             required=False)
+    musicbrainz_artists = forms.ModelMultipleChoiceField(
+        queryset=MusicBrainzArtist.objects.all(),
+        widget=MusicBrainzArtistSearchWidget,
+        required=False,
+        label="Sounds like",
+        help_text="""We'll recommend some concerts based on the artists you
+        select here. Leave blank to get a randomly sorted list.""",
+    )
+    concert_tags = forms.MultipleChoiceField( choices=ConcertTags,
+                                              widget=forms.CheckboxSelectMultiple, required=False, label="Categories",
+                                              help_text="Leave blank to include all show categories.", )
 
     def clean(self):
         cleaned_data = super().clean() or {}
@@ -244,7 +256,7 @@ class ShowFinderForm(forms.Form):
                 )
             elif start_date and start_date > end_date:
                 self.add_error(None,
-                    "Please enter a date range with the end date after the start date."
+                    "End date must be after the start date."
                 )
             elif start_date and end_date-start_date > timedelta(settings.MAX_DATE_RANGE):
                 self.add_error(None,
@@ -267,10 +279,10 @@ class ContactForm(forms.Form):
         REPORT_BUG = "bug", "Bug report"
         OTHER = "oth", "Other"
 
-    email = forms.EmailField(max_length=100)
+    email = forms.EmailField(max_length=100, label="Your email")
+    type = forms.ChoiceField(choices=Types)
     subject = forms.CharField()
     message = forms.CharField(widget=forms.Textarea)
-    type = forms.ChoiceField(choices=Types)
 
     def clean_subject(self):
         data = self.cleaned_data["subject"]

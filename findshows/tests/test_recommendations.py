@@ -69,7 +69,7 @@ class RecommendationTests(TestCaseHelpers):
         self.create_user_profile(favorite_musicbrainz_artists=[], email="user3@em.ail")
         self.create_user_profile(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user4@em.ail", weekly_email=False)
 
-        send_rec_email('subject', 'header')
+        send_rec_email()
         self.assert_emails_sent(3)
         for message in mail.outbox:
             match message.recipients():

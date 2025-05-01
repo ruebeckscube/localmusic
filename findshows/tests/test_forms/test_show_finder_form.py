@@ -52,7 +52,7 @@ class DateRangeValidationTests(TestCase):
     def test_range_end_date_before_start_date(self):
         form = ShowFinderForm(form_data(timezone_today()+timedelta(2), timezone_today(), True))
         self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors['__all__'], ["Please enter a date range with the end date after the start date."])
+        self.assertEqual(form.errors['__all__'], ["End date must be after the start date."])
 
 
     def test_range_max_date_range(self):

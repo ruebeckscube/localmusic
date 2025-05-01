@@ -9,12 +9,11 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, get_connection, send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.http import urlencode
 from django.db.models import Q
 from django.views.generic.dates import timezone_today
 
 from findshows.forms import ContactForm
-from findshows.models import Artist, ArtistLinkingInfo, Concert, UserProfile, Venue
+from findshows.models import Artist, ArtistLinkingInfo, Concert, CustomText, UserProfile, Venue
 
 
 logger = logging.getLogger(__name__)
@@ -73,7 +72,12 @@ def invite_user_to_artist(link_info: ArtistLinkingInfo, invite_code, form):
 def send_artist_setup_info(user_email: str):
     return send_mail_helper(
         f"Make an Artist page on {settings.HOST_NAME}",
-        f"To request an artist page, go to your user settings page ({local_url_to_email(reverse('findshows:user_settings'))}) and click 'Request local artist access.'",
+        f"""To request an artist page, go to your user settings page
+        ({local_url_to_email(reverse('findshows:user_settings'))}) and click
+        'Request local artist access.' You will need to provide your artist
+        name, as well as a website or social media account where we can contact
+        you to verify your identity. A mod will review the request and reach out
+        as soon as possible.""",
         [user_email]
     )
 
@@ -107,7 +111,7 @@ def daily_mod_email():
     if all(q.count()==0 for q in (new_artists, new_concerts, new_venues, actionable_artists, actionable_venues)):
         return True
 
-    message = f"There are new or actionable listings to moderate.\n\n{local_url_to_email(reverse('findshows:mod_dashboard'))}"
+    message = f"There are new or actionable listings to review.\n\n{local_url_to_email(reverse('findshows:mod_dashboard'))}"
     recipient_list = [mod.user.email for mod in UserProfile.objects.filter(is_mod=True)]
     return send_mail_helper("Moderation reminder", message, recipient_list)
 
@@ -136,7 +140,7 @@ def send_mass_html_mail(datatuples):
     return sent
 
 
-def rec_email_generator(header_message):
+def rec_email_generator():
     user_profiles = UserProfile.objects.filter(weekly_email=True)
     today = datetime.date.today()
     week_later = today + datetime.timedelta(6)
@@ -171,18 +175,17 @@ def rec_email_generator(header_message):
         rec_concerts = rec_concerts[:settings.CONCERT_RECS_PER_EMAIL]
 
         html_message = render_to_string("findshows/emails/rec_email.html",
-                                        context={'header_message': header_message,
-                                                 'user_profile': user_profile,
+                                        context={'user_profile': user_profile,
                                                  'concerts': rec_concerts,
                                                  'search_url': search_url,
                                                  'has_recs': has_recs})
-        text_message = f'{header_message}\n\nGo to {search_url} to see your weekly concert recommendations.'
+        text_message = f'{CustomText.get_text(CustomText.WEEKLY_EMAIL_HEADER)}\n\nGo to {search_url} to see your weekly concert recommendations.'
 
         yield text_message, html_message, user_profile.user.email
 
 
 
-def send_rec_email(subject, header_message):
-    datatuple = ( (subject, text_message, html_message, None, [email])
-                  for text_message, html_message, email in rec_email_generator(header_message) )
+def send_rec_email():
+    datatuple = ( (CustomText.get_text(CustomText.WEEKLY_EMAIL_SUBJECT), text_message, html_message, None, [email])
+                  for text_message, html_message, email in rec_email_generator() )
     return send_mass_html_mail(datatuple)

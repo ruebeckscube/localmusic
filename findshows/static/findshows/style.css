@@ -13,10 +13,21 @@
     @apply text-purple-600 font-bold;
   }
 
+  h1 {
+    @apply text-3xl mb-4;
+  }
+
+  h2 {
+    @apply text-2xl mb-2;
+  }
 }
 
 @layer components {
   .helptext {
     @apply text-xs
+  }
+
+  .link-base {
+    @apply text-purple-600 font-bold cursor-pointer;
   }
 }

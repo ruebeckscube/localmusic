@@ -2,6 +2,8 @@
 
 {% block content %}
 
+    <h1> User Settings </h1>
+
     <form method="post" action="{% url 'findshows:user_settings' %}">
         {% csrf_token %}
 
