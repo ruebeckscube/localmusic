@@ -72,7 +72,12 @@ def invite_user_to_artist(link_info: ArtistLinkingInfo, invite_code, form):
 def send_artist_setup_info(user_email: str):
     return send_mail_helper(
         f"Make an Artist page on {settings.HOST_NAME}",
-        f"To request an artist page, go to your user settings page ({local_url_to_email(reverse('findshows:user_settings'))}) and click 'Request local artist access.'",
+        f"""To request an artist page, go to your user settings page
+        ({local_url_to_email(reverse('findshows:user_settings'))}) and click
+        'Request local artist access.' You will need to provide your artist
+        name, as well as a website or social media account where we can contact
+        you to verify your identity. A mod will review the request and reach out
+        as soon as possible.""",
         [user_email]
     )
 
@@ -106,7 +111,7 @@ def daily_mod_email():
     if all(q.count()==0 for q in (new_artists, new_concerts, new_venues, actionable_artists, actionable_venues)):
         return True
 
-    message = f"There are new or actionable listings to moderate.\n\n{local_url_to_email(reverse('findshows:mod_dashboard'))}"
+    message = f"There are new or actionable listings to review.\n\n{local_url_to_email(reverse('findshows:mod_dashboard'))}"
     recipient_list = [mod.user.email for mod in UserProfile.objects.filter(is_mod=True)]
     return send_mail_helper("Moderation reminder", message, recipient_list)
 
