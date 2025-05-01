@@ -9,12 +9,11 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, get_connection, send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.http import urlencode
 from django.db.models import Q
 from django.views.generic.dates import timezone_today
 
 from findshows.forms import ContactForm
-from findshows.models import Artist, ArtistLinkingInfo, Concert, UserProfile, Venue
+from findshows.models import Artist, ArtistLinkingInfo, Concert, CustomText, UserProfile, Venue
 
 
 logger = logging.getLogger(__name__)
@@ -136,7 +135,7 @@ def send_mass_html_mail(datatuples):
     return sent
 
 
-def rec_email_generator(header_message):
+def rec_email_generator():
     user_profiles = UserProfile.objects.filter(weekly_email=True)
     today = datetime.date.today()
     week_later = today + datetime.timedelta(6)
@@ -171,18 +170,17 @@ def rec_email_generator(header_message):
         rec_concerts = rec_concerts[:settings.CONCERT_RECS_PER_EMAIL]
 
         html_message = render_to_string("findshows/emails/rec_email.html",
-                                        context={'header_message': header_message,
-                                                 'user_profile': user_profile,
+                                        context={'user_profile': user_profile,
                                                  'concerts': rec_concerts,
                                                  'search_url': search_url,
                                                  'has_recs': has_recs})
-        text_message = f'{header_message}\n\nGo to {search_url} to see your weekly concert recommendations.'
+        text_message = f'{CustomText.get_text(CustomText.WEEKLY_EMAIL_HEADER)}\n\nGo to {search_url} to see your weekly concert recommendations.'
 
         yield text_message, html_message, user_profile.user.email
 
 
 
-def send_rec_email(subject, header_message):
-    datatuple = ( (subject, text_message, html_message, None, [email])
-                  for text_message, html_message, email in rec_email_generator(header_message) )
+def send_rec_email():
+    datatuple = ( (CustomText.get_text(CustomText.WEEKLY_EMAIL_SUBJECT), text_message, html_message, None, [email])
+                  for text_message, html_message, email in rec_email_generator() )
     return send_mass_html_mail(datatuple)

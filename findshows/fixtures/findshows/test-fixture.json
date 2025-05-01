@@ -288,5 +288,21 @@
         "followed_artists": [],
         "managed_artists": []
     }
+},
+{
+    "model": "findshows.customtext",
+    "pk": 1,
+    "fields": {
+        "type": "ES",
+        "text": "Testing email subject"
+    }
+},
+    {
+    "model": "findshows.customtext",
+    "pk": 2,
+    "fields": {
+        "type": "EH",
+        "text": "Testing email header"
+    }
 }
 ]

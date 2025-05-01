@@ -81,7 +81,7 @@ class SendRecEmailTests(TestCaseHelpers):
         concert2 = self.create_concert(timezone_today() + timedelta(1))
 
         self.create_user_profile(email="user1@em.ail")
-        send_rec_email('subject', 'header')
+        send_rec_email()
         self.assert_emails_sent(1)
         self.assert_concert_link_in_message_html(concert2, mail.outbox[0])
         self.assert_concert_link_in_message_html(concert1, mail.outbox[0], True)
@@ -93,7 +93,7 @@ class SendRecEmailTests(TestCaseHelpers):
         concert3 = self.create_concert(tags=[ConcertTags.DJ, ConcertTags.COVERS])
         self.create_user_profile(email="user1@em.ail", preferred_concert_tags=ConcertTags.ORIGINALS)
 
-        send_rec_email('subject', 'header')
+        send_rec_email()
 
         self.assert_emails_sent(1)
         self.assert_concert_link_in_message_html(concert1, mail.outbox[0])
@@ -107,7 +107,7 @@ class SendRecEmailTests(TestCaseHelpers):
         verified_concert=self.create_concert(venue=self.create_venue(is_verified=True, declined_listing=False))
         self.create_user_profile(email="user1@em.ail")
 
-        send_rec_email('subject', 'header')
+        send_rec_email()
 
         self.assert_emails_sent(1)
         self.assert_concert_link_in_message_html(verified_concert, mail.outbox[0])

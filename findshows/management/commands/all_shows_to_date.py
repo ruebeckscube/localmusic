@@ -1,8 +1,7 @@
 from datetime import datetime
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from findshows.email import send_rec_email
 from findshows.models import Concert
 
 

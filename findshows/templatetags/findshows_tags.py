@@ -45,10 +45,7 @@ def similar_artist_name_with_relevancy(similar_musicbrainz_artist, searched_musi
 
 @register.simple_tag
 def custom_text(type: str):
-    try:
-        return CustomText.objects.get(type=type).text
-    except CustomText.DoesNotExist:
-        return ""
+    return CustomText.get_text(type)
 
 @register.simple_tag
 def email_url(url_name: str, *args, **kwargs):

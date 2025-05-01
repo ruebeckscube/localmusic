@@ -353,7 +353,7 @@ class UserProfile(models.Model):
         a good match.""",
     )
 
-    preferred_concert_tags=MultiSelectField(choices=ConcertTags, max_length=2,
+    preferred_concert_tags=MultiSelectField(choices=ConcertTags, max_length=15,
                                             verbose_name="Categories",
                                             help_text="""Select which types of
                                             shows you'd like to see in your
@@ -455,14 +455,25 @@ class CustomText(models.Model):
     BANNER = "BR"
     ABOUT = "AB"
     SITE_TITLE = "ST"
+    WEEKLY_EMAIL_SUBJECT = "ES"
+    WEEKLY_EMAIL_HEADER = "EH"
     TEXT_TYPES = {
         BANNER: "Warning/announcement banner",
         ABOUT: "About page",
         SITE_TITLE: "Site title",
+        WEEKLY_EMAIL_SUBJECT: "Subject for weekly email",
+        WEEKLY_EMAIL_HEADER: "Header message for weekly email",
     }
 
-    type = models.CharField(choices=TEXT_TYPES, unique=True)
+    type = models.CharField(choices=TEXT_TYPES, unique=True, max_length=2)
     text = models.TextField()
+
+    @classmethod
+    def get_text(cls, type):
+        try:
+            return cls.objects.get(type=type).text
+        except cls.DoesNotExist:
+            return ""
 
     def __str__(self):
         return self.get_type_display()
