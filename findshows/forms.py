@@ -104,9 +104,8 @@ class ConcertForm(forms.ModelForm):
                                  for a in self.editing_user.userprofile.managed_artists.all()
                                  if a.local)
         if not local_user_artists.intersection(str(a['id']) for a in cleaned_data['bill']):
-            self.add_error('bill',
-                           "You may only post shows where the bill includes one of the local artists \
-                           that your account manages.")
+            self.add_error('bill', """The bill must include one of the local
+            artists that your account manages.""")
 
         venue = cleaned_data.get("venue")
         date = cleaned_data.get("date")
@@ -115,10 +114,11 @@ class ConcertForm(forms.ModelForm):
             if self.instance:
                 conflict_concerts = conflict_concerts.exclude(pk=self.instance.pk)
             if conflict_concerts:
-                self.add_error(None,
-                               "There is already a show in the database for the specified venue and date.\
-                               If you think this is in error, or there are in fact two events on the same\
-                               date, please contact site admins for an override.")
+                self.add_error(None, """There is already a show in the database
+                               for the specified venue and date. If you think
+                               this is in error, or there are in fact two events
+                               on the same date, please contact site admins for
+                               an override.""")
         return cleaned_data
 
     def save(self, commit = True): # saving this without a commit is gonna be weird, hope it doesn't happen
@@ -182,7 +182,7 @@ class ArtistAccessForm(forms.Form):
                                   if not self.user_json_has_valid_email(u))
         if invalid_emails:
             self.add_error(None,
-                           f"The following email addresses are invalid: {invalid_emails}; please remove them and re-enter.")
+                           f"Invalid email addresses: {invalid_emails}.")
         return self.cleaned_data['users']
 
 
@@ -256,7 +256,7 @@ class ShowFinderForm(forms.Form):
                 )
             elif start_date and start_date > end_date:
                 self.add_error(None,
-                    "Please enter a date range with the end date after the start date."
+                    "End date must be after the start date."
                 )
             elif start_date and end_date-start_date > timedelta(settings.MAX_DATE_RANGE):
                 self.add_error(None,

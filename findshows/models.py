@@ -61,17 +61,17 @@ class MultiURLValidator(URLValidator):
         match self.listen_or_youtube:
             case self.YOUTUBE:
                 if any(_parse_youtube_id(pu) == "" for pu in parsed_urls):
-                    raise ValidationError("Invalid Youtube URLs. Make sure they look like the examples.", code=self.code, params={"value": value})
+                    raise ValidationError("Invalid Youtube URLs.", code=self.code, params={"value": value})
             case self.LISTEN:
                 listen_platforms = [_parse_listen_platform(pu) for pu in parsed_urls]
                 if any(lp == Artist.NOLISTEN for lp in listen_platforms):
-                    raise ValidationError("Links must be from one of the supported domains.", code=self.code, params={"value": value})
+                    raise ValidationError("Links must be from one of the supported sites.", code=self.code, params={"value": value})
                 if any(lp != listen_platforms[0] for lp in listen_platforms):
-                    raise ValidationError("Links must be from the same domain.", code=self.code, params={"value": value})
+                    raise ValidationError("Links must be from the same site.", code=self.code, params={"value": value})
 
                 listen_types = [_parse_listen_type(pu, listen_platforms[0]) for pu in parsed_urls]
                 if any(lt == Artist.NOLISTEN for lt in listen_types):
-                    raise ValidationError("Link not formatted correctly. Make sure it looks like the examples", code=self.code, params={"value": value})
+                    raise ValidationError("Link not formatted correctly.", code=self.code, params={"value": value})
                 if len(urls) > 1 and any(lt == Artist.ALBUM for lt in listen_types):
                     raise ValidationError("If multiple links are provided, they must all be song links.", code=self.code, params={"value": value})
 
@@ -295,7 +295,7 @@ class ArtistLinkingInfo(CreationTrackingMixin):
     def create_and_get_invite_code(cls, artist, email, created_by):
         if (not created_by.is_mod) and (not created_by.given_artist_access_datetime or
             created_by.given_artist_access_datetime > now() - timedelta(settings.INVITE_BUFFER_DAYS)):
-            raise InviteDelayError(f"Users newly given posting permissions must wait {settings.INVITE_BUFFER_DAYS} days before inviting other users.")
+            raise InviteDelayError(f"Users newly given artist access must wait {settings.INVITE_BUFFER_DAYS} days before inviting other users.")
         link_info = cls(artist=artist, invited_email=email)
         invite_code = link_info._generate_invite_code()
         link_info.created_by = created_by

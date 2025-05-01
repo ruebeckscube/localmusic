@@ -285,7 +285,7 @@ class CreateTempArtistTests(TestCaseHelpers):
         self.assert_records_created(Artist, 0)
         self.assertTemplateUsed(response, 'findshows/htmx/cant_create_artist.html')
         self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
-        self.assertIn("Users newly given posting permissions", str(response.content))
+        self.assertIn("Users newly given artist access", str(response.content))
     
 
     def test_successful_create(self):
@@ -631,7 +631,7 @@ class ManageArtistAccessTests(TestCaseHelpers):
         self.assert_records_created(ArtistLinkingInfo, settings.MAX_DAILY_INVITES)
         partial_errors = response.context['partial_errors']()
         self.assertEqual(len(partial_errors), 1)
-        self.assertIn("You have hit your max invites",
+        self.assertIn("You have reached your max invites",
                       partial_errors[0])
         self.assertFalse('HX-Trigger' in response.headers)
 
@@ -650,7 +650,7 @@ class ManageArtistAccessTests(TestCaseHelpers):
         self.assert_records_created(ArtistLinkingInfo, 0)
         partial_errors = response.context['partial_errors']()
         self.assertEqual(len(partial_errors), 1)
-        self.assertIn("Users newly given posting permissions must wait",
+        self.assertIn("Users newly given artist access must wait",
                       partial_errors[0])
         self.assertFalse('HX-Trigger' in response.headers)
 

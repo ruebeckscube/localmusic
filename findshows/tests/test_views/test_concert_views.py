@@ -160,7 +160,7 @@ class CreateConcertTests(ConcertViewTestHelpers):
         artist = self.get_static_instance(self.StaticArtists.NONLOCAL_ARTIST)
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST) # different artist
         response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request(artist))
-        self.assertEqual(response.context['form'].errors["bill"][0][:17], "You may only post")
+        self.assertEqual(response.context['form'].errors["bill"][0][:17], "The bill must inc")
 
 
     def test_user_only_owns_nonlocal_artist(self):
@@ -168,7 +168,7 @@ class CreateConcertTests(ConcertViewTestHelpers):
         artist2 = self.get_static_instance(self.StaticArtists.NONLOCAL_ARTIST)
         user_profile.managed_artists.add(artist2)
         response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request(artist2))
-        self.assertEqual(response.context['form'].errors["bill"][0][:17], "You may only post")
+        self.assertEqual(response.context['form'].errors["bill"][0][:17], "The bill must inc")
 
 
     def test_concert_creation_limit(self):
