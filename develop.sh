@@ -72,6 +72,15 @@ dump_data() {
         --indent 4
 }
 
+coverage_report() {
+    if [ "$IS_DEV" = "True" ]; then
+        invoke_docker_compose run --rm web sh -c "coverage run ./manage.py test && coverage html"
+        open htmlcov/index.html
+    else
+        echo "Don't run coverage/tests in prod."
+    fi
+}
+
 biweekly_tasks() {
     invoke_docker_compose run --rm certbot renew
     invoke_manage update_musicbrainz_data
@@ -89,6 +98,8 @@ elif [ "$1" = "biweekly-tasks" ]; then
     biweekly_tasks
 elif [ "$1" = "dump-data" ]; then
     dump_data
+elif [ "$1" = "coverage" ]; then
+    coverage_report
 else
     echo "Running docker-compose with the given command..."
     invoke_docker_compose "$@"
