@@ -1,52 +1,44 @@
 # Installation
 
-1. Clone the repo, navigate to project root.
+1. Install [Docker](https://www.docker.com) (including docker-compose)
 
-2. Install [Docker](https://www.docker.com) (including docker-compose)
+2. Clone the repo, navigate to project root.
 
 3. Copy `example.env` to a new file named `.env`, and set any field that says
    "set_this". `SECRET_KEY` and `DATABASE_PASSWORD` are arbitrary but should be
    set to secure strings. See [MusicBrainz API
    documentation](https://musicbrainz.org/doc/MusicBrainz_API) for instructions
    on obtaining a `MUSICBRAINZ_TOKEN` and choosing a meaningful
-   `USER_AGENT_HEADER`.
+   `USER_AGENT_HEADER`. For a development environment, set `IS_DEV=True`.
+   Especially important in production is the `HOST_NAME` variable, as this is
+   used to set up SSL certificates and other things.
 
-4. Build images and containers with:
+4. In a PRODUCTION environment, simply run:
+   ```
+   ./develop.sh init
+   ```
+   This will perform one-time tasks like database setup, SSL certificates, and nginx configuration, as well as building all Docker services.
+   
+   In a DEVELOPMENT environment, run the following commands:
    ```
    ./develop.sh up --build
+   ./develop.sh manage migrate
+   ./develop.sh manage update_musicbrainz_data
    ```
-   (Django migrations will automatically be applied)
-
-5. Run the following to download data from MusicBrainz (~2.5 million artists, it will let you know its progress, should take about 10 minutes):
-   ```
-   ./develop.sh manage  update_musicbrainz_data
-   ```
-
-6. Install TailwindCSS (for development environment only):
-   ```
-   npm install -D tailwindcss
-   ```
-
-
 
 # Create/load data dump
 If you want to send/load some test data from your database, run
 ```
-./develop.sh dump-data  > localmusic-db-dump.json
+./develop.sh dump-data > localmusic-db-dump.json
 ```
 to dump and
 ```
 ./develop.sh manage loaddata ./localmusic-db-dump.json
 ```
-to load.
+to load. Be aware that media files must be copied manually.
 
 
 # Running the server
-
-Run Tailwind CLI (development only):
-```
-npx tailwindcss -i findshows/static/findshows/style.css -o findshows/static/findshows/tailwind.css --watch
-```
 
 Run the server:
 ```

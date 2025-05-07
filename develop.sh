@@ -14,6 +14,11 @@ else
     DOCKER_COMPOSE_CMD="docker-compose"
 fi
 
+if [ ! -e ".env" ]; then
+    echo "No .env file found"
+    exit 1
+fi
+
 . ./.env
 
 invoke_docker_compose() {
@@ -55,6 +60,8 @@ setup_initial_server() {
 
     update_config "nginx.template"
     invoke_docker_compose restart
+
+    invoke_manage update_musicbrainz_data
 }
 
 dump_data() {
