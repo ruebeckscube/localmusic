@@ -30,7 +30,7 @@ modal based on https://alpinetoolbox.com/examples/modal
 {% endcomment %}
 
 <div x-data="modal_form_data()"
-     @keydown.escape="close_modal()"
+     @keydown.escape.window="close_modal()"
      x-cloak
 >
 
@@ -42,9 +42,16 @@ modal based on https://alpinetoolbox.com/examples/modal
     </div>
 
     <!--Overlay-->
-    <div class="overflow-auto" style="background-color: rgba(0,0,0,0.5)" x-show="show_modal" :class="{ 'absolute inset-0 z-10 flex items-center justify-center': show_modal }">
+    <div class="overflow-auto" style="background-color: rgba(0,0,0,0.5)"
+         x-show="show_modal"
+         @keydown.enter.prevent
+         :class="{ 'absolute inset-0 z-10 flex items-center justify-center': show_modal }">
         <!--Dialog-->
-        <div class="bg-white w-11/12 md:max-w-md mx-auto rounded-sm shadow-lg py-4 text-left px-6" x-show="show_modal" @click.away="close_modal()">
+        <div class="modalform bg-white w-11/12 md:max-w-md mx-auto rounded-sm shadow-lg py-4 text-left px-6"
+             x-show="show_modal"
+             x-trap.inert.noscroll="show_modal"
+             @click.away="close_modal()"
+        >
 
             <!--Title-->
             <div class="flex justify-between items-center pb-3">
@@ -70,7 +77,7 @@ modal based on https://alpinetoolbox.com/examples/modal
                         {% else %}
                             hx-post="{% url htmx_url %}"
                         {% endif %}
-                        hx-trigger="click,load"
+                        hx-trigger="click,load,keyup[keyCode==13] from:closest .modalform"
                         hx-target="previous .modal-form"
                         @modal-form-success="on_successful_create"
                 >Submit</button>
