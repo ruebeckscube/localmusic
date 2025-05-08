@@ -8,7 +8,7 @@ from django.db import models
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.models import Artist, Concert, ConcertTags, MusicBrainzArtist, UserProfile, Venue
+from findshows.models import Artist, Concert, ConcertTags, LabeledURLsValidator, MusicBrainzArtist, UserProfile, Venue
 from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
 
 class UserCreationFormE(UserCreationForm):
@@ -51,6 +51,11 @@ class ArtistEditForm(forms.ModelForm):
         fields=("name", "profile_picture", "bio", "youtube_links", "socials_links", "listen_links", "similar_musicbrainz_artists")
         widgets={"similar_musicbrainz_artists": MusicBrainzArtistSearchWidget,
                  "socials_links": SocialsLinksWidget}
+
+    def clean_socials_links(self):
+        socials_links = self.cleaned_data['socials_links']
+        LabeledURLsValidator()(socials_links)
+        return socials_links
 
     def save(self, commit = True):
         artist = super().save(commit=False)
@@ -214,6 +219,11 @@ class RequestArtistForm(forms.ModelForm):
         fields=("name", "socials_links")
         widgets={"similar_musicbrainz_artists": MusicBrainzArtistSearchWidget,
                  "socials_links": SocialsLinksWidget(num_links=1)}
+
+    def clean_socials_links(self):
+        socials_links = self.cleaned_data['socials_links']
+        LabeledURLsValidator()(socials_links)
+        return socials_links
 
     def save(self, commit = True):
         artist = super().save(commit=False)

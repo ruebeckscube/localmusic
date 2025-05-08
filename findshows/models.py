@@ -166,7 +166,7 @@ class Artist(CreationTrackingMixin):
     youtube_ids=models.JSONField(editable=False, default=list, blank=True)
 
     # List of tuples [ (display_name, url), ... ]
-    socials_links=models.JSONField(default=list, blank=True, validators=[LabeledURLsValidator(),],
+    socials_links=models.JSONField(default=list, blank=True,
                                    help_text="Enter links to socials, website, etc.")
 
     similar_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist, verbose_name="Sounds like",
