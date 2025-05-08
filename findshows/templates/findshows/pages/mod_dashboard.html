@@ -29,6 +29,14 @@
         Outstanding invites
     </button>
 
+    <form>
+        {% csrf_token %}
+        {% with title_text="Invite Artist" success_text="Invite sent successfully!" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
+            {% include "findshows/partials/modal_form.html" %}
+        {% endwith %}
+    </form>
+
+
 </div>
 
 <div id="mod-content">

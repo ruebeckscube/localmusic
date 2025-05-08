@@ -168,11 +168,16 @@ def artist_search_results(request):
     })
 
 
+def has_exceeded_daily_invites(user):
+    return (not is_mod(user) and
+            records_created_today(ArtistLinkingInfo, user.userprofile) >= settings.MAX_DAILY_INVITES)
+
+
 def create_temp_artist(request):
-    if not is_local_artist_account(request.user):
+    if not (is_local_artist_account(request.user) or is_mod(request.user)):
         return HttpResponse('')
 
-    if records_created_today(ArtistLinkingInfo, request.user.userprofile) >= settings.MAX_DAILY_INVITES:
+    if has_exceeded_daily_invites(request.user):
         return render(request, 'findshows/htmx/cant_create_artist.html')
 
     if (not request.user.userprofile.given_artist_access_datetime or
@@ -201,7 +206,7 @@ def create_temp_artist(request):
             artist.delete()
             valid = False
 
-    if records_created_today(ArtistLinkingInfo, request.user.userprofile) >= settings.MAX_DAILY_INVITES:
+    if has_exceeded_daily_invites(request.user):
         response = render(request, 'findshows/htmx/cant_create_artist.html')
     else:
         response = render(request, "findshows/htmx/temp_artist_form.html", {
@@ -274,7 +279,7 @@ def manage_artist_access(request, pk):
                     if user_json['email'] in [up.user.email for up in artist.managing_users.all()]:
                         form.add_error(None, f"The user {user_json['email']} already has edit access to this artist.")
                         continue
-                    if records_created_today(ArtistLinkingInfo, request.user.userprofile) >= settings.MAX_DAILY_INVITES:
+                    if has_exceeded_daily_invites(request.user):
                         form.add_error(None, "You have reached your max invites for the day; please try again tomorrow")
                         continue
                     try:

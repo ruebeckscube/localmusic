@@ -341,13 +341,18 @@ class CreateTempArtistTests(TestCaseHelpers):
         for _ in range(settings.MAX_DAILY_INVITES - 1):
             self.create_artist_linking_info(created_by=user)
 
+        # Initial GET should return form
         response = self.client.post(reverse("findshows:create_temp_artist"))
         self.assertTemplateNotUsed(response, 'findshows/htmx/cant_create_artist.html')
         self.assertTemplateUsed(response, 'findshows/htmx/temp_artist_form.html')
 
-        self.create_artist_linking_info("ahcjbn@hs.com", created_by=user)
+        # Making the max number should work, but should tell the user they've hit the max
+        response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
+        self.assertTemplateUsed(response, 'findshows/htmx/cant_create_artist.html')
+        self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
+        self.assert_records_created(ArtistLinkingInfo, settings.MAX_DAILY_INVITES)
 
-        # Simulates inital page load
+        # Simulates inital page load when max is already hit
         response = self.client.post(reverse("findshows:create_temp_artist"))
         self.assertTemplateUsed(response, 'findshows/htmx/cant_create_artist.html')
         self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
@@ -357,6 +362,21 @@ class CreateTempArtistTests(TestCaseHelpers):
         self.assertTemplateUsed(response, 'findshows/htmx/cant_create_artist.html')
         self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
         self.assert_records_created(ArtistLinkingInfo, settings.MAX_DAILY_INVITES)
+
+
+    def test_mods_can_invite_artists_no_limit(self):
+        user = self.login_static_user(self.StaticUsers.MOD_USER)
+        for _ in range(settings.MAX_DAILY_INVITES + 1):
+            self.create_artist_linking_info(created_by=user)
+
+        response = self.client.post(reverse("findshows:create_temp_artist"))
+        self.assertTemplateNotUsed(response, 'findshows/htmx/cant_create_artist.html')
+        self.assertTemplateUsed(response, 'findshows/htmx/temp_artist_form.html')
+
+        response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
+        self.assertTemplateNotUsed(response, 'findshows/htmx/cant_create_artist.html')
+        self.assertTemplateUsed(response, 'findshows/htmx/temp_artist_form.html')
+        self.assert_records_created(ArtistLinkingInfo, settings.MAX_DAILY_INVITES + 2)
 
 
 def request_artist_post_data():
