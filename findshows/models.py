@@ -36,6 +36,8 @@ class LabeledURLsValidator(URLValidator):
                 raise ValidationError("Internal parsing error. Please report.", code=self.code, params={"value": value})
             if not tup[0]:
                 raise ValidationError("Display name is required.", code=self.code, params={"value": value})
+            if "://" not in tup[1]:
+                raise ValidationError("URL must include protocol (https://)")
             super().__call__(tup[1])
 
 
