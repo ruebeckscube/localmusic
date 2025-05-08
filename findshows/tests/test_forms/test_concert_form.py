@@ -1,5 +1,6 @@
 import datetime
 import json
+from django.conf import settings
 from django.views.generic.dates import timezone_today
 from findshows.forms import ConcertForm
 
@@ -68,8 +69,7 @@ class ValidationTests(ConcertFormTestHelpers):
                            self.file_data())
         form.set_editing_user(user_profile.user)
         self.assertFalse(form.is_valid())
-        trunc_msg = "There is already a show"
-        self.assertEqual(form.errors.as_data()['__all__'][0].message[:len(trunc_msg)], trunc_msg)
+        self.assertIn("There is already a show", form.errors['__all__'][0])
 
 
     def test_venue_declined_listing(self):
@@ -82,3 +82,14 @@ class ValidationTests(ConcertFormTestHelpers):
         self.assertFalse(form.is_valid())
         self.assertIn("declined listings",
                       str(form.errors['venue'][0]))
+
+
+    def test_date_too_far_future(self):
+        date = timezone_today() + datetime.timedelta(settings.MAX_FUTURE_CONCERT_WEEKS * 7 + 3)
+        artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        user_profile = self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)
+        form = ConcertForm(self.form_data(date=date, artists=[artist]),
+                           self.file_data())
+        form.set_editing_user(user_profile.user)
+        self.assertFalse(form.is_valid())
+        self.assertIn("Date cannot be more than", form.errors['date'][0])

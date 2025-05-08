@@ -102,6 +102,13 @@ class ConcertForm(forms.ModelForm):
         return venue
 
 
+    def clean_date(self):
+        date = self.cleaned_data['date']
+        if date > timezone_today() + timedelta(settings.MAX_FUTURE_CONCERT_WEEKS * 7):
+            self.add_error('date', f'Date cannot be more than {settings.MAX_FUTURE_CONCERT_WEEKS} weeks in the future.')
+        return date
+
+
     def clean(self):
         cleaned_data = super().clean() or {}
 
