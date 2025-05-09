@@ -98,22 +98,29 @@ def contact_email(cf: ContactForm):
                             cf,
                             cf.cleaned_data['email'])
 
-def daily_mod_email():
-    today = timezone_today()
-
-    new_artists = Artist.objects.filter(created_at=today)
-    new_concerts = Concert.objects.filter(created_at=today)
-    new_venues = Venue.objects.filter(created_at=today)
-
-    actionable_artists = Artist.objects.filter(is_active_request=True)
-    actionable_venues = Venue.objects.filter(is_verified=False)
-
-    if all(q.count()==0 for q in (new_artists, new_concerts, new_venues, actionable_artists, actionable_venues)):
+def daily_mod_email(date):
+    query_labels = ("NEW ARTISTS", "ACTIONABLE ARTISTS", "NEW VENUES", "ACTIONABLE VENUES", "NEW CONCERTS")
+    queries = (
+        Artist.objects.filter(created_at=date),
+        Artist.objects.filter(is_active_request=True),
+        Venue.objects.filter(created_at=date),
+        Venue.objects.filter(is_verified=False),
+        Concert.objects.filter(created_at=date),
+    )
+    if all(q.count()==0 for q in queries):
         return True
 
-    message = f"There are new or actionable listings to review.\n\n{local_url_to_email(reverse('findshows:mod_dashboard'))}"
+    records_tuple = ('\n'.join(str(record) for record in q.all())
+                      for q in queries)
+    records_string = '\n\n'.join(f"{label}\n{records}"
+                                 for label, records in zip(query_labels, records_tuple)
+                                 if records
+                                 )
+
+    message = f"There are new or actionable listings to review from {str(date)}.\n\n{local_url_to_email(reverse('findshows:mod_dashboard'))}\n\n{records_string}"
     recipient_list = [mod.user.email for mod in UserProfile.objects.filter(is_mod=True)]
-    return send_mail_helper("Moderation reminder", message, recipient_list)
+    return send_mail_helper(f"{CustomText.get_text(CustomText.SITE_TITLE)} Moderation reminder",
+                            message, recipient_list)
 
 
 # from https://stackoverflow.com/questions/7583801/send-mass-emails-with-emailmultialternatives/10215091#10215091

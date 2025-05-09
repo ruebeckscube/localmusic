@@ -35,15 +35,16 @@ class SendMailHelperTests(TestCaseHelpers):
 
 class DailyModEmailTests(TestCaseHelpers):
     def test_new_records(self):
-        self.create_artist(created_at=timezone_today())
-        success = daily_mod_email()
+        artist = self.create_artist(created_at=timezone_today())
+        success = daily_mod_email(timezone_today())
         self.assertTrue(success)
         self.assert_emails_sent(1)
+        self.assertIn(str(artist), mail.outbox[0].body)
 
     @patch('findshows.email.timezone_today')
     def test_no_new_records(self, mock_today):
         mock_today.return_value = timezone_today() + timedelta(1)
-        success = daily_mod_email()
+        success = daily_mod_email(timezone_today())
         self.assertTrue(success)
         self.assert_emails_sent(0)
 
