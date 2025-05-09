@@ -6,6 +6,9 @@
     </div>
     <div class="flex justify-between space-x-5">
     {% if user.is_authenticated %}
+        {% if user.is_staff %}
+            <a href="{% url 'admin:index' %}">Admin site</a>
+        {% endif %}
         {% if user.userprofile.is_mod %}
             <a href="{% url 'findshows:mod_dashboard' %}">Mod dashboard</a>
         {% endif %}
