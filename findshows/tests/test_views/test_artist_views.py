@@ -320,7 +320,7 @@ class CreateTempArtistTests(TestCaseHelpers):
         self.assert_emails_sent(0)
 
     @patch('findshows.email.logger')
-    @patch("findshows.email.send_mail")
+    @patch("findshows.email.EmailMessage.send")
     def test_email_fails(self, mock_send_mail, mock_logger):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         data=temp_artist_post_data()
@@ -783,7 +783,7 @@ class ManageArtistAccessTests(TestCaseHelpers):
 
 
     @patch('findshows.email.logger')
-    @patch("findshows.email.send_mail")
+    @patch("findshows.email.EmailMessage.send")
     def test_new_invite_email_fails(self, mock_send_mail, mock_logger):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         mock_send_mail.side_effect = SMTPException()
@@ -804,7 +804,7 @@ class ManageArtistAccessTests(TestCaseHelpers):
 
 
     @patch('findshows.email.logger')
-    @patch("findshows.email.send_mail")
+    @patch("findshows.email.EmailMessage.send")
     def test_resend_invite_email_fails(self, mock_send_mail, mock_logger):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)

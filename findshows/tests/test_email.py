@@ -18,7 +18,7 @@ class SendMailHelperTests(TestCaseHelpers):
 
 
     @patch('findshows.email.logger')
-    @patch('findshows.email.send_mail')
+    @patch('findshows.email.EmailMessage.send')
     def test_email_failure(self, mock_send_mail: MagicMock, mock_logger: MagicMock):
         mock_send_mail.side_effect = SMTPConnectError(123, "error message")
         mock_logger.error = MagicMock()
@@ -41,9 +41,7 @@ class DailyModEmailTests(TestCaseHelpers):
         self.assert_emails_sent(1)
         self.assertIn(str(artist), mail.outbox[0].body)
 
-    @patch('findshows.email.timezone_today')
-    def test_no_new_records(self, mock_today):
-        mock_today.return_value = timezone_today() + timedelta(1)
+    def test_no_new_records(self):
         success = daily_mod_email(timezone_today())
         self.assertTrue(success)
         self.assert_emails_sent(0)

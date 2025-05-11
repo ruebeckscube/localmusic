@@ -6,11 +6,10 @@ import logging
 from smtplib import SMTPException
 
 from django.conf import settings
-from django.core.mail import EmailMessage, EmailMultiAlternatives, get_connection, send_mail
+from django.core.mail import EmailMessage, EmailMultiAlternatives, get_connection
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.db.models import Q
-from django.views.generic.dates import timezone_today
 
 from findshows.forms import ContactForm
 from findshows.models import Artist, ArtistLinkingInfo, Concert, CustomText, UserProfile, Venue

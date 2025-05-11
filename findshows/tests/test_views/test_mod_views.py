@@ -139,7 +139,7 @@ class ResendInviteTests(TestCaseHelpers):
         self.assertIn("Please wait at least five minutes before sending again.", response.context['errors'])
 
     @patch('findshows.email.logger')
-    @patch("findshows.email.send_mail")
+    @patch("findshows.email.EmailMessage.send")
     def test_email_failure(self, mock_send_mail, mock_logger):
         self.login_static_user(self.StaticUsers.MOD_USER)
         ali = self.create_artist_linking_info(email="invited@em.ail", generated_datetime=now()-timedelta(1))[0]
@@ -199,7 +199,7 @@ class ApproveArtistRequestTests(TestCaseHelpers):
         self.assertTrue(artist.is_active_request)
 
     @patch('findshows.email.logger')
-    @patch("findshows.email.send_mail")
+    @patch("findshows.email.EmailMessage.send")
     def test_email_failure(self, mock_send_mail, mock_logger):
         self.login_static_user(self.StaticUsers.MOD_USER)
         artist = self.create_artist(is_active_request=True)
