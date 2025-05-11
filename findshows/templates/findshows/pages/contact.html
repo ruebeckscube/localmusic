@@ -10,6 +10,9 @@
 
     <form method="post" action="{% url 'findshows:contact' %}">
         {% csrf_token %}
+        <div>
+            {{  form.non_field_errors }}
+        </div>
         <div class="flex flex-col">
             {% for field in form %}
                 {{ field.as_field_group }}

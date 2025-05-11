@@ -6,7 +6,7 @@ import logging
 from smtplib import SMTPException
 
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives, get_connection, send_mail
+from django.core.mail import EmailMessage, EmailMultiAlternatives, get_connection, send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.db.models import Q
@@ -24,21 +24,29 @@ def local_url_to_email(local_url):
     return f"{PROTOCOL}://{settings.HOST_NAME}{local_url}"
 
 
-def send_mail_helper(subject, message, recipient_list, form=None, from_email=None, errorlist=None):
+def send_mail_helper(subject, message, recipient_list, form=None, from_email=None, errorlist=None, reply_to_list=None, cc_reply_to=False):
     """
     Sends a single email.
 
     If form is provided, we will add an error to it if email fails. Assumes is_valid() has been called.
-    If from_email is not provided, it will be from DEFAULT_FROM_EMAIL
+    If from_email is not provided, it will be from DEFAULT_FROM_EMAIL. It should always be one from our domain (i.e. mod or admin email).
     If errorlist is provided, we will append errors to it if email fails.
     """
     recipient_list = [r for r in recipient_list if r]
     if not recipient_list:
-        display_error = "Internal error; please try again later"
+        display_error = "Internal error; admins have been notified, please try again later."
         log_error = "Email failure: no recipients specified for email."
     else:
         try:
-            return send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+            email = EmailMessage(
+                subject,
+                message,
+                from_email,
+                recipient_list,
+                reply_to=reply_to_list,
+                cc=reply_to_list if cc_reply_to else None,
+            )
+            return email.send(fail_silently=False)
         except SMTPException as e:
             display_error = f"Unable to send email to {','.join(recipient_list)}. Please try again later."
             log_error = f"Email failure: {str(e)}"
@@ -96,7 +104,9 @@ def contact_email(cf: ContactForm):
                             cf.cleaned_data['message'],
                             recipient_list,
                             cf,
-                            cf.cleaned_data['email'])
+                            reply_to_list=[cf.cleaned_data['email']],
+                            cc_reply_to=True,
+                            )
 
 def daily_mod_email(date):
     query_labels = ("NEW ARTISTS", "ACTIONABLE ARTISTS", "NEW VENUES", "ACTIONABLE VENUES", "NEW CONCERTS")
