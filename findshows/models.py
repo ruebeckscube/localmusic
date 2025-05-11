@@ -136,8 +136,8 @@ class Artist(CreationTrackingMixin):
     }
 
     name=models.CharField(verbose_name="Artist Name", max_length=60)
-    profile_picture=models.ImageField(blank=True, help_text="JPG/JPEG preferred, max file size 1MB. Profile pictures will be cropped to a circle.")
-    bio=models.TextField(blank=True, max_length=800)
+    profile_picture=models.ImageField(null=True, help_text="JPG/JPEG preferred, max file size 1MB. Profile pictures will be cropped to a circle.")
+    bio=models.TextField(null=True, max_length=800)
     local=models.BooleanField(help_text="Check if this is a local artist. It will give them permission to list shows and invite other artists.")
 
     is_active_request=models.BooleanField(default=False)
@@ -154,7 +154,7 @@ class Artist(CreationTrackingMixin):
         and the first track from the album or the first song link will be
         displayed on concerts. """
 
-    listen_links=models.TextField(blank=True, validators=[MultiURLValidator(MultiURLValidator.LISTEN, 3),],
+    listen_links=models.TextField(null=True, validators=[MultiURLValidator(MultiURLValidator.LISTEN, 3),],
                                   help_text=LISTEN_LINK_HELP, max_length=400)
     listen_platform=models.CharField(editable=False, max_length=2,
                                      choices=LISTEN_PLATFORMS, default=NOLISTEN)
@@ -162,7 +162,7 @@ class Artist(CreationTrackingMixin):
                                  choices=LISTEN_TYPES, default=NOLISTEN)
     listen_ids=models.JSONField(editable=False, default=list)
 
-    youtube_links=models.TextField(blank=True, validators=[MultiURLValidator(MultiURLValidator.YOUTUBE, 2),],
+    youtube_links=models.TextField(blank=True, null=True, validators=[MultiURLValidator(MultiURLValidator.YOUTUBE, 2),],
                                    help_text="(Optional) Enter up to two youtube links on separate lines.",
                                    max_length=300)
     youtube_ids=models.JSONField(editable=False, default=list, blank=True)
