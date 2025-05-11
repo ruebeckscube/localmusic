@@ -52,6 +52,7 @@ class ArtistEditForm(forms.ModelForm):
         widgets={"similar_musicbrainz_artists": MusicBrainzArtistSearchWidget,
                  "socials_links": SocialsLinksWidget}
 
+
     def clean_socials_links(self):
         socials_links = self.cleaned_data['socials_links']
         LabeledURLsValidator()(socials_links)
@@ -226,6 +227,10 @@ class RequestArtistForm(forms.ModelForm):
         fields=("name", "socials_links")
         widgets={"similar_musicbrainz_artists": MusicBrainzArtistSearchWidget,
                  "socials_links": SocialsLinksWidget(num_links=1)}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['socials_links'].required = True
 
     def clean_socials_links(self):
         socials_links = self.cleaned_data['socials_links']
