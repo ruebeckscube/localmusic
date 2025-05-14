@@ -81,6 +81,11 @@ coverage_report() {
     fi
 }
 
+connect_to_database() {
+    psql "postgresql://$DATABASE_USER:$DATABASE_PASSWORD@localhost:5431/$DATABASE_NAME"
+}
+
+
 biweekly_tasks() {
     invoke_docker_compose run --rm certbot renew
     invoke_manage update_musicbrainz_data
@@ -100,6 +105,8 @@ elif [ "$1" = "dump-data" ]; then
     dump_data
 elif [ "$1" = "coverage" ]; then
     coverage_report
+elif [ "$1" = "psql" ]; then
+    connect_to_database
 else
     echo "Running docker-compose with the given command..."
     invoke_docker_compose "$@"
