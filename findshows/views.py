@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models import Q
 from django.utils import timezone
 from django.views.generic.dates import timezone_today
@@ -490,9 +491,10 @@ def musicbrainz_artist_search_results(request):
     if not (request.GET and request.GET["mb-search"]):
         return HttpResponse("")
 
-    keywords = request.GET['mb-search'].split()
+    q = request.GET['mb-search']
     mb_artists = MusicBrainzArtist.objects.defer('similar_artists', 'similar_artists_cache_datetime')
-    mb_artists = mb_artists.filter(reduce(and_, (Q(name__icontains=k) for k in keywords)))[:10]
+    mb_artists = mb_artists.annotate(similarity=TrigramSimilarity('name', q)
+                                     ).filter(name__fuzzy_index=q).order_by('-similarity')[:10]
 
     return render(request, "findshows/htmx/musicbrainz_artist_search_results.html", {
         "musicbrainz_artists": mb_artists

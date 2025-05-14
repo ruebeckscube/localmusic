@@ -13,6 +13,7 @@ from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.utils.timezone import now
+from django.contrib.postgres.indexes import GinIndex
 
 from multiselectfield import MultiSelectField
 
@@ -25,6 +26,17 @@ class CreationTrackingMixin(models.Model):
 
     class Meta:
         abstract = True
+
+
+@models.CharField.register_lookup
+class Similar(models.Lookup):
+    lookup_name = "fuzzy_index"
+
+    def as_postgresql(self, compiler, connection):
+        lhs_sql, lhs_params = self.process_lhs(compiler, connection)
+        rhs_sql, rhs_params = self.process_rhs(compiler, connection)
+        params = lhs_params + rhs_params
+        return f"{lhs_sql} %% {rhs_sql}", params
 
 
 class LabeledURLsValidator(URLValidator):
@@ -86,6 +98,13 @@ class MusicBrainzArtist(models.Model):
     name = models.CharField()
     similar_artists = models.JSONField(editable=False, null=True)
     similar_artists_cache_datetime = models.DateTimeField(editable=False, null=True)
+
+
+    class Meta:
+        indexes = [
+            GinIndex(name="mb_artist_gin_trgrm", fields=["name"], opclasses=["gin_trgm_ops"], fastupdate=False),
+        ]
+
 
     def get_similar_artists(self):
         if self.similar_artists_cache_datetime is None or self.similar_artists is None:
