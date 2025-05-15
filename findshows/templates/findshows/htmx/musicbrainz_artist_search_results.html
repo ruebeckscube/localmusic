@@ -6,7 +6,10 @@
         >
             <div class="flex">
                 <div>
-                    {{mb_artist.name}}
+                    {{  mb_artist.name }}
+                    {% if mb_artist.disambiguation %}
+                        <span class="text-gray-300"> ({{ mb_artist.disambiguation }}) </span>
+                    {% endif %}
                 </div>
             </div>
         </button></li>

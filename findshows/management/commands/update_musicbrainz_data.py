@@ -14,7 +14,7 @@ class Command(BaseCommand):
 
     def mb_artist_from_line(self, line):
         artist_json = json.loads(line)
-        return MusicBrainzArtist(mbid=artist_json['id'], name=artist_json['name'])
+        return MusicBrainzArtist(mbid=artist_json['id'], name=artist_json['name'], disambiguation=artist_json['disambiguation'])
 
 
     def save_mb_artists_from_filestream(self, f):
@@ -22,7 +22,7 @@ class Command(BaseCommand):
         for mb_artists in itertools.batched((self.mb_artist_from_line(line) for line in f), BATCH_SIZE):
             MusicBrainzArtist.objects.bulk_create(mb_artists,
                                                   update_conflicts=True,
-                                                  update_fields=('name',),
+                                                  update_fields=('name', 'disambiguation'),
                                                   unique_fields=('mbid',))
             processed += BATCH_SIZE
             self.stdout.write(f"Processed: {processed}")

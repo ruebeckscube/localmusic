@@ -96,6 +96,7 @@ class MultiURLValidator(URLValidator):
 class MusicBrainzArtist(models.Model):
     mbid = models.CharField(primary_key=True, max_length=40)
     name = models.CharField()
+    disambiguation = models.CharField(null=True)
     similar_artists = models.JSONField(editable=False, null=True)
     similar_artists_cache_datetime = models.DateTimeField(editable=False, null=True)
 
