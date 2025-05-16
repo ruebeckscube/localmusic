@@ -10,8 +10,10 @@ fi
 
 if docker compose version >/dev/null 2>&1; then
     DOCKER_COMPOSE_CMD="docker compose"
+    echo "Using development compose file."
 else
     DOCKER_COMPOSE_CMD="docker-compose"
+    echo "Using production compose file."
 fi
 
 if [ ! -e ".env" ]; then
@@ -23,10 +25,8 @@ fi
 
 invoke_docker_compose() {
     if [ "$IS_DEV" = "True" ]; then
-        echo "Using development compose file."
         COMPOSE_FILE="docker-compose-dev.yml"
     else
-        echo "Using production compose file."
         COMPOSE_FILE="docker-compose-prod.yml"
     fi
 
@@ -65,11 +65,13 @@ setup_initial_server() {
 }
 
 dump_data() {
+    echo "Exporting database to ${1:-datadump.json}"
     invoke_manage dumpdata \
         --natural-foreign --natural-primary \
         -e contenttypes -e auth.Permission -e admin -e sessions \
         -e findshows.MusicBrainzArtist \
-        --indent 4
+        --indent 4 \
+        > "${1:-datadump.json}"
 }
 
 coverage_report() {
@@ -101,8 +103,8 @@ elif [ "$1" = "init" ]; then
     setup_initial_server
 elif [ "$1" = "biweekly-tasks" ]; then
     biweekly_tasks
-elif [ "$1" = "dump-data" ]; then
-    dump_data
+elif [ "$1" = "dump-data" ]; then shift
+    dump_data "$@"
 elif [ "$1" = "coverage" ]; then
     coverage_report
 elif [ "$1" = "psql" ]; then

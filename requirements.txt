@@ -9,3 +9,4 @@ Pillow
 tblib
 coverage
 gunicorn
+zstandard

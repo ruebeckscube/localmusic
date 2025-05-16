@@ -12,12 +12,12 @@ class Command(BaseCommand):
         parser.add_argument("date", nargs='?', default=datetime.today().isoformat(), type=str)
 
     def handle(self, *args, **options):
-        date = datetime.fromisoformat(options['date'])
+        date = datetime.fromisoformat(options['date']).date()
         concerts = Concert.objects.all()
         with transaction.atomic():
             for c in concerts:
                 c.date = date
                 c.save()
         self.stdout.write(
-            self.style.SUCCESS('Moved concerts to today.')
+            self.style.SUCCESS(f'Moved concerts to {date.isoformat()}.')
         )
