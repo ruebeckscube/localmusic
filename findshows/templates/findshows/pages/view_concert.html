@@ -2,6 +2,10 @@
 
 {% block content %}
 
+{% if concert.cancelled %}
+    <h1> This concert is cancelled! </h1>
+{% endif %}
+
 {% include "findshows/partials/concert_card.html" %}
 
 {% endblock %}

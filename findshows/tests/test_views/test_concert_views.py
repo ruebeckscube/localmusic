@@ -270,3 +270,51 @@ class EditConcertTests(ConcertViewTestHelpers):
 
         concert_after = Concert.objects.get(pk=concert_before.pk)
         self.assertEqual(concert_after.ticket_link, 'https://www.thisisthevalueforconcertpostrequests.com')
+
+
+class CancelConcertTests(TestCaseHelpers):
+    def test_concert_doesnt_exist(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        response = self.client.post(reverse("findshows:cancel_concert", args=(100,)))
+        self.assertEqual(response.status_code, 404)
+
+
+    def test_user_doesnt_own_concert(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        user2 = self.create_user_profile()
+        concert_before = self.create_concert(created_by=user2)
+
+        response = self.client.post(reverse("findshows:cancel_concert", args=(concert_before.pk,)))
+        self.assertEqual(response.status_code, 403)
+
+        concert_after = Concert.objects.get(pk=concert_before.pk)
+        self.assertEqual(concert_before, concert_after)
+
+
+    def test_cancel_concert(self):
+        user = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        concert = self.create_concert(created_by=user)
+
+        self.client.post(reverse("findshows:cancel_concert", args=(concert.pk,)))
+        concert.refresh_from_db()
+        self.assertTrue(concert.cancelled)
+
+
+    def test_uncancel_concert(self):
+        user = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        concert = self.create_concert(created_by=user, cancelled=True)
+
+        self.client.post(reverse("findshows:uncancel_concert", args=(concert.pk,)))
+        concert.refresh_from_db()
+        self.assertFalse(concert.cancelled)
+
+
+    def test_uncancel_concert_conflict(self):
+        user = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        concert1 = self.create_concert(created_by=user, cancelled=True)
+        concert2 = self.create_concert(created_by=user)
+
+        response = self.client.post(reverse("findshows:uncancel_concert", args=(concert1.pk,)))
+        concert1.refresh_from_db()
+        self.assertTrue(concert1.cancelled)
+        self.assertIn("there is another concert at this venue on this date", str(response.content))

@@ -221,7 +221,9 @@ class TestCaseHelpers(TestCase):
                        ticket_description="10 buckaroos",
                        created_by=None,
                        created_at=None,
-                       tags=[ConcertTags.ORIGINALS]) -> Concert:
+                       tags=[ConcertTags.ORIGINALS],
+                       cancelled=False,
+                       ) -> Concert:
         date = date or timezone_today()
         start_time = start_time or datetime.time(19,0)
         artists = artists or [cls.create_artist(f"Test Artist")]
@@ -242,6 +244,9 @@ class TestCaseHelpers(TestCase):
             concert.venue_id = cls.StaticVenues.DEFAULT_VENUE.value
         else:
             concert.venue_id = venue.id
+
+        if cancelled:
+            concert.cancelled = True
 
         concert.save()
 

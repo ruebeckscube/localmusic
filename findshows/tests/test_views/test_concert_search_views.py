@@ -132,4 +132,12 @@ class ConcertSearchResultsTests(TestCaseHelpers):
         response = self.client.get(reverse('findshows:concert_search_results'), concert_GET_params())
         self.assert_equal_as_sets(response.context['concerts'], [verified_concert])
 
+
+    def test_cancelled_concert_filtering(self):
+        concert1 = self.create_concert()
+        concert2 = self.create_concert(cancelled=True)
+        response = self.client.get(reverse('findshows:concert_search_results'), concert_GET_params())
+        self.assert_equal_as_sets(response.context['concerts'], [concert1])
+
+
     # Similarity sorting is tested in ../test_recommendations.py

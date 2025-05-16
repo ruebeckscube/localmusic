@@ -430,6 +430,29 @@ def my_concert_list(request):
     })
 
 
+@user_passes_test(is_local_artist_account)
+def cancel_concert(request, pk, uncancel=False):
+    concert = get_object_or_404(Concert, pk=pk)
+    if not concert.created_by == request.user.userprofile:
+        raise PermissionDenied
+
+    error = ""
+    if uncancel:
+        conflict_concerts = Concert.objects.filter(venue=concert.venue, date=concert.date).exclude(cancelled=True)
+        conflict_concerts = conflict_concerts.exclude(pk=pk)
+        if conflict_concerts.count():
+            error = "Can't uncancel; there is another concert at this venue on this date"
+
+    if not error:
+        concert.cancelled = not uncancel
+        concert.save()
+
+    return render(request, "findshows/htmx/cancel_concert_button.html", context = {
+        "concert": concert,
+        "error": error,
+    })
+
+
 #################
 ## Venue views ##
 #################

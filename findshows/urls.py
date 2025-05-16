@@ -1,3 +1,5 @@
+from functools import partial
+
 from django.urls import path
 from django.views.generic import TemplateView
 
@@ -19,6 +21,8 @@ urlpatterns = [
     path("concert/<int:pk>", views.view_concert, name="view_concert"),
     path("concert/<int:pk>/edit", views.edit_concert, name="edit_concert"),
     path("concert/create", views.edit_concert, name="create_concert"),
+    path("concert/<int:pk>/cancel", views.cancel_concert, name="cancel_concert"),
+    path("concert/<int:pk>/uncancel", partial(views.cancel_concert, uncancel=True), name="uncancel_concert"),
 
     path("mod_dashboard", views.mod_dashboard, name="mod_dashboard"),
     path("htmx/mod_daily_digest", views.mod_daily_digest, name="mod_daily_digest"),

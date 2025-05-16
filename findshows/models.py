@@ -439,10 +439,16 @@ class Concert(CreationTrackingMixin):
     except for one song, don't check Cover Set. If two bands are playing all
     originals and one is playing a full cover set, check both Originals and
     Cover Set.""")
+    cancelled=models.BooleanField(blank=True, null=True)
 
     @classmethod
     def publically_visible(cls):
-        return cls.objects.exclude(Q(artists__is_temp_artist=True) | Q(venue__is_verified=False) | Q(venue__declined_listing=True))
+        return cls.objects.exclude(
+            Q(artists__is_temp_artist=True) |
+            Q(venue__is_verified=False) |
+            Q(venue__declined_listing=True) |
+            Q(cancelled=True)
+        )
 
 
     def relevance_score(self, searched_mbids):

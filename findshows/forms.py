@@ -123,10 +123,10 @@ class ConcertForm(forms.ModelForm):
         venue = cleaned_data.get("venue")
         date = cleaned_data.get("date")
         if venue and date:
-            conflict_concerts = Concert.objects.filter(venue=venue, date=date)
+            conflict_concerts = Concert.objects.filter(venue=venue, date=date).exclude(cancelled=True)
             if self.instance:
                 conflict_concerts = conflict_concerts.exclude(pk=self.instance.pk)
-            if conflict_concerts:
+            if conflict_concerts.count():
                 self.add_error(None, """There is already a show in the database
                                for the specified venue and date. If you think
                                this is in error, or there are in fact two events

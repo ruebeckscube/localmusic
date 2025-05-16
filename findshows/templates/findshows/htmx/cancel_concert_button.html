@@ -1,0 +1,31 @@
+<div class="cancel-concert-button">
+    {% if error %}
+        <div>
+            {{ error }}
+        </div>
+    {% endif %}
+    <form type="post">
+        {% csrf_token %}
+        {% if concert.cancelled %}
+            <input class=""
+                   type="button"
+                   name="uncancel-concert"
+                   hx-post="{% url 'findshows:uncancel_concert' concert.pk %}"
+                   hx-trigger="click"
+                   value="Uncancel concert"
+                   hx-target="closest .cancel-concert-button"
+                   hx-swap="outerHTML"
+            >
+        {% else %}
+            <input class=""
+                   type="button"
+                   name="cancel-concert"
+                   hx-post="{% url 'findshows:cancel_concert' concert.pk %}"
+                   hx-trigger="click"
+                   value="Cancel concert"
+                   hx-target="closest .cancel-concert-button"
+                   hx-swap="outerHTML"
+            >
+        {% endif %}
+    </form>
+</div>

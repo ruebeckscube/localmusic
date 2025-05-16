@@ -13,9 +13,10 @@
                     {% include "findshows/partials/concert_card.html" %}
                 </div>
                 {% if concert.created_by == userprofile %}
-                <div class = "w-1/6 grid content-center">
-                    <a href="{% url 'findshows:edit_concert' concert.pk %}"> Edit </a>
-                </div>
+                    <div class="w-1/6 grid content-center">
+                        <a href="{% url 'findshows:edit_concert' concert.pk %}"> Edit </a>
+                        {% include "findshows/htmx/cancel_concert_button.html" %}
+                    </div>
                 {% endif %}
             </div>
         {% endfor %}
