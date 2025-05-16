@@ -13,7 +13,7 @@ class MusicbrainzArtistSearchTests(TestCaseHelpers):
         self.create_musicbrainz_artist('2', 'Devo')
         self.create_musicbrainz_artist('3', 'Illuminati Hotties')
 
-        query = 'nat hot'
+        query = 'devo'
         response = self.client.get(reverse("findshows:musicbrainz_artist_search_results"),
                                    data={'mb-search': query})
-        self.assert_equal_as_sets([a.mbid for a in response.context['musicbrainz_artists']], ['3'])
+        self.assert_equal_as_sets([a.mbid for a in response.context['musicbrainz_artists']], ['2'])
