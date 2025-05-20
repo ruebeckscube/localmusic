@@ -70,6 +70,16 @@ class ArtistEditForm(forms.ModelForm):
         return validate_image(self.cleaned_data['profile_picture'])
 
 
+    def clean_similar_musicbrainz_artists(self):
+        mb_artists = self.cleaned_data['similar_musicbrainz_artists']
+        no_similar_artists = [mba.name
+                              for mba in mb_artists
+                              if not mba.get_similar_artists()]
+        if no_similar_artists:
+            raise ValidationError(f"We do not currently have any similarity data on the following artists: {','.join(no_similar_artists)}. Please select another to make sure you show up in search results!")
+        return mb_artists
+
+
     def save(self, commit = True):
         artist = super().save(commit=False)
         artist.is_temp_artist = False
