@@ -20,6 +20,9 @@ from multiselectfield import MultiSelectField
 from findshows import musicbrainz
 
 
+IMAGE_HELP_TEXT = f"JPG of at most {settings.MAX_IMAGE_SIZE_IN_MB}MB."
+
+
 class CreationTrackingMixin(models.Model):
     created_at=models.DateField(auto_now_add=True)
     created_by=models.ForeignKey('UserProfile', on_delete=models.CASCADE)
@@ -156,7 +159,7 @@ class Artist(CreationTrackingMixin):
     }
 
     name=models.CharField(verbose_name="Artist Name", max_length=60)
-    profile_picture=models.ImageField(null=True, help_text=f"JPG of at most {settings.MAX_IMAGE_SIZE_IN_MB}MB. Profile pictures will be cropped to a circle.")
+    profile_picture=models.ImageField(null=True, help_text=f"{IMAGE_HELP_TEXT}  Profile pictures will be cropped to a circle.")
     bio=models.TextField(null=True, max_length=800)
     local=models.BooleanField(help_text="Check if this is a local artist. It will give them permission to list shows and invite other artists.")
 
@@ -419,8 +422,7 @@ class Venue(CreationTrackingMixin):
 
 
 class Concert(CreationTrackingMixin):
-    poster=models.ImageField(help_text="""JPG/JPEG preferred, max file size 1MB.
-    Vertical or square orientations display best.""")
+    poster=models.ImageField(help_text=f"{IMAGE_HELP_TEXT} Vertical or square orientations display best.")
     date=models.DateField()
     doors_time=models.TimeField(blank=True, null=True)
     start_time=models.TimeField()
