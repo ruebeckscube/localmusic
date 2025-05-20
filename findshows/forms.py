@@ -3,7 +3,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.core.validators import EmailValidator
+from django.core.validators import EmailValidator, FileExtensionValidator
 from django.db import models
 from django.views.generic.dates import timezone_today
 from django.conf import settings
@@ -45,6 +45,13 @@ class UserProfileForm(forms.ModelForm):
         widgets={"favorite_musicbrainz_artists": MusicBrainzArtistSearchWidget}
 
 
+def validate_image(image):
+    FileExtensionValidator(allowed_extensions=('jpg', 'jpeg'))(image)
+    if image.size > settings.MAX_IMAGE_SIZE_IN_MB*1024*1024:
+        raise ValidationError("Image file too large")
+    return image
+
+
 class ArtistEditForm(forms.ModelForm):
     class Meta:
         model=Artist
@@ -57,6 +64,11 @@ class ArtistEditForm(forms.ModelForm):
         socials_links = self.cleaned_data['socials_links']
         LabeledURLsValidator()(socials_links)
         return socials_links
+
+
+    def clean_profile_picture(self):
+        return validate_image(self.cleaned_data['profile_picture'])
+
 
     def save(self, commit = True):
         artist = super().save(commit=False)
@@ -108,6 +120,10 @@ class ConcertForm(forms.ModelForm):
         if date > timezone_today() + timedelta(settings.MAX_FUTURE_CONCERT_WEEKS * 7):
             self.add_error('date', f'Date cannot be more than {settings.MAX_FUTURE_CONCERT_WEEKS} weeks in the future.')
         return date
+
+
+    def clean_poster(self):
+        return validate_image(self.cleaned_data['poster'])
 
 
     def clean(self):

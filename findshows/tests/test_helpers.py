@@ -111,7 +111,7 @@ class TestCaseHelpers(TestCase):
             b'\x01\x0a\x00\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02'
             b'\x02\x4c\x01\x00\x3b'
         )
-        return SimpleUploadedFile(name='small.gif', content=small_gif, content_type='image/gif')
+        return SimpleUploadedFile(name='small.jpg', content=small_gif, content_type='image/jpg')
 
 
     @classmethod
