@@ -93,18 +93,21 @@ def contact_email(cf: ContactForm):
     match cf.cleaned_data['type']:
         case cf.Types.REPORT_BUG:
             recipient_list = [admin[1] for admin in settings.ADMINS] # Tuples (Name, email)
+            type = cf.Types.REPORT_BUG.label
         case cf.Types.OTHER:
             mods = UserProfile.objects.filter(is_mod=True)
             recipient_list = [mod.user.email for mod in mods]
+            type = cf.Types.OTHER.label
         case _:
             recipient_list = []
+            type = ""
 
-    return send_mail_helper(cf.cleaned_data['subject'],
+    return send_mail_helper(f"[Contact|{type}] {cf.cleaned_data['subject']}",
                             cf.cleaned_data['message'],
                             recipient_list,
                             cf,
                             reply_to_list=[cf.cleaned_data['email']],
-                            cc_reply_to=True,
+                            cc_reply_to=False,
                             )
 
 def daily_mod_email(date):
