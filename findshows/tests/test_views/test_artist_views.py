@@ -206,9 +206,11 @@ class EditArtistTests(ArtistViewTestHelpers):
         self.assertNotIn('This artist listing has not been filled out', str(response.content))
 
 
-    def test_edit_artist_successful_POST(self):
+    @patch("findshows.forms.MusicBrainzArtist.get_similar_artists")
+    def test_edit_artist_successful_POST(self, mock_similar_artists):
         self.login_static_user(self.StaticUsers.TEMP_ARTIST)
         post_request = self.artist_post_request()
+        mock_similar_artists.return_value = {"abc"}
 
         response = self.client.post(reverse("findshows:edit_artist", args=(self.StaticArtists.TEMP_ARTIST.value,)), data=post_request)
         self.assertRedirects(response, reverse('findshows:view_artist', args=(self.StaticArtists.TEMP_ARTIST.value,)))
