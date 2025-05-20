@@ -1,16 +1,10 @@
 {% for mb_artist in musicbrainz_artists %}
-    <li class="odd:bg-white even:bg-slate-50 hover:bg-slate-200">
-        <button class="w-full text-left"
-                type="button"
-                @click="add_artist('{{mb_artist.mbid|escapejs}}', '{{mb_artist.name|escapejs}}')"
-        >
-            <div class="flex">
-                <div>
-                    {{  mb_artist.name }}
-                    {% if mb_artist.disambiguation %}
-                        <span class="text-gray-300"> ({{ mb_artist.disambiguation }}) </span>
-                    {% endif %}
-                </div>
-            </div>
-        </button></li>
+    <li class="odd:bg-white even:bg-slate-50 hover:bg-slate-200 cursor-pointer"
+        @click="add_artist('{{mb_artist.mbid|escapejs}}', '{{mb_artist.name|escapejs}}')"
+    >
+        {{  mb_artist.name }}
+        {% if mb_artist.disambiguation %}
+            <span class="text-gray-500"> ({{ mb_artist.disambiguation }}) </span>
+        {% endif %}
+    </li>
 {% endfor %}
