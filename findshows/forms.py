@@ -292,31 +292,18 @@ class ShowFinderForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean() or {}
         today = timezone_today()
+
+        date = cleaned_data.get("date")
+        if (not date) or date < today:
+            cleaned_data['date'] = today
+
         if cleaned_data.get('is_date_range'):
-            start_date, end_date = cleaned_data.get("date"), cleaned_data.get("end_date")
-            if not end_date:
-                self.add_error('end_date',
-                    "Please enter an end date, or hide date range."
-                )
-            elif end_date < today:
-                self.add_error('end_date',
-                    "End date is in the past. Please select a valid date."
-                )
-            elif start_date and start_date > end_date:
-                self.add_error(None,
-                    "End date must be after the start date."
-                )
-            elif start_date and end_date-start_date > timedelta(settings.MAX_DATE_RANGE):
+            end_date = cleaned_data.get("end_date")
+            if (not end_date) or end_date < cleaned_data['date']:
+                cleaned_data['end_date'] = cleaned_data['date']
+            elif cleaned_data['end_date'] - cleaned_data['date'] > timedelta(settings.MAX_DATE_RANGE):
                 self.add_error(None,
                     "Max date range is " + str(settings.MAX_DATE_RANGE) + " days."
-                )
-            if (not start_date) or start_date < today:
-                cleaned_data['date'] = today
-        else:
-            date = cleaned_data.get('date')
-            if date and date < today:
-                self.add_error('date',
-                    "Date is in the past. Please select a valid date."
                 )
 
         return cleaned_data

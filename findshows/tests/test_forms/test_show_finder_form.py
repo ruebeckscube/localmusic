@@ -23,10 +23,10 @@ class SingleDateValidationTests(TestCase):
         self.assertTrue(form.is_valid())
 
 
-    def test_date_is_in_future(self):
+    def test_date_is_in_past(self):
         form = ShowFinderForm(form_data(timezone_today() - timedelta(1)))
-        self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors['date'], ["Date is in the past. Please select a valid date."])
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['date'], timezone_today())
 
 
     def test_end_date_doesnt_error_when_daterange_false(self):
@@ -39,20 +39,22 @@ class DateRangeValidationTests(TestCase):
         data = form_data(is_date_range=True)
         del data['end_date']
         form = ShowFinderForm(data)
-        self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors['end_date'], ["Please enter an end date, or hide date range."])
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['end_date'], timezone_today())
 
 
-    def test_range_end_date_in_past(self):
+    def test_range_both_in_past(self):
         form = ShowFinderForm(form_data(timezone_today()-timedelta(2), timezone_today()-timedelta(1), True))
-        self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors['end_date'], ["End date is in the past. Please select a valid date."])
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['date'], timezone_today())
+        self.assertEqual(form.cleaned_data['end_date'], timezone_today())
 
 
     def test_range_end_date_before_start_date(self):
-        form = ShowFinderForm(form_data(timezone_today()+timedelta(2), timezone_today(), True))
-        self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors['__all__'], ["End date must be after the start date."])
+        tomorrowmorrow = timezone_today() + timedelta(2)
+        form = ShowFinderForm(form_data(tomorrowmorrow, timezone_today(), True))
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['end_date'], tomorrowmorrow)
 
 
     def test_range_max_date_range(self):
