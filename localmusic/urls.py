@@ -33,7 +33,9 @@ urlpatterns = [
     # accounts/password_reset/done/ [name='password_reset_done']
     # accounts/reset/<uidb64>/<token>/ [name='password_reset_confirm']
     # accounts/reset/done/ [name='password_reset_complete']
-    path("accounts/create_account", views.create_account, name='create_account')
+    path("accounts/create_account", views.create_account, name='create_account'),
+    path("accounts/verify_email", views.verify_email, name='verify_email'),
+    path("accounts/resend_email_verification", views.resend_email_verification, name='resend_email_verification'),
 ]
 
 if settings.DEBUG:

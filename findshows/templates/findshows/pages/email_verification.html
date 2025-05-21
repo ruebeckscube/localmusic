@@ -1,0 +1,13 @@
+{% extends "localmusic/base.html" %}
+
+{% block content %}
+
+    {% if error %}
+        <h1> Error verifying email </h1>
+        <p>{{ error }}</p>
+    {% else %}
+        <h1> Successfully verified email </h1>
+        <p> Return <a href="{% url 'findshows:home' %}">home</a></p>
+    {% endif %}
+
+{% endblock %}

@@ -1,0 +1,25 @@
+<div class="email-verification-banner bg-purple-100 text-center my-2 py-2">
+    {% if success %}
+        Email sent
+    {% else %}
+        {% for error in errorlist %}
+            <p> {{ error }} </p>
+        {% empty %}
+            <form type="post">
+                {% csrf_token %}
+                Please check your email for a verification link. Weekly emails and other features will
+                be unavailable with an unconfirmed email address. If you didn't receive an email after
+                a few minutes, try
+                <span class="cursor-pointer link-base"
+                      name="resend-verification-email"
+                      hx-post="{% url 'resend_email_verification' %}"
+                      hx-trigger="click"
+                      hx-target="closest .email-verification-banner"
+                      hx-swap="outerHTML"
+                >
+                    resending
+                </span>
+            </form>
+        {% endfor %}
+    {% endif %}
+</div>

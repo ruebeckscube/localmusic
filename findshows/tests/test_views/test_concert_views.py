@@ -148,6 +148,15 @@ class CreateConcertTests(ConcertViewTestHelpers):
         self.assert_redirects_to_login(reverse("findshows:create_concert"))
 
 
+    def test_unverified_email_redirects_to_login(self):
+        artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        user_profile.email_is_verified = False
+        user_profile.save()
+        self.assert_redirects_to_login(reverse("findshows:create_concert"))
+        self.assert_records_created(Concert, 0)
+
+
     def test_artist_user_can_create_new_concert(self):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         response = self.client.get(reverse("findshows:create_concert"))
@@ -289,6 +298,16 @@ class CancelConcertTests(TestCaseHelpers):
 
         concert_after = Concert.objects.get(pk=concert_before.pk)
         self.assertEqual(concert_before, concert_after)
+
+
+    def test_unverified_email_redirects_to_login(self):
+        user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        concert = self.create_concert(created_by=user_profile)
+        user_profile.email_is_verified = False
+        user_profile.save()
+        self.assert_redirects_to_login(reverse("findshows:cancel_concert", args=(concert.pk,)))
+        concert.refresh_from_db()
+        self.assertFalse(concert.cancelled)
 
 
     def test_cancel_concert(self):

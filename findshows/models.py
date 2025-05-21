@@ -12,6 +12,8 @@ from django.contrib.auth.models import User
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.urls import reverse
+from django.utils import timezone
 from django.utils.timezone import now
 from django.contrib.postgres.indexes import GinIndex
 
@@ -306,26 +308,47 @@ class InviteDelayError(Exception):
         super().__init__(self.message)
 
 
-class ArtistLinkingInfo(CreationTrackingMixin):
+class EmailCodeError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
+class EmailCodeMixin(models.Model):
     invited_email=models.EmailField()
     generated_datetime=models.DateTimeField()
     invite_code_hashed=models.CharField(unique=True, max_length=128, editable=False)
-    artist=models.ForeignKey(Artist, on_delete=models.CASCADE)
+    url_name=""
 
-    class Meta(CreationTrackingMixin.Meta):
-        unique_together = (('invited_email', 'artist'),)
-
+    class Meta:
+        abstract = True
 
     @classmethod
-    def create_and_get_invite_code(cls, artist, email, created_by):
-        if (not created_by.is_mod) and (not created_by.given_artist_access_datetime or
-            created_by.given_artist_access_datetime > now() - timedelta(settings.INVITE_BUFFER_DAYS)):
-            raise InviteDelayError(f"Users newly given artist access must wait {settings.INVITE_BUFFER_DAYS} days before inviting other users.")
-        link_info = cls(artist=artist, invited_email=email)
-        invite_code = link_info._generate_invite_code()
-        link_info.created_by = created_by
-        link_info.save()
-        return link_info, invite_code
+    def check_url(cls, GET_data, user_email):
+        id = GET_data.get('id')
+        code = GET_data.get('code')
+
+        bad_link_error = "Invalid link. Make sure you clicked the link in your email or copied it correctly; if this error persists, please contact site admins."
+        if not (id and code):
+            raise EmailCodeError(bad_link_error)
+        try:
+            email_code = cls.objects.get(id=id)
+        except cls.DoesNotExist:
+            raise EmailCodeError('Could not find record in the database. Please request a re-send.')
+        if user_email != email_code.invited_email:
+            raise EmailCodeError("User's email does not match the link. Please log back in with an account associated with the email that the link was sent to.")
+        if email_code.generated_datetime + timedelta(settings.INVITE_CODE_EXPIRATION_DAYS) < timezone.now():
+            raise EmailCodeError("Expired link. Please request a re-send.")
+        if not email_code.check_invite_code(code):
+            raise EmailCodeError(bad_link_error)
+
+        return email_code
+
+
+    def get_url(self, code):
+        qs = {'id': self.pk,
+              'code': code}
+        return reverse(self.url_name, query=qs)
 
 
     def regenerate_invite_code(self):
@@ -352,6 +375,42 @@ class ArtistLinkingInfo(CreationTrackingMixin):
         self.invite_code_hashed = self._calculate_stored_hash(invite_code, salt)
         self.generated_datetime = now()
         return invite_code
+
+
+
+class EmailVerification(EmailCodeMixin):
+    url_name="verify_email"
+    class Meta(CreationTrackingMixin.Meta, EmailCodeMixin.Meta):
+        unique_together = (('invited_email'),)
+
+    @classmethod
+    def create_and_get_invite_code(cls, email):
+        email_verification = cls(invited_email=email)
+        invite_code = email_verification._generate_invite_code()
+        email_verification.save()
+        return email_verification, invite_code
+
+
+
+class ArtistLinkingInfo(CreationTrackingMixin, EmailCodeMixin):
+    artist=models.ForeignKey(Artist, on_delete=models.CASCADE)
+
+    url_name="findshows:link_artist"
+
+    class Meta(CreationTrackingMixin.Meta, EmailCodeMixin.Meta):
+        unique_together = (('invited_email', 'artist'),)
+
+
+    @classmethod
+    def create_and_get_invite_code(cls, artist, email, created_by):
+        if (not created_by.is_mod) and (not created_by.given_artist_access_datetime or
+            created_by.given_artist_access_datetime > now() - timedelta(settings.INVITE_BUFFER_DAYS)):
+            raise InviteDelayError(f"Users newly given artist access must wait {settings.INVITE_BUFFER_DAYS} days before inviting other users.")
+        link_info = cls(artist=artist, invited_email=email)
+        invite_code = link_info._generate_invite_code()
+        link_info.created_by = created_by
+        link_info.save()
+        return link_info, invite_code
 
 
     def __str__(self):
@@ -393,6 +452,8 @@ class UserProfile(models.Model):
     given_artist_access_datetime=models.DateTimeField(null=True, blank=True)
 
     is_mod=models.BooleanField(default=False, help_text="Gives the user access to the mod dashboard and associated permissions.")
+
+    email_is_verified=models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.user)

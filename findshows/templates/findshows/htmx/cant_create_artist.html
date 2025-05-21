@@ -2,6 +2,9 @@
     {% if new_account_delay %}
         Users newly given artist access must wait {{  new_account_delay }} days
         before inviting other users.
+    {% elif no_privileges %}
+        You must have a local artist account with a verified email to
+        invite an artist to the platform.
     {% else %}
         You've hit the daily limit for inviting artists&mdash;please
         try again in 24 hours or contact an admin if it's urgent.

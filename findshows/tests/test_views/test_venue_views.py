@@ -61,6 +61,14 @@ class CreateVenueTests(TestCaseHelpers):
         self.assert_records_created(Venue, 0)
 
 
+    def test_unverified_email_doesnt_create(self):
+        user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        user_profile.email_is_verified = False
+        user_profile.save()
+        self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
+        self.assert_records_created(Venue, 0)
+
+
     def test_successful_create(self):
         user = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         response = self.client.post(reverse("findshows:create_venue"), data=venue_post_data())

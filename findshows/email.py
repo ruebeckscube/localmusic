@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.db.models import Q
 
 from findshows.forms import ContactForm
-from findshows.models import Artist, ArtistLinkingInfo, Concert, CustomText, UserProfile, Venue
+from findshows.models import Artist, ArtistLinkingInfo, Concert, CustomText, EmailVerification, UserProfile, Venue
 
 
 logger = logging.getLogger(__name__)
@@ -58,21 +58,21 @@ def send_mail_helper(subject, message, recipient_list, form=None, from_email=Non
     return 0
 
 
-def artist_invite_url(link_info: ArtistLinkingInfo, invite_code):
-    qs = {'invite_id': link_info.pk,
-          'invite_code': invite_code}
-    return local_url_to_email(reverse("findshows:link_artist", query=qs))
+def send_verify_email(email_verification: EmailVerification, invite_code, form=None, errorlist=None):
+    subject = "Confirm your email address"
+    message = f"Please click the following link to verify your email address:\n\n{local_url_to_email(email_verification.get_url(invite_code))}"
+    return send_mail_helper(subject, message, [email_verification.invited_email], form, errorlist=errorlist)
 
 
 def invite_artist(link_info: ArtistLinkingInfo, invite_code, form=None, errorlist=None):
     subject = "Artist profile invite"
-    message = f"You've been invited to create an artist profile on {settings.HOST_NAME}. Click the link to claim it and fill out your profile!\n\n{artist_invite_url(link_info, invite_code)}"
+    message = f"You've been invited to create an artist profile on {settings.HOST_NAME}. Click the link to claim it and fill out your profile!\n\n{local_url_to_email(link_info.get_url(invite_code))}"
     return send_mail_helper(subject, message, [link_info.invited_email], form, errorlist=errorlist)
 
 
 def invite_user_to_artist(link_info: ArtistLinkingInfo, invite_code, form):
     subject = "Artist profile invite"
-    message = f"You've been invited to manage an artist profile on {settings.HOST_NAME}. Click the link to claim access:\n\n{artist_invite_url(link_info, invite_code)}"
+    message = f"You've been invited to manage an artist profile on {settings.HOST_NAME}. Click the link to claim access:\n\n{local_url_to_email(link_info.get_url(invite_code))}"
     return send_mail_helper(subject, message, [link_info.invited_email], form)
 
 
@@ -160,7 +160,7 @@ def send_mass_html_mail(datatuples):
 
 
 def rec_email_generator():
-    user_profiles = UserProfile.objects.filter(weekly_email=True)
+    user_profiles = UserProfile.objects.filter(weekly_email=True, email_is_verified=True)
     today = datetime.date.today()
     week_later = today + datetime.timedelta(6)
     search_params = {'date': today,

@@ -195,7 +195,8 @@
         "is_mod": false,
         "favorite_musicbrainz_artists": [],
         "followed_artists": [],
-        "managed_artists": []
+        "managed_artists": [],
+        "email_is_verified": true
     }
 },
 {
@@ -214,7 +215,8 @@
         "followed_artists": [],
         "managed_artists": [
             1
-        ]
+        ],
+        "email_is_verified": true
     }
 },
 {
@@ -233,7 +235,8 @@
         "followed_artists": [],
         "managed_artists": [
             2
-        ]
+        ],
+        "email_is_verified": true
     }
 },
 {
@@ -250,7 +253,8 @@
         "is_mod": false,
         "favorite_musicbrainz_artists": [],
         "followed_artists": [],
-        "managed_artists": []
+        "managed_artists": [],
+        "email_is_verified": true
     }
 },
 {
@@ -269,7 +273,8 @@
         "followed_artists": [],
         "managed_artists": [
             3
-        ]
+        ],
+        "email_is_verified": true
     }
 },
 {
@@ -286,7 +291,8 @@
         "is_mod": true,
         "favorite_musicbrainz_artists": [],
         "followed_artists": [],
-        "managed_artists": []
+        "managed_artists": [],
+        "email_is_verified": true
     }
 },
 {

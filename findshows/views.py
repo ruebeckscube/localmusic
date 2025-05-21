@@ -17,10 +17,10 @@ from django.utils import timezone
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.email import contact_email, invite_artist, invite_user_to_artist, send_artist_setup_info
+from findshows.email import contact_email, invite_artist, invite_user_to_artist, send_artist_setup_info, send_verify_email
 from findshows.widgets import ArtistAccessWidget
 
-from .models import Artist, ArtistLinkingInfo, Concert, ConcertTags, InviteDelayError, MusicBrainzArtist, Venue
+from .models import Artist, ArtistLinkingInfo, Concert, ConcertTags, EmailCodeError, EmailVerification, InviteDelayError, MusicBrainzArtist, Venue
 from .forms import ArtistAccessForm, ArtistEditForm, ConcertForm, ContactForm, ModDailyDigestForm, RequestArtistForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
 
 
@@ -75,6 +75,13 @@ def create_account(request):
             profile = profile_form.save(commit=False)
             profile.user = user
             profile.save()
+
+            email_verification, invite_code = EmailVerification.create_and_get_invite_code(user.email)
+            if not send_verify_email(email_verification, invite_code, profile_form):
+                # Info about verification (failure or otherwise) will be shown
+                # to the user in a banner on the home search page
+                email_verification.delete()
+
             if "sendartistinfo" in request.POST:
                 send_artist_setup_info(user.email)
             login(request, user)
@@ -90,6 +97,44 @@ def create_account(request):
 
     return render(request, 'registration/create_account.html', context)
 
+
+@login_required
+def verify_email(request):
+    try:
+        email_verification = EmailVerification.check_url(request.GET, request.user.email)
+    except EmailCodeError as e:
+        return render(request, "findshows/pages/email_verification.html",
+                      {'error': e.message})
+
+    request.user.userprofile.email_is_verified = True
+    request.user.userprofile.save()
+    email_verification.delete()
+
+    return render(request, "findshows/pages/email_verification.html")
+
+
+@login_required
+def resend_email_verification(request):
+    errorlist = []
+    if request.user.userprofile.email_is_verified:
+        errorlist.append("Email already verified.")
+    else:
+        try:
+            email_verification = EmailVerification.objects.get(invited_email=request.user.email)
+            invite_code = email_verification.regenerate_invite_code()
+        except EmailVerification.DoesNotExist:
+            email_verification, invite_code = EmailVerification.create_and_get_invite_code(request.user.email)
+
+        if not send_verify_email(email_verification, invite_code, errorlist=errorlist):
+            email_verification.delete()
+
+    success = not errorlist
+
+    return render(request, "findshows/htmx/email_verification_banner.html", {
+        'success': success,
+        'errorlist': errorlist,
+    })
+
 ###################
 ## Artist Views ###
 ###################
@@ -102,6 +147,11 @@ def is_artist_account(user):
 def is_local_artist_account(user):
     return (not user.is_anonymous
             and any(a.local for a in user.userprofile.managed_artists.all()) > 0)
+
+
+def has_edit_privileges(user):
+    return ((is_local_artist_account(user) and user.userprofile.email_is_verified) or
+            is_mod(user))
 
 
 @user_passes_test(is_artist_account)
@@ -175,8 +225,10 @@ def has_exceeded_daily_invites(user):
 
 
 def create_temp_artist(request):
-    if not (is_local_artist_account(request.user) or is_mod(request.user)):
-        return HttpResponse('')
+    if not (has_edit_privileges(request.user)):
+        return render(request, 'findshows/htmx/cant_create_artist.html', {
+            'no_privileges': True
+        })
 
     if has_exceeded_daily_invites(request.user):
         return render(request, 'findshows/htmx/cant_create_artist.html')
@@ -230,7 +282,7 @@ def request_artist_access(request):
         return HttpResponse('Something went wrong; you already have local artist access.')
 
     has_requested = Artist.objects.filter(created_by=request.user.userprofile).count()
-    if has_requested:
+    if has_requested or not request.user.userprofile.email_is_verified:
         return render(request, 'findshows/htmx/cant_request_artist.html')
 
     # The latter condition is a slightly hacky way of telling whether this HTMX
@@ -328,28 +380,11 @@ def manage_artist_access(request, pk):
 
 @login_required
 def link_artist(request):
-    error_template = "findshows/pages/artist_link_failure.html"
-
-    invite_id = request.GET.get('invite_id')
-    invite_code = request.GET.get('invite_code')
-
-    if not (invite_id and invite_code):
-        return render(request, error_template,
-                      {'error': 'Bad invite URL. Make sure you clicked the link in your email or copied it correctly; if this error persists, please contact site admins.'})
     try:
-        artist_linking_info = ArtistLinkingInfo.objects.get(id=invite_id)
-    except ArtistLinkingInfo.DoesNotExist:
-        return render(request, error_template,
-                      {'error': 'Could not find invite in the database. Please reach out to the artist or mod who invited you and request they re-send it.'})
-    if request.user.email != artist_linking_info.invited_email:
-        return render(request, error_template,
-                      {'error': "User's email does not match the invited email. Please log back in with an account associated with the email that the invite was sent to, or request a new invite with the correct email."})
-    if artist_linking_info.generated_datetime + timedelta(settings.INVITE_CODE_EXPIRATION_DAYS) < timezone.now():
-        return render(request, error_template,
-                      {'error': "Invite code expired. Please reach out to the artist or mod who invited you and request they re-send it."})
-    if not artist_linking_info.check_invite_code(invite_code):
-        return render(request, error_template,
-                      {'error': "Invite code invalid. Make sure you clicked the link in your email or copied it correctly; if this error persists, please contact site admins."})
+        artist_linking_info = ArtistLinkingInfo.check_url(request.GET, request.user.email)
+    except EmailCodeError as e:
+        return render(request, "findshows/pages/artist_link_failure.html",
+                      {'error': e.message})
 
     artist = artist_linking_info.artist
     up = request.user.userprofile
@@ -389,7 +424,7 @@ def records_created_today(model, userprofile):
     return records.count()
 
 
-@user_passes_test(is_local_artist_account)
+@user_passes_test(has_edit_privileges)
 def edit_concert(request, pk=None):
     if pk is None:
         if records_created_today(Concert, request.user.userprofile) >= settings.MAX_DAILY_CONCERT_CREATES:
@@ -430,7 +465,7 @@ def my_concert_list(request):
     })
 
 
-@user_passes_test(is_local_artist_account)
+@user_passes_test(has_edit_privileges)
 def cancel_concert(request, pk, uncancel=False):
     concert = get_object_or_404(Concert, pk=pk)
     if not concert.created_by == request.user.userprofile:
@@ -471,7 +506,7 @@ def venue_search_results(request):
 
 
 def create_venue(request):
-    if not is_local_artist_account(request.user):
+    if not has_edit_privileges(request.user):
         return HttpResponse('')
 
     if records_created_today(Venue, request.user.userprofile) >= settings.MAX_DAILY_VENUE_CREATES:

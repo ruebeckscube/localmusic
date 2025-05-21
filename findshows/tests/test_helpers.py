@@ -13,7 +13,7 @@ from django.utils.datastructures import MultiValueDict
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 
-from findshows.models import Ages, Artist, ArtistLinkingInfo, Concert, ConcertTags, MusicBrainzArtist, SetOrder, UserProfile, Venue
+from findshows.models import Ages, Artist, ArtistLinkingInfo, Concert, ConcertTags, EmailVerification, MusicBrainzArtist, SetOrder, UserProfile, Venue
 
 @override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
 class TestCaseHelpers(TestCase):
@@ -62,7 +62,7 @@ class TestCaseHelpers(TestCase):
     def assert_redirects_to_login(self, url):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 302) # HTTP redirect
-        self.assertEqual(response.url, f"{reverse('login')}?next={url}")
+        self.assertRedirects(response, reverse('login', query={'next': url}))
 
 
     def assert_blank_form(self, form, form_class):
@@ -125,6 +125,7 @@ class TestCaseHelpers(TestCase):
                             is_mod=False,
                             given_artist_access_by=None,
                             given_artist_access_datetime=None,
+                            email_is_verified=True,
                             ):
         while username is None:
             username = str(uuid4())
@@ -134,7 +135,9 @@ class TestCaseHelpers(TestCase):
         user_profile = UserProfile.objects.create(user=user,
                                                   preferred_concert_tags=preferred_concert_tags,
                                                   weekly_email=weekly_email,
-                                                  is_mod=is_mod)
+                                                  is_mod=is_mod,
+                                                  email_is_verified=email_is_verified,
+                                                  )
         if given_artist_access_by:
             user_profile.given_artist_access_by = given_artist_access_by
             user_profile.given_artist_access_datetime = given_artist_access_datetime or now()
@@ -291,6 +294,20 @@ class TestCaseHelpers(TestCase):
             ali.save()
 
         return ali, invite_code
+
+
+    @classmethod
+    def create_email_verification(cls, email=None, generated_datetime=None):
+        while email is None:
+            email = str(uuid4())
+            if EmailVerification.objects.filter(invited_email=email).exists():
+                email = None
+        email_verification, invite_code = EmailVerification.create_and_get_invite_code(email=email)
+        if generated_datetime is not None:
+            email_verification.generated_datetime = generated_datetime
+            email_verification.save()
+
+        return email_verification, invite_code
 
 
 def concert_GET_params(date=timezone_today(),
