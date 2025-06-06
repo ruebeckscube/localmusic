@@ -7,7 +7,7 @@ from . import views
 
 app_name = "findshows"
 urlpatterns = [
-    path("", views.concert_search, name="home"),
+    path("", views.home, name="home"),
     path("user_settings", views.user_settings, name="user_settings"),
     path('about/', TemplateView.as_view(template_name='findshows/pages/about.html'), name="about"),
     path('contact/', views.contact, name="contact"),
@@ -33,7 +33,7 @@ urlpatterns = [
     path("htmx/approve_artist_request/<int:pk>", views.approve_artist_request, name="approve_artist_request"),
 
     path("search", views.concert_search, name="concert_search"),
-    path("htmx/concert_search_results/", views.concert_search_results, name="concert_search_results"),
+    path("htmx/concert_search/", views.concert_search, name="concert_search"),
 
     path("htmx/mb_artist_search_results/", views.musicbrainz_artist_search_results, name="musicbrainz_artist_search_results"),
     path("htmx/venue_search_results/", views.venue_search_results, name="venue_search_results"),

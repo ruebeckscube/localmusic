@@ -46,20 +46,20 @@ class RecommendationTests(TestCaseHelpers):
 
 
     def test_similarity_sorting(self):
-        response = self.client.get(reverse('findshows:concert_search_results'),
+        response = self.client.get(reverse('findshows:concert_search'),
                                    concert_GET_params(musicbrainz_artists=['0-0', '0-1']))
         self.assertEqual(response.context['concerts'], [self.concert1, self.concert2, self.concert3, self.concert4])
 
-        response = self.client.get(reverse('findshows:concert_search_results'),
+        response = self.client.get(reverse('findshows:concert_search'),
                                    concert_GET_params(musicbrainz_artists=['1-2']))
         self.assertEqual(response.context['concerts'][:2], [self.concert3, self.concert2])
 
-        response = self.client.get(reverse('findshows:concert_search_results'),
+        response = self.client.get(reverse('findshows:concert_search'),
                                    concert_GET_params(musicbrainz_artists=['2-0']))
         self.assertEqual(response.context['concerts'][0], self.concert4)
 
         # Results are random, just checking it doesn't error out
-        response = self.client.get(reverse('findshows:concert_search_results'),
+        response = self.client.get(reverse('findshows:concert_search'),
                                    concert_GET_params(musicbrainz_artists=['']))
 
 

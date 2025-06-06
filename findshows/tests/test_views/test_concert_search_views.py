@@ -9,7 +9,7 @@ from findshows.tests.test_helpers import TestCaseHelpers, concert_GET_params
 class ConcertSearchTests(TestCaseHelpers):
     # Also tests helper function get_concert_search_defaults
     def test_default_search_not_logged_in(self):
-        response = self.client.get(reverse('findshows:concert_search'))
+        response = self.client.get(reverse('findshows:home'))
         data = {key: val() if callable(val) else val
                 for key, val in response.context['search_form'].initial.items()}
         self.assertEqual(data, {
@@ -27,7 +27,7 @@ class ConcertSearchTests(TestCaseHelpers):
         user_profile.preferred_concert_tags = [ConcertTags.ORIGINALS]
         user_profile.save()
 
-        response = self.client.get(reverse('findshows:concert_search'))
+        response = self.client.get(reverse('findshows:home'))
         data = {key: val() if callable(val) else val
                 for key, val in response.context['search_form'].initial.items()}
 
@@ -48,7 +48,7 @@ class ConcertSearchTests(TestCaseHelpers):
         get_params = concert_GET_params(tomorrow, tomorrow, False,
                                         ['22','35'], [ConcertTags.ORIGINALS])
         response = self.client.get(reverse('findshows:concert_search'), get_params)
-        data = response.context['search_form'].cleaned_data
+        data = response.context['search_form'].initial
 
         self.assert_equal_as_sets(data['musicbrainz_artists'], MusicBrainzArtist.objects.all()) # equality acting weird
         del data['musicbrainz_artists']
@@ -62,7 +62,7 @@ class ConcertSearchTests(TestCaseHelpers):
 
 class ConcertSearchResultsTests(TestCaseHelpers):
     def test_no_GET_data(self):
-        response = self.client.get(reverse('findshows:concert_search_results'))
+        response = self.client.get(reverse('findshows:concert_search'))
         self.assertEqual(response.context['concerts'], [])
         self.assert_blank_form(response.context['search_form'], ShowFinderForm)
 
@@ -74,7 +74,7 @@ class ConcertSearchResultsTests(TestCaseHelpers):
 
         get_params = concert_GET_params(timezone_today() + timedelta(1))
 
-        response = self.client.get(reverse('findshows:concert_search_results'), get_params)
+        response = self.client.get(reverse('findshows:concert_search'), get_params)
         self.assert_equal_as_sets(response.context['concerts'], [concert1, concert2])
 
 
@@ -87,7 +87,7 @@ class ConcertSearchResultsTests(TestCaseHelpers):
         get_params = concert_GET_params(timezone_today() + timedelta(1),
                                         timezone_today() + timedelta(3),
                                         True)
-        response = self.client.get(reverse('findshows:concert_search_results'), get_params)
+        response = self.client.get(reverse('findshows:concert_search'), get_params)
         self.assert_equal_as_sets(response.context['concerts'], [concert2, concert3])
 
 
@@ -97,15 +97,15 @@ class ConcertSearchResultsTests(TestCaseHelpers):
         concert3 = self.create_concert(tags=[ConcertTags.DJ, ConcertTags.COVERS])
         concert4 = self.create_concert(tags=[ConcertTags.DJ])
 
-        response = self.client.get(reverse('findshows:concert_search_results'),
+        response = self.client.get(reverse('findshows:concert_search'),
                                    concert_GET_params(concert_tags=[ConcertTags.ORIGINALS]))
         self.assert_equal_as_sets(response.context['concerts'], [concert1, concert2])
 
-        response = self.client.get(reverse('findshows:concert_search_results'),
+        response = self.client.get(reverse('findshows:concert_search'),
                                    concert_GET_params(concert_tags=[ConcertTags.ORIGINALS, ConcertTags.COVERS]))
         self.assert_equal_as_sets(response.context['concerts'], [concert1, concert2, concert3])
 
-        response = self.client.get(reverse('findshows:concert_search_results'),
+        response = self.client.get(reverse('findshows:concert_search'),
                                    concert_GET_params(concert_tags=[]))
         self.assert_equal_as_sets(response.context['concerts'], [concert1, concert2, concert3, concert4])
 
@@ -120,7 +120,7 @@ class ConcertSearchResultsTests(TestCaseHelpers):
 
         get_params = concert_GET_params(timezone_today() + timedelta(1))
 
-        response = self.client.get(reverse('findshows:concert_search_results'), get_params)
+        response = self.client.get(reverse('findshows:concert_search'), get_params)
         self.assert_equal_as_sets(response.context['concerts'], [concert2])
 
 
@@ -129,14 +129,14 @@ class ConcertSearchResultsTests(TestCaseHelpers):
         declined_concert=self.create_concert(venue=self.create_venue(is_verified=True, declined_listing=True))
         verified_concert=self.create_concert(venue=self.create_venue(is_verified=True, declined_listing=False))
 
-        response = self.client.get(reverse('findshows:concert_search_results'), concert_GET_params())
+        response = self.client.get(reverse('findshows:concert_search'), concert_GET_params())
         self.assert_equal_as_sets(response.context['concerts'], [verified_concert])
 
 
     def test_cancelled_concert_filtering(self):
         concert1 = self.create_concert()
         concert2 = self.create_concert(cancelled=True)
-        response = self.client.get(reverse('findshows:concert_search_results'), concert_GET_params())
+        response = self.client.get(reverse('findshows:concert_search'), concert_GET_params())
         self.assert_equal_as_sets(response.context['concerts'], [concert1])
 
 

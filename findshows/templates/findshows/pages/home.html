@@ -1,0 +1,24 @@
+{% extends "localmusic/base.html" %}
+
+{% block content %}
+    {% if not user.is_authenticated %}
+        <div class="bg-purple-100 text-center my-2 py-2">
+            <a href="{% url 'create_account' %}">Create an account</a> to save your search terms
+            and get a weekly email of personalized show recommendations!
+        </div>
+    {% elif not user.userprofile.email_is_verified %}
+        {% include "findshows/htmx/email_verification_banner.html" %}
+    {% endif %}
+
+    <div hx-on::after-request="update_url(event.detail.pathInfo, '{% url 'findshows:home' %}')">
+        {% include "findshows/htmx/concert_search.html" with initial="True"%}
+    </div>
+
+    <script>
+     function update_url(pathInfo, baseURL) {
+         query = pathInfo.finalRequestPath.slice(pathInfo.requestPath.length);
+         window.history.pushState('', '', baseURL + query);
+     }
+    </script>
+
+{% endblock %}

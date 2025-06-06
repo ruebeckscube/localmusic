@@ -574,17 +574,17 @@ def get_concert_search_defaults(request):
     return defaults
 
 
-def concert_search(request):
+def home(request):
     if request.GET:
         search_form = ShowFinderForm(request.GET)
     else:
         search_form = ShowFinderForm(initial=get_concert_search_defaults(request))
-    return render(request, "findshows/pages/concert_search.html", context = {
+    return render(request, "findshows/pages/home.html", context = {
         "search_form": search_form,
     })
 
 
-def concert_search_results(request):
+def concert_search(request):
     if request.GET:
         search_form = ShowFinderForm(request.GET)
     else:
@@ -611,11 +611,13 @@ def concert_search_results(request):
         else:
             shuffle(concerts)
 
+        search_form = ShowFinderForm(initial=search_form.cleaned_data)
+
     else:
         concerts = []
         searched_musicbrainz_artists = []
 
-    return render(request, "findshows/htmx/concert_search_results.html", context={
+    return render(request, "findshows/htmx/concert_search.html", context={
         "concerts": concerts,
         "search_form": search_form,
         "searched_musicbrainz_artists": searched_musicbrainz_artists,
