@@ -8,10 +8,10 @@
             <div x-show="show_end_date">
                 {{ search_form.end_date.as_field_group }}
             </div>
-            <div x-show="!show_end_date" @click="show_end_date=true" class="link-base text-xs">
+            <div x-show="!show_end_date" @click="show_end_date=true" class="link text-xs">
                 Date range
             </div>
-            <div x-show="show_end_date" @click="show_end_date=false" class="link-base text-xs">
+            <div x-show="show_end_date" @click="show_end_date=false" class="link text-xs">
                 Hide date range
             </div>
             <input type='hidden' :value='show_end_date' name='is_date_range'>

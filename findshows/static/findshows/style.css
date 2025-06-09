@@ -1,16 +1,35 @@
 @import 'tailwindcss';
 
+@theme {
+  --color-background: #F9F9ED;
+  --color-sub-background: RGBA(180, 160, 229, .2);
+
+  --color-clickable: #9719ea;
+  --color-clickable-h: #ea19af;
+
+  --color-highlight-item: #187795;
+  --color-highlight-text: #000000;
+
+  --font-body: "LeagueMono";
+}
+
+@font-face {
+  font-family: "LeagueMono";
+  src:
+    url("LeagueMono/LeagueMono.ttf"),
+}
+
 @layer base {
   input[type=text], input[type=url], input[type=search], input[type=email], textarea {
-    @apply w-[90%] m-0.5 border rounded;
+    @apply w-[90%] m-0.5 border bg-white;
   }
 
   button, input[type=button], input[type=submit] {
-    @apply shadow-2xs bg-purple-600 cursor-pointer text-white m-0.5 p-0.5 rounded;
+    @apply shadow-md bg-clickable hover:bg-clickable-h cursor-pointer text-white m-0.5 p-1 rounded-full;
   }
 
   a {
-    @apply text-purple-600 font-bold;
+    @apply text-clickable hover:text-clickable-h font-bold;
   }
 
   h1 {
@@ -27,7 +46,7 @@
     @apply text-xs
   }
 
-  .link-base {
-    @apply text-purple-600 font-bold cursor-pointer;
+  .link {
+    @apply text-clickable hover:text-clickable-h font-bold cursor-pointer;
   }
 }
