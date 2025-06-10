@@ -2,7 +2,7 @@
 
 {% block content %}
     {% if not user.is_authenticated %}
-        <div class="bg-purple-100 text-center my-2 py-2">
+        <div class="banner">
             <a href="{% url 'create_account' %}">Create an account</a> to save your search terms
             and get a weekly email of personalized show recommendations!
         </div>

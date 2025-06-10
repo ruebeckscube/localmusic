@@ -60,4 +60,8 @@
     @apply bg-sub-background mx-3 my-1 p-2
   }
 
+  .banner {
+    @apply bg-highlight-item/40 text-center my-1 py-2 w-11/12 mx-auto
+  }
+
 }
