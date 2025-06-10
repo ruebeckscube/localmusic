@@ -1,29 +1,55 @@
 {% load findshows_tags %}
 
-<div class="flex justify-between h-10">
-    <div>
+<div class="flex h-8 mt-2 mx-3 justify-between">
+    <div class="basis-0 grow"></div>
+    <div class="text-2xl mx-auto text-center font-extralight font-stretch-100% self-center">
         <a href="{% url 'findshows:home' %}">{% custom_text 'ST' %}</a>
     </div>
-    <div class="flex justify-between space-x-5">
-    {% if user.is_authenticated %}
-        {% if user.is_staff %}
-            <a href="{% url 'admin:index' %}">Admin site</a>
+    <div class="basis-0 grow flex justify-end">
+        {% if user.is_authenticated %}
+            {# Dropdown menu #}
+            <div x-data="{'show_menu': false}">
+                <svg class= "w-8 cursor-pointer hover:bg-gray-300 rounded-sm p-0.5"
+                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
+                     @click="show_menu = true">
+                    <path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H96c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/>
+                </svg>
+                <ul class="absolute right-2 top-10 z-50 border-1 border-highlight-item bg-background shadow-2xl"
+                    x-show="show_menu"
+                    @click.away="show_menu = false"
+                >
+                    {% if user.userprofile.managed_artists.all|length > 0 %}
+                        <li class="even:bg-sub-background">
+                            <a class="block link p-1" href="{% url 'findshows:my_concert_list' %}">My shows</a>
+                        </li>
+                        <li class="even:bg-sub-background"f>
+                            <a class="block link p-1" href="{% url 'findshows:managed_artist_list' %}">Artist profile</a>
+                        </li>
+                    {% endif %}
+                    {% if user.userprofile.is_mod %}
+                        <li class="even:bg-sub-background">
+                            <a class="block link p-1" href="{% url 'findshows:mod_dashboard' %}">Mod dashboard</a>
+                        </li>
+                    {% endif %}
+                    {% if user.is_staff %}
+                        <li class="even:bg-sub-background">
+                            <a class="block link p-1" href="{% url 'admin:index' %}">Admin site</a>
+                        </li>
+                    {% endif %}
+                    <li class="even:bg-sub-background">
+                        <a class="block link p-1" href="{% url 'findshows:user_settings' %}">Settings</a>
+                    </li>
+                    <li class="even:bg-sub-background">
+                        <form id="logout-form" method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button class="block link p-1 w-full h-full text-left" type="submit">Log out</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        {% else %}
+            <a class="link" href="{% url 'login' %}">Log in</a>
         {% endif %}
-        {% if user.userprofile.is_mod %}
-            <a href="{% url 'findshows:mod_dashboard' %}">Mod dashboard</a>
-        {% endif %}
-        {% if user.userprofile.managed_artists.all|length > 0 %}
-            <a href="{% url 'findshows:my_concert_list' %}">My shows</a>
-            <a href="{% url 'findshows:managed_artist_list' %}">Artist profile</a>
-        {% endif %}
-        <a href="{% url 'findshows:user_settings' %}">Settings</a>
-        <form id="logout-form" method="post" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button type="submit">Logout</button>
-        </form>
-    {% else %}
-        <a href="{% url 'login' %}">Login</a>
-    {% endif %}
     </div>
 </div>
 <div class="banner">

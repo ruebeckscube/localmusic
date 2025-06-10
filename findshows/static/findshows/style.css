@@ -45,7 +45,7 @@
 
 @layer components {
   .link {
-    @apply text-clickable hover:text-clickable-h font-bold cursor-pointer;
+    @apply text-clickable hover:text-clickable-h font-semibold cursor-pointer;
   }
 
   .btn {
@@ -62,6 +62,10 @@
 
   .banner {
     @apply bg-highlight-item/40 text-center my-1 py-2 w-11/12 mx-auto
+  }
+
+  .menuitem {
+    @apply even:bg-sub-background p-1 cursor-pointer;
   }
 
 }
