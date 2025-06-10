@@ -231,17 +231,8 @@
   .top-10 {
     top: calc(var(--spacing) * 10);
   }
-  .right-0 {
-    right: calc(var(--spacing) * 0);
-  }
-  .right-1 {
-    right: calc(var(--spacing) * 1);
-  }
   .right-2 {
     right: calc(var(--spacing) * 2);
-  }
-  .right-3 {
-    right: calc(var(--spacing) * 3);
   }
   .left-0 {
     left: calc(var(--spacing) * 0);
@@ -414,14 +405,8 @@
   .w-6 {
     width: calc(var(--spacing) * 6);
   }
-  .w-8 {
-    width: calc(var(--spacing) * 8);
-  }
   .w-11\/12 {
     width: calc(11/12 * 100%);
-  }
-  .w-fit {
-    width: fit-content;
   }
   .w-full {
     width: 100%;
@@ -555,11 +540,11 @@
   .fill-current {
     fill: currentcolor;
   }
+  .stroke-3 {
+    stroke-width: 3;
+  }
   .object-contain {
     object-fit: contain;
-  }
-  .p-0\.5 {
-    padding: calc(var(--spacing) * 0.5);
   }
   .p-1 {
     padding: calc(var(--spacing) * 1);
@@ -578,6 +563,9 @@
   }
   .px-1 {
     padding-inline: calc(var(--spacing) * 1);
+  }
+  .px-2 {
+    padding-inline: calc(var(--spacing) * 2);
   }
   .px-4 {
     padding-inline: calc(var(--spacing) * 4);
@@ -608,9 +596,6 @@
   }
   .text-right {
     text-align: right;
-  }
-  .align-bottom {
-    vertical-align: bottom;
   }
   .align-middle {
     vertical-align: middle;
@@ -680,6 +665,9 @@
   }
   .text-gray-800 {
     color: var(--color-gray-800);
+  }
+  .text-highlight-item {
+    color: var(--color-highlight-item);
   }
   .text-highlight-text {
     color: var(--color-highlight-text);
@@ -804,13 +792,6 @@
       }
     }
   }
-  .hover\:bg-gray-300 {
-    &:hover {
-      @media (hover: hover) {
-        background-color: var(--color-gray-300);
-      }
-    }
-  }
   .hover\:bg-indigo-400 {
     &:hover {
       @media (hover: hover) {
@@ -822,6 +803,20 @@
     &:hover {
       @media (hover: hover) {
         background-color: var(--color-slate-200);
+      }
+    }
+  }
+  .hover\:bg-sub-background {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-sub-background);
+      }
+    }
+  }
+  .hover\:text-clickable-h {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-clickable-h);
       }
     }
   }
