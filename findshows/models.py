@@ -503,6 +503,8 @@ class Concert(CreationTrackingMixin):
     originals and one is playing a full cover set, check both Originals and
     Cover Set.""")
     cancelled=models.BooleanField(blank=True, null=True)
+    description=models.CharField(max_length=50, null=True, blank=True,
+                                 help_text="A headline-esque description of the concert")
 
     @classmethod
     def publically_visible(cls):
