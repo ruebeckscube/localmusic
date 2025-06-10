@@ -6,7 +6,10 @@
 
     <div class="flex w-full relative z-10 p-2 justify-between">
         <div class="flex w-full">
-            <div class="flex align-center w-1/4 m-2">
+            <div class="flex flex-col justify-center w-1/4 m-2">
+                <div>
+                    {{ concert.description|default:""|upper }}
+                </div>
                 <img src="{{concert.poster.url}}" alt="Concert poster"
                      class="object-contain" />
             </div>
