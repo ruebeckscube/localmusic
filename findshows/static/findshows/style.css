@@ -20,18 +20,6 @@
 }
 
 @layer base {
-  input[type=text], input[type=url], input[type=search], input[type=email], textarea {
-    @apply w-[90%] m-0.5 border bg-white;
-  }
-
-  button, input[type=button], input[type=submit] {
-    @apply shadow-md bg-clickable hover:bg-clickable-h cursor-pointer text-white m-0.5 p-1 rounded-full;
-  }
-
-  a {
-    @apply text-clickable hover:text-clickable-h font-bold;
-  }
-
   h1 {
     @apply text-3xl mb-4;
   }
@@ -39,14 +27,37 @@
   h2 {
     @apply text-2xl mb-2;
   }
+
+  .helptext {
+    @apply text-xs;
+  }
+
+  .errorlist {
+    @apply text-red-700;
+  }
+
+  label.required:before{
+    content:"*";
+    @apply text-highlight-item;
+  }
+
 }
 
 @layer components {
-  .helptext {
-    @apply text-xs
-  }
-
   .link {
     @apply text-clickable hover:text-clickable-h font-bold cursor-pointer;
   }
+
+  .btn {
+    @apply shadow-md bg-clickable hover:bg-clickable-h cursor-pointer text-white m-0.5 p-1 rounded-full w-fit;
+  }
+
+  .textinput {
+    @apply w-[90%] m-0.5 border bg-white;
+  }
+
+  .fieldgroup {
+    @apply bg-sub-background mx-3 my-1 p-2
+  }
+
 }

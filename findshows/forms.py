@@ -11,6 +11,36 @@ from django.conf import settings
 from findshows.models import Artist, Concert, ConcertTags, LabeledURLsValidator, MusicBrainzArtist, UserProfile, Venue
 from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
 
+
+def add_default_styling_to_fields(fields):
+    field_type_to_css_class = {
+        forms.CharField: 'textinput',
+        forms.ImageField: 'btn',
+    }
+    for field in fields:
+        field.widget.attrs.update({
+            'class': field_type_to_css_class.get(type(field))
+        })
+
+
+# Have to duplicate this because of how the base classes are written
+# (they don't call super in init, so a mixin version of this wouldn't get init called)
+class DefaultStylingForm(forms.Form):
+    required_css_class = "required"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        add_default_styling_to_fields(self.fields.values())
+
+
+class DefaultStylingModelForm(forms.ModelForm):
+    required_css_class = "required"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        add_default_styling_to_fields(self.fields.values())
+
+
 class UserCreationFormE(UserCreationForm):
     class Meta:
         model = User
@@ -52,7 +82,7 @@ def validate_image(image):
     return image
 
 
-class ArtistEditForm(forms.ModelForm):
+class ArtistEditForm(DefaultStylingModelForm):
     class Meta:
         model=Artist
         fields=("name", "profile_picture", "bio", "youtube_links", "socials_links", "listen_links", "similar_musicbrainz_artists")

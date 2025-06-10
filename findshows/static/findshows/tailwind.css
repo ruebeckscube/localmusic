@@ -8,6 +8,7 @@
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
     --color-red-500: oklch(63.7% 0.237 25.331);
+    --color-red-700: oklch(50.5% 0.213 27.518);
     --color-blue-200: oklch(88.2% 0.059 254.128);
     --color-blue-500: oklch(62.3% 0.214 259.815);
     --color-indigo-400: oklch(67.3% 0.182 276.935);
@@ -514,9 +515,6 @@
   .bg-purple-100 {
     background-color: var(--color-purple-100);
   }
-  .bg-red-500 {
-    background-color: var(--color-red-500);
-  }
   .bg-transparent {
     background-color: transparent;
   }
@@ -802,15 +800,43 @@
   src: url("LeagueMono/LeagueMono.ttf"),;
 }
 @layer base {
-  input[type=text], input[type=url], input[type=search], input[type=email], textarea {
-    margin: calc(var(--spacing) * 0.5);
-    width: 90%;
-    border-style: var(--tw-border-style);
-    border-width: 1px;
-    background-color: var(--color-white);
+  h1 {
+    margin-bottom: calc(var(--spacing) * 4);
+    font-size: var(--text-3xl);
+    line-height: var(--tw-leading, var(--text-3xl--line-height));
   }
-  button, input[type=button], input[type=submit] {
+  h2 {
+    margin-bottom: calc(var(--spacing) * 2);
+    font-size: var(--text-2xl);
+    line-height: var(--tw-leading, var(--text-2xl--line-height));
+  }
+  .helptext {
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+  .errorlist {
+    color: var(--color-red-700);
+  }
+  label.required:before {
+    content: "*";
+    color: var(--color-highlight-item);
+  }
+}
+@layer components {
+  .link {
+    cursor: pointer;
+    --tw-font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-clickable);
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-clickable-h);
+      }
+    }
+  }
+  .btn {
     margin: calc(var(--spacing) * 0.5);
+    width: fit-content;
     cursor: pointer;
     border-radius: calc(infinity * 1px);
     background-color: var(--color-clickable);
@@ -824,42 +850,18 @@
       }
     }
   }
-  a {
-    --tw-font-weight: var(--font-weight-bold);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-clickable);
-    &:hover {
-      @media (hover: hover) {
-        color: var(--color-clickable-h);
-      }
-    }
+  .textinput {
+    margin: calc(var(--spacing) * 0.5);
+    width: 90%;
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+    background-color: var(--color-white);
   }
-  h1 {
-    margin-bottom: calc(var(--spacing) * 4);
-    font-size: var(--text-3xl);
-    line-height: var(--tw-leading, var(--text-3xl--line-height));
-  }
-  h2 {
-    margin-bottom: calc(var(--spacing) * 2);
-    font-size: var(--text-2xl);
-    line-height: var(--tw-leading, var(--text-2xl--line-height));
-  }
-}
-@layer components {
-  .helptext {
-    font-size: var(--text-xs);
-    line-height: var(--tw-leading, var(--text-xs--line-height));
-  }
-  .link {
-    cursor: pointer;
-    --tw-font-weight: var(--font-weight-bold);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-clickable);
-    &:hover {
-      @media (hover: hover) {
-        color: var(--color-clickable-h);
-      }
-    }
+  .fieldgroup {
+    margin-inline: calc(var(--spacing) * 3);
+    margin-block: calc(var(--spacing) * 1);
+    background-color: var(--color-sub-background);
+    padding: calc(var(--spacing) * 2);
   }
 }
 @property --tw-space-x-reverse {
