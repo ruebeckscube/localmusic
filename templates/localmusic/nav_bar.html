@@ -1,8 +1,10 @@
 {% load findshows_tags %}
 
 <div class="flex h-8 mt-2 mx-3 justify-between">
-    <div class="basis-0 grow"></div>
-    <div class="text-2xl mx-auto text-center font-extralight font-stretch-100% self-center">
+    <div class="basis-0 sm:grow"></div>
+    <div class="mx-auto self-center
+                text-left text-3xl font-stretch-[30%] font-thin
+                sm:text-center sm:text-2xl sm:font-stretch-100% sm:font-extralight">
         <a href="{% url 'findshows:home' %}">{% custom_text 'ST' %}</a>
     </div>
     <div class="basis-0 grow flex justify-end">

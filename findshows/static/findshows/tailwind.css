@@ -40,6 +40,7 @@
     --text-3xl--line-height: calc(2.25 / 1.875);
     --text-8xl: 6rem;
     --text-8xl--line-height: 1;
+    --font-weight-thin: 100;
     --font-weight-extralight: 200;
     --font-weight-normal: 400;
     --font-weight-medium: 500;
@@ -467,9 +468,6 @@
   .justify-end {
     justify-content: flex-end;
   }
-  .gap-x-2 {
-    column-gap: calc(var(--spacing) * 2);
-  }
   .space-x-5 {
     :where(& > :not(:last-child)) {
       --tw-space-x-reverse: 0;
@@ -603,6 +601,10 @@
     font-size: var(--text-2xl);
     line-height: var(--tw-leading, var(--text-2xl--line-height));
   }
+  .text-3xl {
+    font-size: var(--text-3xl);
+    line-height: var(--tw-leading, var(--text-3xl--line-height));
+  }
   .text-8xl {
     font-size: var(--text-8xl);
     line-height: var(--tw-leading, var(--text-8xl--line-height));
@@ -634,10 +636,6 @@
     --tw-font-weight: var(--font-weight-bold);
     font-weight: var(--font-weight-bold);
   }
-  .font-extralight {
-    --tw-font-weight: var(--font-weight-extralight);
-    font-weight: var(--font-weight-extralight);
-  }
   .font-medium {
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
@@ -645,6 +643,10 @@
   .font-normal {
     --tw-font-weight: var(--font-weight-normal);
     font-weight: var(--font-weight-normal);
+  }
+  .font-thin {
+    --tw-font-weight: var(--font-weight-thin);
+    font-weight: var(--font-weight-thin);
   }
   .text-black {
     color: var(--color-black);
@@ -682,8 +684,8 @@
   .font-stretch-90\% {
     font-stretch: 90%;
   }
-  .font-stretch-100\% {
-    font-stretch: 100%;
+  .font-stretch-\[30\%\] {
+    font-stretch: 30%;
   }
   .line-through {
     text-decoration-line: line-through;
@@ -852,6 +854,33 @@
   .sidebar-bp\:flex-col {
     @media (width >= 1120px) {
       flex-direction: column;
+    }
+  }
+  .sm\:grow {
+    @media (width >= 40rem) {
+      flex-grow: 1;
+    }
+  }
+  .sm\:text-center {
+    @media (width >= 40rem) {
+      text-align: center;
+    }
+  }
+  .sm\:text-2xl {
+    @media (width >= 40rem) {
+      font-size: var(--text-2xl);
+      line-height: var(--tw-leading, var(--text-2xl--line-height));
+    }
+  }
+  .sm\:font-extralight {
+    @media (width >= 40rem) {
+      --tw-font-weight: var(--font-weight-extralight);
+      font-weight: var(--font-weight-extralight);
+    }
+  }
+  .sm\:font-stretch-100\% {
+    @media (width >= 40rem) {
+      font-stretch: 100%;
     }
   }
   .md\:max-w-md {
