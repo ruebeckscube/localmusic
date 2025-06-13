@@ -1,8 +1,24 @@
-{% if relevant_names %}
-    <div class="text-xs text-highlight-text font-bold"
-         title="Similar to {{relevant_names}}">
-        {{name}}
-    </div>
-{% else %}
-    <div class="text-xs text-gray-600"> {{name}} </div>
-{% endif %}
+<div
+    class="text-xs @max-md:hidden
+    {% if relevant_names %}
+    text-highlight-text font-bold"
+    title="Similar to {{relevant_names}}"
+    {% else %}
+    text-gray-600"
+    {% endif %}
+    >
+    {{name}}
+</div>
+
+
+<span
+    class="text-xs @md:hidden
+    {% if relevant_names %}
+    text-highlight-text font-bold"
+    title="Similar to {{relevant_names}}"
+    {% else %}
+    text-gray-600"
+    {% endif %}
+    >
+    {{name}}{% if not is_last %}, {% endif %}
+</span>

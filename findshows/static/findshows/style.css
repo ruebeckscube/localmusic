@@ -11,6 +11,8 @@
   --color-highlight-text: #000000;
 
   --font-body: "LeagueMono";
+
+  --breakpoint-sidebar-bp: 1120px;
 }
 
 @font-face {
@@ -49,7 +51,7 @@
   }
 
   .btn {
-    @apply shadow-md bg-clickable hover:bg-clickable-h cursor-pointer text-white m-0.5 p-1 rounded-full w-fit;
+    @apply shadow-md bg-clickable hover:bg-clickable-h cursor-pointer text-white m-0.5 p-1 rounded-full w-fit h-fit;
   }
 
   .textinput {
@@ -61,7 +63,7 @@
   }
 
   .banner {
-    @apply bg-highlight-item/40 text-center my-1 py-2 w-11/12 mx-auto
+    @apply bg-highlight-item/30 text-center my-1 py-2 w-11/12 mx-auto
   }
 
   .menuitem {

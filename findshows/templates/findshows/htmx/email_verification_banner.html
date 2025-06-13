@@ -10,14 +10,14 @@
                 Please check your email for a verification link. Weekly emails and other features will
                 be unavailable with an unconfirmed email address. If you didn't receive an email after
                 a few minutes, try
-                <span class="cursor-pointer link"
+                <span class="link"
                       name="resend-verification-email"
                       hx-post="{% url 'resend_email_verification' %}"
                       hx-trigger="click"
                       hx-target="closest .email-verification-banner"
                       hx-swap="outerHTML"
                 >
-                    resending
+                    resending.
                 </span>
             </form>
         {% endfor %}

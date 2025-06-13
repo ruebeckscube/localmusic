@@ -56,6 +56,10 @@
         {% endif %}
     </div>
 </div>
-<div class="banner">
-    {% custom_text 'BR' %}
-</div>
+
+{% custom_text 'BR' as banner_text %}
+{% if banner_text %}
+    <div class="banner">
+        {{ banner_text }}
+    </div>
+{% endif %}

@@ -31,7 +31,7 @@ def time_short(value: datetime.time):
 
 
 @register.inclusion_tag("findshows/partials/similar_artist_name_with_relevancy.html")
-def similar_artist_name_with_relevancy(similar_musicbrainz_artist, searched_musicbrainz_artists=None):
+def similar_artist_name_with_relevancy(similar_musicbrainz_artist,  is_last, searched_musicbrainz_artists=None):
     if not searched_musicbrainz_artists:
         searched_musicbrainz_artists = []
     relevant_names = ", ".join(searched_artist.name
@@ -40,6 +40,7 @@ def similar_artist_name_with_relevancy(similar_musicbrainz_artist, searched_musi
     return {
         'name': similar_musicbrainz_artist.name,
         'relevant_names': relevant_names,
+        'is_last': is_last,
     }
 
 
@@ -54,3 +55,7 @@ def email_url(url_name: str, *args, **kwargs):
 @register.simple_tag
 def email_raw_url(raw_url: str):
     return local_url_to_email(raw_url)
+
+@register.simple_tag
+def num_true_args(*args):
+    return sum(1 for arg in args if arg)
