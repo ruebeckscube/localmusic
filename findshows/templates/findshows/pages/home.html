@@ -10,8 +10,9 @@
         {% include "findshows/htmx/email_verification_banner.html" %}
     {% endif %}
 
-    <div hx-on::after-request="update_url(event.detail.pathInfo, '{% url 'findshows:home' %}')">
-        {% include "findshows/htmx/concert_search.html" with initial="True"%}
+    <div hx-on::after-request="update_url(event.detail.pathInfo, '{% url 'findshows:home' %}')"
+         x-init="$nextTick(() => {$dispatch('widget-update')})">
+        {% include "findshows/htmx/concert_search.html" %}
     </div>
 
     <script>

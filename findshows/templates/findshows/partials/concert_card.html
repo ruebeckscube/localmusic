@@ -98,9 +98,11 @@
                     {{ concert.ticket_description  }}
                 </div>
             </div>
-            <div>
-                {{ concert.description|default:""|upper }}
-            </div>
+            {% if concert.description %}
+                <div>
+                    {{ concert.description|default:""|upper }}
+                </div>
+            {% endif %}
         </div>
         <!-- end info -->
     </div>

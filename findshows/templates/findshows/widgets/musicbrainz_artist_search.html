@@ -14,6 +14,7 @@
     <div x-ref="musicbrainz-search-plus-dropdown"
          @focusin="open_dropdown()"
          @click.outside="close_dropdown()"
+         @htmx:after-request="open_dropdown()"
     >
             <input class="" type="search"
                    name="mb-search" placeholder="Search artists..."
@@ -56,10 +57,12 @@
                  this.selected_musicbrainz_artists.push({'mbid':mbid, 'name':name});
                  this.search_text = '';
              }
+             this.$dispatch('widget-update');
          },
 
          remove_artist(index) {
              this.selected_musicbrainz_artists.splice(index, 1);
+             this.$dispatch('widget-update');
          }
      }
  }

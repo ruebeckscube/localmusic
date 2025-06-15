@@ -1,9 +1,16 @@
 <div id="concert-search" class="w-full flex max-sidebar-bp:flex-col"
      x-data="{'show_end_date': {{ search_form.is_date_range.value|lower }} }">
 
+    <div
+        hx-get="{% url 'findshows:concert_search' %}"
+        hx-trigger="widget-update from:body delay:.1s"
+        hx-include="#search-form"
+        hx-target="#concert-search"
+        hx-swap="outerHTML"
+    ></div>
     {# Search form #}
     <form method="GET" action="" id="search-form" class="flex sidebar-bp:flex-col sidebar-bp:w-1/5 jusify-between">
-        <div class="flex flex-col fieldgroup">
+        <div class="flex flex-col fieldgroup min-w-52">
             {{ search_form.date.as_field_group }}
             <div x-show="show_end_date">
                 {{ search_form.end_date.as_field_group }}
@@ -11,7 +18,7 @@
             <div x-show="!show_end_date" @click="show_end_date=true" class="link text-xs">
                 Date range
             </div>
-            <div x-show="show_end_date" @click="show_end_date=false" class="link text-xs">
+            <div x-show="show_end_date" @click="show_end_date=false;$dispatch('widget-update')" class="link text-xs">
                 Hide date range
             </div>
             <input type='hidden' :value='show_end_date' name='is_date_range'>
@@ -19,23 +26,9 @@
         <div class="flex flex-col fieldgroup">
             {{ search_form.musicbrainz_artists.as_field_group }}
         </div>
-        <div class="flex flex-col fieldgroup">
+        <div class="flex flex-col fieldgroup min-w-48">
             {{ search_form.concert_tags.as_field_group }}
         </div>
-
-        <input class="btn"
-               type="button"
-               hx-get="{% url 'findshows:concert_search' %}"
-               {% if initial %}
-               hx-trigger="load"
-               {% else %}
-               hx-trigger="click"
-               {% endif %}
-               hx-target="#concert-search"
-               hx-include="#search-form"
-               hx-swap="outerHTML"
-               value="Search"
-        >
     </form>
 
     {# Search results #}

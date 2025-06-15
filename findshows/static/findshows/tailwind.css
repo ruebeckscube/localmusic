@@ -354,6 +354,9 @@
   .h-80 {
     height: calc(var(--spacing) * 80);
   }
+  .h-fit {
+    height: fit-content;
+  }
   .h-full {
     height: 100%;
   }
@@ -410,6 +413,12 @@
   }
   .min-w-14 {
     min-width: calc(var(--spacing) * 14);
+  }
+  .min-w-48 {
+    min-width: calc(var(--spacing) * 48);
+  }
+  .min-w-52 {
+    min-width: calc(var(--spacing) * 52);
   }
   .flex-none {
     flex: none;

@@ -305,7 +305,7 @@ class RequestArtistForm(forms.ModelForm):
 
 
 class ShowFinderForm(forms.Form):
-    date = DatePickerField()
+    date = DatePickerField(required=False)
     end_date = DatePickerField(required=False)
     is_date_range = forms.BooleanField(required=False)
     musicbrainz_artists = forms.ModelMultipleChoiceField(
@@ -316,9 +316,13 @@ class ShowFinderForm(forms.Form):
         help_text="""We'll recommend some concerts based on the artists you
         select here. Leave blank to get a randomly sorted list.""",
     )
-    concert_tags = forms.MultipleChoiceField( choices=ConcertTags,
-                                              widget=forms.CheckboxSelectMultiple, required=False, label="Categories",
-                                              help_text="Leave blank to include all show categories.", )
+    concert_tags = forms.MultipleChoiceField(
+        choices=ConcertTags,
+        widget=forms.CheckboxSelectMultiple(attrs={"@click": "$dispatch('widget-update')"}),
+        required=False,
+        label="Categories",
+        help_text="Leave blank to include all show categories.",
+    )
 
     def clean(self):
         cleaned_data = super().clean() or {}

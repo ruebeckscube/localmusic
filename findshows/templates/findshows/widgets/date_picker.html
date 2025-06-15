@@ -154,11 +154,17 @@
                onDateClick(date) {
                    if (!this.isSelectable(date)) return;
 
+                   this.showDatepicker = false;
+
+                   if (this.selectedYear === this.calYear &&
+                       this.selectedMonth === this.calMonth &&
+                       this.selectedDate === date) return;
+
                    this.selectedYear = this.calYear;
                    this.selectedMonth = this.calMonth;
                    this.selectedDate = date;
 
-                   this.showDatepicker = false;
+                   this.$dispatch('widget-update');
                },
 
                incrementCalDisplay(incr) {
