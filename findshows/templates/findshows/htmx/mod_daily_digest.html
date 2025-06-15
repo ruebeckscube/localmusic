@@ -1,19 +1,12 @@
-<div id="daily-digest">
+<div hx-get="{% url 'findshows:mod_daily_digest' %}"
+     hx-trigger="widget-update from:body delay:.1s"
+     hx-include="#mod-digest-form"
+     hx-target="this"
+>
     <div> Review records created on a given date.</div>
     <form method="GET" action="" id="mod-digest-form">
         <div class="flex">
-
             {{ form }}
-
-            <input class=""
-                   type="button"
-                   name="mod-digest-button"
-                   hx-get="{% url 'findshows:mod_daily_digest' %}"
-                   hx-trigger="click"
-                   value="Submit"
-                   hx-include="#mod-digest-form"
-                   hx-target="#daily-digest"
-            >
         </div>
     </form>
 
