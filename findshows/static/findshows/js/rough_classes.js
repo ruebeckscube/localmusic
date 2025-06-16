@@ -25,18 +25,35 @@ function rough_bg_rect(svg) {
   });
 }
 
+function rough_bg_musicbrainz_card(svg) {
+  rough_rect_helper(svg, 2, {
+    roughness: 2,
+    bowing: 0,
+    fill: "var(--color-highlight-item-light)",
+    fillStyle: 'solid',
+  });
+}
+
+
 // Dict that maps class names to shape functions
 const rough_cls_2_fnc = {
   'rough-bg-rect': rough_bg_rect,
+  'rough-bg-musicbrainz-card': rough_bg_musicbrainz_card,
+}
+
+// Process a node
+function add_rough_to_node(el) {
+  for (const cls in rough_cls_2_fnc) {
+    for (svg of el.getElementsByClassName(cls)) {
+      rough_cls_2_fnc[cls](svg);
+    }
+  }
+
 }
 
 // Set up listener; fires for initial page load on body, as well as any new
 // element that htmx inserts. Any given element will be checked once and only
 // once for each class name.
-htmx.on("htmx:load", function(evt) {
-  for (const cls in rough_cls_2_fnc) {
-    for (svg of evt.detail.elt.getElementsByClassName(cls)) {
-      rough_cls_2_fnc[cls](svg);
-    }
-  }
+htmx.onLoad(function(elt) {
+  add_rough_to_node(elt)
 });

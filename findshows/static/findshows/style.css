@@ -8,6 +8,7 @@
   --color-clickable-h: #ea19af;
 
   --color-highlight-item: #187795;
+  --color-highlight-item-light: #b5d2d2;
   --color-highlight-text: #000000;
 
   --font-body: "LeagueMono";
@@ -31,7 +32,7 @@
   }
 
   .helptext {
-    @apply text-xs;
+    @apply text-xs font-light;
   }
 
   .errorlist {
@@ -51,23 +52,31 @@
   }
 
   .btn {
-    @apply shadow-md bg-clickable hover:bg-clickable-h cursor-pointer text-white m-0.5 p-1 rounded-full w-fit h-fit;
+    @apply shadow-lg bg-clickable hover:bg-clickable-h cursor-pointer text-white m-0.5 p-1 w-fit h-fit;
   }
 
   .textinput {
-    @apply w-[90%] m-0.5 border bg-white;
+    @apply  m-0.5 border bg-white;
   }
 
   .fieldgroup {
-    @apply bg-sub-background mx-3 my-1 p-2
+    @apply bg-sub-background mx-3 my-1 p-2;
   }
 
   .banner {
-    @apply bg-highlight-item/30 text-center my-1 py-2 w-11/12 mx-auto
+    @apply bg-highlight-item-light text-center my-1 py-2 w-11/12 mx-auto;
   }
 
   .menuitem {
     @apply even:bg-sub-background p-1 cursor-pointer;
+  }
+
+  .popup-menu {
+    @apply z-50 border-1 border-highlight-item bg-background shadow-2xl;
+  }
+
+  .clickable-svg {
+    @apply cursor-pointer hover:bg-sub-background text-highlight-item hover:text-clickable-h;
   }
 
 }

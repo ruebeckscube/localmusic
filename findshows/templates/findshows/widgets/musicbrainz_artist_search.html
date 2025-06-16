@@ -2,21 +2,13 @@
      x-data="musicbrainz_artist_chooser_data({{ widget.artist_dicts }},{{ widget.max_artists }})"
      @keydown.escape.prevent.stop="close_dropdown()"
 >
-    <div class="flex flex-wrap">
-        <template x-for="(musicbrainz_artist, index) in selected_musicbrainz_artists" :key="index">
-            <div>
-                {% include "../partials/musicbrainz_card.html" with dynamic=True %}
-                <input type='hidden' name='{{widget.name}}' :value='musicbrainz_artist.mbid'>
-            </div>
-        </template>
-    </div>
 
     <div x-ref="musicbrainz-search-plus-dropdown"
          @focusin="open_dropdown()"
          @click.outside="close_dropdown()"
          @htmx:after-request="open_dropdown()"
     >
-            <input class="" type="search"
+            <input class="textinput" type="search"
                    name="mb-search" placeholder="Search artists..."
                    x-model="search_text"
                    hx-get="{% url 'findshows:musicbrainz_artist_search_results' %}"
@@ -26,13 +18,23 @@
             >
 
             <ul id="musicbrainz-search-results"
-                class="absolute z-50"
+                class="absolute popup-menu"
                 x-show="show_search"
                 @click="close_dropdown()"
                 style="display: none;"
             >
             </ul>
         </div>
+
+    <div class="flex flex-wrap">
+        <template x-for="(musicbrainz_artist, index) in selected_musicbrainz_artists" :key="index">
+            <div>
+                {% include "../partials/musicbrainz_card.html" with dynamic=True %}
+                <input type='hidden' name='{{widget.name}}' :value='musicbrainz_artist.mbid'>
+            </div>
+        </template>
+    </div>
+
 </div>
 
 <script>

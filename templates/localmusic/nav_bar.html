@@ -11,15 +11,14 @@
         {% if user.is_authenticated %}
             {# Dropdown menu #}
             <div x-data="{'show_menu': false}">
-                <svg class= "h-full  p-1 stroke-3
-                             cursor-pointer hover:bg-sub-background text-highlight-item hover:text-clickable-h"
+                <svg class= "clickable-svg h-full p-1 stroke-3"
                      viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
                      @click="show_menu = true">
                     <line x1="0" y1="4" x2="24" y2="4" stroke="currentColor"/>
                     <line x1="0" y1="12" x2="24" y2="12" stroke="currentColor"/>
                     <line x1="0" y1="20" x2="24" y2="20" stroke="currentColor"/>
                 </svg>
-                <ul class="absolute right-2 top-10 z-50 border-1 border-highlight-item bg-background shadow-2xl"
+                <ul class="absolute right-2 top-10 popup-menu"
                     x-show="show_menu"
                     @click.away="show_menu = false"
                     @keydown.escape.window="show_menu = false"

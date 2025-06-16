@@ -1,190 +1,75 @@
-{# Modified from https://www.creative-tim.com/twcomponents/component/datepicker-with-tailwindcss-and-alpinejs #}
-{# Can't find a license listed on the site so assuming it's okay to use this #}
+{% load static %}
 
-<div class="max-w-60 flex items-center justify-center bg-gray-200 rounded-lg">
-    <div class="antialiased sans-serif">
-    <div x-data="datePickerData({{ widget.allow_past_or_future }})" x-init="[initDate('{{ widget.value }}'), incrementCalDisplay(0)]" x-cloak>
-          <div class="container mx-auto px-4 py-2">
-              <div class="max-w-64">
+<div class="max-w-48 container py-1 relative"
+     x-data="datePickerData({{ widget.allow_past_or_future }})"
+     x-init="[initDate('{{ widget.value }}'), incrementCalDisplay(0)]"
+     x-cloak
+>
+    <input type="hidden" name={{ widget.name }} :value="getWidgetReturnVal()">
+    <input
+        type="text"
+        @click="showDatepicker = !showDatepicker"
+        :value="getDisplayDate()"
+        @keydown.escape="showDatepicker = false"
+        class="textinput w-full cursor-pointer"
+        placeholder="Select date"
+        readonly>
 
-                  <div class="relative">
-                      <input type="hidden" name={{ widget.name }} :value="getWidgetReturnVal()">
-                      <input
-                          type="text"
-                          @click="showDatepicker = !showDatepicker"
-                          :value="getDisplayDate()"
-                          @keydown.escape="showDatepicker = false"
-                          class="w-full px-1 py-1 leading-none rounded-lg shadow-xs focus:outline-hidden focus:shadow-outline text-gray-600 font-medium"
-                          placeholder="Select date"
-                          readonly>
+    {# Popup menu #}
+    <div class="popup-menu mt-12 w-64 p-4 absolute top-0 left-0"
+         x-show.transition="showDatepicker"
+         @click.away="showDatepicker = false">
 
-                          <div
-                              class="bg-white mt-12 rounded-lg shadow-sm p-4 absolute top-0 left-0 z-50"
-                              style="width: 17rem"
-                              x-show.transition="showDatepicker"
-                              @click.away="showDatepicker = false">
+        {# Header of date form #}
+        <div class="flex justify-between items-center mb-2">
+            <div>
+                <span x-text="MONTH_NAMES[calMonth-1]" class="text-lg font-semibold"></span>
+                <span x-text="calYear" class="ml-1 text-lg text-gray-600 font-normal"></span>
+            </div>
+            <div>
+                <button
+                    type="button"
+                    class="clickable-svg transition ease-in-out duration-100 inline-flex p-1"
+                    @click="incrementCalDisplay(-1)">
+                    <svg class="h-6 w-6 inline-flex"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <button
+                    type="button"
+                    class="clickable-svg transition ease-in-out duration-100 inline-flex p-1"
+                    @click="incrementCalDisplay(1)">
+                    <svg class="h-6 w-6 inline-flex"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
 
-                              <div class="flex justify-between items-center mb-2">
-                                  <div>
-                                      <span x-text="MONTH_NAMES[calMonth-1]" class="text-lg font-bold text-gray-800"></span>
-                                      <span x-text="calYear" class="ml-1 text-lg text-gray-600 font-normal"></span>
-                                  </div>
-                                  <div>
-                                      <button
-                                          type="button"
-                                          class="transition ease-in-out duration-100 inline-flex cursor-pointer hover:bg-gray-200 p-1 rounded-full"
-                                          @click="incrementCalDisplay(-1)">
-                                          <svg class="h-6 w-6 text-gray-500 inline-flex"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                                          </svg>
-                                      </button>
-                                      <button
-                                          type="button"
-                                          class="transition ease-in-out duration-100 inline-flex cursor-pointer hover:bg-gray-200 p-1 rounded-full"
-                                          @click="incrementCalDisplay(1)">
-                                          <svg class="h-6 w-6 text-gray-500 inline-flex"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                          </svg>
-                                      </button>
-                                  </div>
-                              </div>
-
-                              <div class="grid grid-cols-7 grid-flow-row -mx-1">
-                                <template x-for="day in DAYS">
-                                    <div class="mb-1">
-                                        <div x-text="day" class="text-gray-800 font-medium text-center text-xs"></div>
-                                    </div>
-                                </template>
-                                <template x-for="i in NumSpacesBeforeDays">
-                                    <div ></div>
-                                </template>
-                                <template x-for="date in numDaysInMonth">
-                                      <div class="px-1 mb-1">
-                                          <div
-                                              @click="onDateClick(date)"
-                                              x-text="date"
-                                              class="cursor-pointer text-center text-sm rounded-full leading-loose transition ease-in-out duration-100"
-                                              :class="{'text-gray-300': !isSelectable(date),
-                                                      'bg-blue-500 text-white': isSelected(date),
-                                                      'text-black hover:bg-blue-200': isSelectable(date)&&(!isSelected(date)),
-                                                      'font-bold': isToday(date)}"
-                                          ></div>
-                                      </div>
-                                </template>
-                              </div>
-                          </div>
-
-                  </div>
-              </div>
-
-          </div>
-      </div>
-
-      <script>
-       function datePickerData(allowPastOrFuture) {
-           return {
-               MONTH_NAMES: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-               DAYS: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-               TODAY: new Date(),
-
-               showDatepicker: false,
-               apf: allowPastOrFuture, // -1 to allow only past, 1 to allow only future, 0 to allow both
-
-               selectedDate: '',
-               selectedMonth: '',
-               selectedYear: '',
-
-               // We're using month indexed from 1, javascript Date stuff expects it indexed from 0
-               calMonth: '',
-               calYear: '',
-               numDaysInMonth: 0,
-               NumSpacesBeforeDays: 0,
-               days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-
-               initDate(initialWidgetVal) {
-                   if (initialWidgetVal) {
-                       [this.selectedYear, this.selectedMonth, this.selectedDate] = initialWidgetVal.split('-').map((x) => parseInt(x))
-
-                       this.calMonth = this.selectedMonth;
-                       this.calYear = this.selectedYear;
-                   }
-                   else {
-                       let today = new Date();
-                       this.calMonth = today.getMonth() + 1;
-                       this.calYear = today.getFullYear();
-                   }
-
-               },
-
-               getDisplayDate() {
-                   if (this.selectedYear==='' || this.selectedMonth==='' || this.selectedDate==='') {
-                       return ''
-                   }
-                   d = new Date(this.selectedYear, this.selectedMonth - 1, this.selectedDate);
-                   return d.toDateString()
-               },
-
-               getWidgetReturnVal() {
-                   if (this.selectedYear==='' || this.selectedMonth==='' || this.selectedDate==='') {
-                       return ''
-                   }
-                   return [this.selectedYear, this.selectedMonth, this.selectedDate].join('-')
-               },
-
-               isToday(date) {
-                   return (date === this.TODAY.getDate() &&
-                           this.calMonth === this.TODAY.getMonth() + 1 &&
-                           this.calYear === this.TODAY.getFullYear())
-               },
-
-               isSelectable(date) {
-                   // Assuming the year/month are bounded correctly by increment function
-                   if (this.calYear != this.TODAY.getFullYear()) return true;
-                   if (this.calMonth != this.TODAY.getMonth() + 1) return true;
-                   if (this.apf * date < this.apf * this.TODAY.getDate()) return false;
-                   return true;
-               },
-
-               isSelected(date) {
-                   return (date === this.selectedDate &&
-                           this.calMonth === this.selectedMonth &&
-                           this.calYear === this.selectedYear)
-               },
-
-               onDateClick(date) {
-                   if (!this.isSelectable(date)) return;
-
-                   this.showDatepicker = false;
-
-                   if (this.selectedYear === this.calYear &&
-                       this.selectedMonth === this.calMonth &&
-                       this.selectedDate === date) return;
-
-                   this.selectedYear = this.calYear;
-                   this.selectedMonth = this.calMonth;
-                   this.selectedDate = date;
-
-                   this.$dispatch('widget-update');
-               },
-
-               incrementCalDisplay(incr) {
-                   newMonthIndexedZero = this.calMonth - 1 + incr;
-                   newYear = this.calYear + Math.floor(newMonthIndexedZero / 12);
-                   newMonthIndexedZero = ((newMonthIndexedZero % 12) + 12) % 12; // get true modulo from Javascript's remainder operator
-
-                   if (this.apf * newYear < this. apf * this.TODAY.getFullYear()) return;
-                   if (newYear === this.TODAY.getFullYear() &&
-                       this.apf * newMonthIndexedZero < this.apf * this.TODAY.getMonth()) return;
-
-                   this.calYear = newYear;
-                   this.calMonth = newMonthIndexedZero + 1;
-
-                   this.numDaysInMonth = new Date(this.calYear, this.calMonth, 0).getDate();
-                   this.NumSpacesBeforeDays = new Date(this.calYear, this.calMonth - 1).getDay();
-               }
-
-           }
-       }
-      </script>
-  </div>
+        {# Grid of dates #}
+        <div class="grid grid-cols-7 grid-flow-row -mx-1">
+            <template x-for="day in DAYS">
+                <div class="mb-1">
+                    <div x-text="day" class="text-gray-800 font-medium text-center text-xs"></div>
+                </div>
+            </template>
+            <template x-for="i in NumSpacesBeforeDays">
+                <div ></div>
+            </template>
+            <template x-for="date in numDaysInMonth">
+                <div class="px-1 mb-1">
+                    <div
+                        @click="onDateClick(date)"
+                        x-text="date"
+                        class="text-center text-sm leading-loose transition ease-in-out duration-100"
+                        :class="{'text-gray-400': !isSelectable(date),
+                                'bg-highlight-item-light cursor-pointer': isSelected(date),
+                                'clickable-svg': isSelectable(date)&&(!isSelected(date)),
+                                'font-bold': isToday(date)}"
+                    ></div>
+                </div>
+            </template>
+        </div>
+    </div>
 </div>
+<script src='{% static "findshows/js/date_picker_data.js" %}'></script>

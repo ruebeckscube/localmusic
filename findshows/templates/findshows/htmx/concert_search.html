@@ -1,33 +1,60 @@
-<div class="w-full flex max-sidebar-bp:flex-col"
-     x-data="{'show_end_date': {{ search_form.is_date_range.value|lower }} }"
+<div class="w-full flex max-sidebar-bp:flex-col relative"
+     x-data="{'show_end_date': {{ search_form.is_date_range.value|lower }},
+              'show_search_form': true}"
      hx-get="{% url 'findshows:concert_search' %}"
      hx-trigger="widget-update from:body delay:.1s"
      hx-include="#search-form"
      hx-target="this"
      hx-swap="outerHTML"
     >
-    {# Search form #}
-    <form method="GET" action="" id="search-form" class="flex sidebar-bp:flex-col sidebar-bp:w-1/5 jusify-between">
-        <div class="flex flex-col fieldgroup min-w-52">
-            {{ search_form.date.as_field_group }}
-            <div x-show="show_end_date">
-                {{ search_form.end_date.as_field_group }}
+    <button type="button"
+            class="btn sm:hidden w-1/2 mx-auto"
+            @click="show_search_form = true;"
+    >
+        Show search
+    </button>
+    {# Overlay #}
+    <div class="sm:!block sidebar-bp:w-1/5 max-sm:mx-auto max-sm:bg-gray-600/40 max-sm:w-full max-sm:h-full"
+         x-show="show_search_form"
+         :class="{ 'max-sm:fixed max-sm:inset-0 max-sm:z-10 max-sm:flex max-sm:items-center': show_search_form }"
+         @keydown.enter.prevent>
+
+        {# Search form #}
+        <form method="GET" action="" id="search-form"
+              class="flex sidebar-bp:flex-col z-20 bg-background relative
+                      max-sm:flex-col max-sm:shadow-xl max-sm:w-2/3 max-sm:mx-auto max-sm:p-5 max-sm:border-2 border-highlight-item"
+              :class="show_search_form ? '' : 'max-sm:hidden'"
+              @click.away="show_search_form = false"
+              @keydown.escape.window="show_search_form = false"
+        >
+            <div class="clickable-svg absolute top-1 right-1 z-50 sm:hidden"
+                 @click="show_search_form = false">
+                <svg class="fill-current" width="24" height="24" viewBox="0 0 18 18">
+                    <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
+                </svg>
             </div>
-            <div x-show="!show_end_date" @click="show_end_date=true" class="link text-xs">
-                Date range
+
+            <div class="flex flex-col fieldgroup min-w-44">
+                {{ search_form.date.as_field_group }}
+                <div x-show="show_end_date">
+                    {{ search_form.end_date.as_field_group }}
+                </div>
+                <div x-show="!show_end_date" @click="show_end_date=true" class="link text-xs">
+                    Date range
+                </div>
+                <div x-show="show_end_date" @click="show_end_date=false;$dispatch('widget-update')" class="link text-xs">
+                    Hide date range
+                </div>
+                <input type='hidden' :value='show_end_date' name='is_date_range'>
             </div>
-            <div x-show="show_end_date" @click="show_end_date=false;$dispatch('widget-update')" class="link text-xs">
-                Hide date range
+            <div class="flex flex-col fieldgroup">
+                {{ search_form.musicbrainz_artists.as_field_group }}
             </div>
-            <input type='hidden' :value='show_end_date' name='is_date_range'>
-        </div>
-        <div class="flex flex-col fieldgroup">
-            {{ search_form.musicbrainz_artists.as_field_group }}
-        </div>
-        <div class="flex flex-col fieldgroup min-w-48">
-            {{ search_form.concert_tags.as_field_group }}
-        </div>
-    </form>
+            <div class="flex flex-col fieldgroup min-w-48">
+                {{ search_form.concert_tags.as_field_group }}
+            </div>
+        </form>
+    </div>
 
     {# Search results #}
     {% if not initial %}

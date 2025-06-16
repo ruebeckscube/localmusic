@@ -72,7 +72,7 @@ class UserProfileForm(forms.ModelForm):
     class Meta:
         model=UserProfile
         fields=("favorite_musicbrainz_artists", "weekly_email", "preferred_concert_tags")
-        widgets={"favorite_musicbrainz_artists": MusicBrainzArtistSearchWidget}
+        widgets={"favorite_musicbrainz_artists": MusicBrainzArtistSearchWidget(max_artists=settings.MAX_USER_ARTISTS)}
 
 
 def validate_image(image):
@@ -282,8 +282,7 @@ class RequestArtistForm(forms.ModelForm):
     class Meta:
         model=Artist
         fields=("name", "socials_links")
-        widgets={"similar_musicbrainz_artists": MusicBrainzArtistSearchWidget,
-                 "socials_links": SocialsLinksWidget(num_links=1)}
+        widgets={"socials_links": SocialsLinksWidget(num_links=1)}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -310,7 +309,7 @@ class ShowFinderForm(forms.Form):
     is_date_range = forms.BooleanField(required=False)
     musicbrainz_artists = forms.ModelMultipleChoiceField(
         queryset=MusicBrainzArtist.objects.all(),
-        widget=MusicBrainzArtistSearchWidget,
+        widget=MusicBrainzArtistSearchWidget(max_artists=settings.MAX_USER_ARTISTS),
         required=False,
         label="Sounds like",
         help_text="""We'll recommend some concerts based on the artists you
@@ -318,7 +317,9 @@ class ShowFinderForm(forms.Form):
     )
     concert_tags = forms.MultipleChoiceField(
         choices=ConcertTags,
-        widget=forms.CheckboxSelectMultiple(attrs={"@click": "$dispatch('widget-update')"}),
+        widget=forms.CheckboxSelectMultiple(attrs={
+            "@click": "$dispatch('widget-update')",
+        }),
         required=False,
         label="Categories",
         help_text="Leave blank to include all show categories.",
