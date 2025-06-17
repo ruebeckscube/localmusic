@@ -98,11 +98,16 @@
                     {{ concert.ticket_description  }}
                 </div>
             </div>
+            <div class="flex flex-col">
             {% if concert.description %}
                 <div>
                     {{ concert.description|default:""|upper }}
                 </div>
             {% endif %}
+                <div class="text-xs text-gray-600">
+                    {{  concert.get_tags_display }}
+                </div>
+            </div>
         </div>
         <!-- end info -->
     </div>
