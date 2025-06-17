@@ -57,7 +57,7 @@
   }
 
   .btn {
-    @apply shadow-lg bg-clickable hover:bg-clickable-h cursor-pointer text-white m-0.5 p-1 w-fit h-fit;
+    @apply shadow-lg bg-clickable hover:bg-clickable-h cursor-pointer text-white m-0.5 p-2 w-fit h-fit text-center;
   }
 
   .textinput {
