@@ -7,9 +7,14 @@
   --color-clickable: #9719ea;
   --color-clickable-h: #ea19af;
 
-  --color-highlight-item: #187795;
+  /* --color-highlight-item: #187795; */
+  /* --color-highlight-item-light: #b5d2d2; */
+  /* --color-highlight-text: #187795; */
+
+  --color-highlight-item: #0b607a;
   --color-highlight-item-light: #b5d2d2;
-  --color-highlight-text: #000000;
+  --color-highlight-text: #0b607a;
+
 
   --font-body: "LeagueMono";
 
@@ -39,7 +44,7 @@
     @apply text-red-700;
   }
 
-  label.required:before{
+  label.required:before {
     content:"*";
     @apply text-highlight-item;
   }
@@ -76,7 +81,7 @@
   }
 
   .clickable-svg {
-    @apply cursor-pointer hover:bg-sub-background text-highlight-item hover:text-clickable-h;
+    @apply cursor-pointer hover:bg-sub-background text-clickable hover:text-clickable-h;
   }
 
 }

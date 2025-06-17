@@ -59,9 +59,9 @@
     --color-sub-background: RGBA(180, 160, 229, .2);
     --color-clickable: #9719ea;
     --color-clickable-h: #ea19af;
-    --color-highlight-item: #187795;
+    --color-highlight-item: #0b607a;
     --color-highlight-item-light: #b5d2d2;
-    --color-highlight-text: #000000;
+    --color-highlight-text: #0b607a;
     --font-body: "LeagueMono";
   }
 }
@@ -433,6 +433,9 @@
   .min-w-48 {
     min-width: calc(var(--spacing) * 48);
   }
+  .min-w-60 {
+    min-width: calc(var(--spacing) * 60);
+  }
   .flex-none {
     flex: none;
   }
@@ -711,6 +714,9 @@
   .line-through {
     text-decoration-line: line-through;
   }
+  .accent-clickable {
+    accent-color: var(--color-clickable);
+  }
   .shadow-lg {
     --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 4px 6px -4px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -863,6 +869,11 @@
   .max-sm\:w-full {
     @media (width < 40rem) {
       width: 100%;
+    }
+  }
+  .max-sm\:min-w-80 {
+    @media (width < 40rem) {
+      min-width: calc(var(--spacing) * 80);
     }
   }
   .max-sm\:flex-col {
@@ -1170,7 +1181,7 @@
   }
   .clickable-svg {
     cursor: pointer;
-    color: var(--color-highlight-item);
+    color: var(--color-clickable);
     &:hover {
       @media (hover: hover) {
         background-color: var(--color-sub-background);

@@ -8,7 +8,7 @@
      hx-swap="outerHTML"
     >
     <button type="button"
-            class="btn sm:hidden w-1/2 mx-auto"
+            class="btn sm:hidden w-1/2 min-w-60 mx-auto my-4"
             @click="show_search_form = true;"
     >
         Show search
@@ -21,7 +21,7 @@
 
         {# Search form #}
         <form method="GET" action="" id="search-form"
-              class="flex sidebar-bp:flex-col z-20 bg-background relative
+              class="flex sidebar-bp:flex-col z-20 bg-background relative max-sm:min-w-80
                       max-sm:flex-col max-sm:shadow-xl max-sm:w-2/3 max-sm:mx-auto max-sm:p-5 max-sm:border-2 border-highlight-item"
               :class="show_search_form ? '' : 'max-sm:hidden'"
               @click.away="show_search_form = false"

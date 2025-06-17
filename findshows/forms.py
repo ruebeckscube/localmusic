@@ -319,6 +319,7 @@ class ShowFinderForm(forms.Form):
         choices=ConcertTags,
         widget=forms.CheckboxSelectMultiple(attrs={
             "@click": "$dispatch('widget-update')",
+            "class": "accent-clickable",
         }),
         required=False,
         label="Categories",
