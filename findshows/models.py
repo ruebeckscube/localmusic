@@ -161,7 +161,7 @@ class Artist(CreationTrackingMixin):
     }
 
     name=models.CharField(verbose_name="Artist Name", max_length=60)
-    profile_picture=models.ImageField(null=True, help_text=f"{IMAGE_HELP_TEXT}  Profile pictures will be cropped to a circle.")
+    profile_picture=models.ImageField(null=True, help_text=f"{IMAGE_HELP_TEXT}")
     bio=models.TextField(null=True, max_length=800)
     local=models.BooleanField(help_text="Check if this is a local artist. It will give them permission to list shows and invite other artists.")
 

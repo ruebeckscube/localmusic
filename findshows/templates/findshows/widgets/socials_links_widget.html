@@ -1,15 +1,12 @@
-<div id = "socials-links-widget"
->
-    <table>
+<table class="mt-2">
+    <tr>
+        <th class="font-light text-lg"> Display name </th>
+        <th class="font-light text-lg w-full"> URL </th>
+    </tr>
+    {% for display_name, url in widget.socials_links %} {# num_links is included in data prep (fill w empty strings) #}
         <tr>
-            <th> Display name </th>
-            <th> URL </th>
+            <td> <input class="textinput" name="{{widget.name}}_display_name" type="text" value="{{ display_name }}"> </td>
+            <td> <input class="textinput w-full" name="{{widget.name}}_url" type="text" value="{{ url }}"> </td>
         </tr>
-        {% for display_name, url in widget.socials_links %} {# num_links is included in data prep (fill w empty strings) #}
-        <tr>
-            <td> <input name="{{widget.name}}_display_name" type="text" value="{{ display_name }}"> </td>
-            <td> <input name="{{widget.name}}_url" type="text" value="{{ url }}"> </td>
-        </tr>
-        {% endfor %}
-    </table>
-</div>
+    {% endfor %}
+</table>

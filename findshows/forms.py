@@ -9,13 +9,12 @@ from django.views.generic.dates import timezone_today
 from django.conf import settings
 
 from findshows.models import Artist, Concert, ConcertTags, LabeledURLsValidator, MusicBrainzArtist, UserProfile, Venue
-from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
+from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, ImageInput, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
 
 
 def add_default_styling_to_fields(fields):
     field_type_to_css_class = {
         forms.CharField: 'textinput',
-        forms.ImageField: 'btn',
     }
     for field in fields:
         field.widget.attrs.update({
@@ -86,9 +85,13 @@ class ArtistEditForm(DefaultStylingModelForm):
     class Meta:
         model=Artist
         fields=("name", "profile_picture", "bio", "youtube_links", "socials_links", "listen_links", "similar_musicbrainz_artists")
-        widgets={"similar_musicbrainz_artists": MusicBrainzArtistSearchWidget,
-                 "socials_links": SocialsLinksWidget}
-
+        widgets={
+            "similar_musicbrainz_artists": MusicBrainzArtistSearchWidget,
+            "socials_links": SocialsLinksWidget,
+            "youtube_links": forms.Textarea(attrs={'rows': 5}),
+            "listen_links": forms.Textarea(attrs={'rows': 7}),
+            "profile_picture": ImageInput(),
+        }
 
     def clean_socials_links(self):
         socials_links = self.cleaned_data['socials_links']

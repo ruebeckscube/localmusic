@@ -3,7 +3,7 @@ The user json has two properties, 'email' and 'type'.
 Valid values for 'type' are defined in findshows.widgets.ArtistAccessWidget.Types
 {% endcomment %}
 
-<div class="bg-gray-100 flex flex-col items-center justify-center"
+<div class="flex flex-col items-center justify-center"
      x-data="artist_access_data()"
      x-init="artist_access_init({{widget.value}})" {# don't need |escapejs because it's already encoded as JSON? #}
      x-cloak>
@@ -12,33 +12,34 @@ Valid values for 'type' are defined in findshows.widgets.ArtistAccessWidget.Type
 
     <div class="flex flex-col w-full p-4 h-full">
         <div> Add user by email: </div>
-        <div>
-            <input x-model="new_email" >
-            <button type="button" @click="add_user()"> Add </button>
+        <div class="flex">
+            <input type="text" class="w-full textinput" x-model="new_email" >
+            <button class="btn px-4" type="button" @click="add_user()"> Add </button>
         </div>
-        <div> Users with access: </div>
+        <div class="pt-4"> Users with access: </div>
         <ol class="w-full">
             <template x-for="(user, idx) in users" :key="idx">
                 <li class="flex w-full justify-between my-2">
-                    <div :class="is_removed(user) ? 'line-through' : ''" x-text="user.email"> </div>
-                    <div class="flex justify-around">
+                    <div class="my-auto"
+                         :class="is_removed(user) ? 'line-through' : ''" x-text="user.email"> </div>
+                    <div class="flex justify-around flex-wrap">
                         <template x-if="!is_removed(user)">
-                            <button type="button" @click="remove_user(idx)">
+                            <button class="btn px-1" type="button" @click="remove_user(idx)">
                                 Remove
                             </button>
                         </template>
                         <template x-if="is_removed(user)">
-                            <button type="button" @click="restore_user(idx)">
+                            <button class="btn px-1" type="button" @click="restore_user(idx)">
                                 Restore
                             </button>
                         </template>
                         <template x-if="is_unlinked(user)">
-                            <button type="button" @click="resend_user(idx)">
+                            <button class="btn px-1 sm:min-w-40" type="button" @click="resend_user(idx)">
                                 Re-send invite
                             </button>
                         </template>
                         <template x-if="is_resend(user)">
-                            <button type="button" @click="unresend_user(idx)">
+                            <button class="btn px-1 min-w-40" type="button" @click="unresend_user(idx)">
                                 Undo re-send
                             </button>
                         </template>

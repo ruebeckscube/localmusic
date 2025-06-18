@@ -61,7 +61,7 @@
   }
 
   .textinput {
-    @apply  m-0.5 border bg-white;
+    @apply  m-0.5 p-1 border bg-white resize-none;
   }
 
   .fieldgroup {

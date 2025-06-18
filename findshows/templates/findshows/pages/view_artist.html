@@ -14,7 +14,7 @@
 
                 <div class="flex flex-row w-fit mx-auto self-end">
                     {% for link in artist.socials_links %}
-                        <a class="link mx-4 my-3 md:my-8" href="{{link.1}}" target="_blank">{{link.0}}</a>
+                        <a class="link text-lg mx-4 my-3 md:my-8" href="{{link.1}}" target="_blank">{{link.0}}</a>
                     {% endfor %}
                 </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="md:w-2/5">
             <div class="bg-sub-background m-2">
                 {% if artist.profile_picture %}
-                    <img class="w-full object-contain"
+                    <img class="w-full max-h-[30em] object-contain"
                          src="{{ artist.profile_picture.url }}">
                 {% endif %}
             </div>

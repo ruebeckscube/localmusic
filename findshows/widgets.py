@@ -1,5 +1,6 @@
 from enum import Enum
 import json
+from django.forms import ClearableFileInput, FileInput
 from django.forms.fields import DateField, TimeField
 
 from django.forms.widgets import Input
@@ -129,3 +130,7 @@ class ArtistAccessWidget(Input):
         UNLINKED = 'UNLINKED'   # an ArtistLinkingInfo exists for this artist + email
         REMOVED = 'REMOVED'     # this artist should be removed from user with email on submit
         RESEND = 'RESEND'       # the invite for this artist should be re-sent to the email
+
+
+class ImageInput(ClearableFileInput):
+    template_name="findshows/widgets/image_widget.html"

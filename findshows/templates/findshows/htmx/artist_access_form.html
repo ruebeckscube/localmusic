@@ -2,9 +2,14 @@
     {{ partial_errors }}
 {% endif %}
 
-{{ artist_access_form }}
+{{ artist_access_form.non_field_errors }}
 
-<div>
+<div class="fieldgroup">
+    {{ artist_access_form.users.errors }}
+    {{ artist_access_form.users }}
+</div>
+
+<div class="helptext my-3">
     Changes are not saved until you press submit. Make sure you trust anyone
     that you're giving access to; they can post shows from this artist or even
     remove you from accessing it!

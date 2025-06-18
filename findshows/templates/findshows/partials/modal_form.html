@@ -29,12 +29,15 @@ And in your alpine data definitions:
 modal based on https://alpinetoolbox.com/examples/modal
 {% endcomment %}
 
-<div x-data="modal_form_data()"
+{% load static %}
+
+<div class="w-full"
+     x-data="modal_form_data()"
      @keydown.escape.window="close_modal()"
      x-cloak
 >
 
-    <button type="button" class="bg-transparent border border-gray-500 hover:border-indigo-500 text-gray-500 hover:text-indigo-500 font-bold py-2 px-4 rounded-full" @click="open_modal()">
+    <button type="button" class="btn w-full" @click="open_modal()">
         {{ title_text }}
     </button>
     <div x-show="show_success">
@@ -42,12 +45,12 @@ modal based on https://alpinetoolbox.com/examples/modal
     </div>
 
     <!--Overlay-->
-    <div class="overflow-auto" style="background-color: rgba(0,0,0,0.5)"
+    <div class="overflow-auto bg-gray-600/40" style="background-color: rgba(0,0,0,0.5)"
          x-show="show_modal"
          @keydown.enter.prevent
-         :class="{ 'absolute inset-0 z-10 flex items-center justify-center': show_modal }">
+         :class="{ 'fixed inset-0 z-10 flex items-center justify-center': show_modal }">
         <!--Dialog-->
-        <div class="modalform bg-white w-11/12 md:max-w-md mx-auto rounded-sm shadow-lg py-4 text-left px-6"
+        <div class="modalform bg-background w-11/12 md:max-w-xl mx-auto shadow-lg py-4 text-left px-6"
              x-show="show_modal"
              x-trap.inert.noscroll="show_modal"
              @click.away="close_modal()"
@@ -64,14 +67,14 @@ modal based on https://alpinetoolbox.com/examples/modal
             </div>
 
             <!-- content -->
-            <div class= "modal-form flex flex-col">
+            <div class="modal-form flex flex-col">
                 {% include form_html %}
             </div>
 
             <!--Footer-->
             <div class="flex justify-end pt-2">
-                <button type="button" class="px-4  p-3 bg-transparent rounded-lg text-indigo-500 hover:bg-gray-100 hover:text-indigo-400" @click="close_modal()">Close</button>
-                <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
+                <button type="button" class="btn" @click="close_modal()">Close</button>
+                <button type="button" class="btn"
                         {% if htmx_param %}
                             hx-post="{% url htmx_url htmx_param %}"
                         {% else %}
@@ -90,25 +93,4 @@ modal based on https://alpinetoolbox.com/examples/modal
 
 </div>
 
-<script>
- function modal_form_data() {
-     return {
-         show_modal: false,
-         show_success: false,
-
-         open_modal() {
-             this.show_modal = true;
-             this.show_success = false;
-         },
-
-         close_modal() {
-             this.show_modal = false;
-         },
-
-         on_successful_create() {
-             this.show_success = true;
-             this.close_modal();
-         }
-     }
- }
-</script>
+<script src='{% static "findshows/js/modal_form_data.js" %}'></script>
