@@ -3,18 +3,18 @@
 {% block content %}
     {% if is_local_artist %}
         <div>
-            <a href="{% url 'findshows:create_concert' %}"> Create new show listing</a>
+            <a class="btn block mx-auto w-1/3 min-w-72" href="{% url 'findshows:create_concert' %}"> Create new show listing</a>
         </div>
     {% endif %}
     <div class="flex flex-col w-full align-middle">
         {% for concert in concerts %}
-            <div class="flex">
-                <div class="w-5/6">
+            <div class="flex max-sm:flex-col bg-highlight-item-light/60 m-2">
+                <div class="w-full">
                     {% include "findshows/partials/concert_card.html" %}
                 </div>
                 {% if concert.created_by == userprofile %}
-                    <div class="w-1/6 grid content-center">
-                        <a href="{% url 'findshows:edit_concert' concert.pk %}"> Edit </a>
+                    <div class="w-60 flex sm:flex-col justify-center items-center mx-auto my-2">
+                        <a class="btn" href="{% url 'findshows:edit_concert' concert.pk %}"> Edit </a>
                         {% include "findshows/htmx/cancel_concert_button.html" %}
                     </div>
                 {% endif %}

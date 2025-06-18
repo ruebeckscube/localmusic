@@ -7,7 +7,7 @@
     <form type="post">
         {% csrf_token %}
         {% if concert.cancelled %}
-            <input class=""
+            <input class="btn"
                    type="button"
                    name="uncancel-concert"
                    hx-post="{% url 'findshows:uncancel_concert' concert.pk %}"
@@ -17,7 +17,7 @@
                    hx-swap="outerHTML"
             >
         {% else %}
-            <input class=""
+            <input class="btn"
                    type="button"
                    name="cancel-concert"
                    hx-post="{% url 'findshows:cancel_concert' concert.pk %}"
