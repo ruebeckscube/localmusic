@@ -1,29 +1,31 @@
 {% extends "localmusic/base.html" %}
 
 {% block content %}
-
+<div class="p-3">
     <h1> User Settings </h1>
 
     <form method="post" action="{% url 'findshows:user_settings' %}">
         {% csrf_token %}
 
-        {% for field in form %}
-            {{ field.as_field_group }}
-        {% endfor %}
-
-        <div>
-            <input type="submit" value="save">
+        <div class="flex flex-col items-center max-w-2xl">
+            {% for field in form %}
+                <div class="fieldgroup w-full">
+                    {{ field.as_field_group }}
+                </div>
+            {% endfor %}
+            <input class="btn" type="submit" value="Save">
+            <div class="w-80 mx-auto py-8">
+                {% if is_local_artist_account %}
+                    {% with title_text="Invite Artist" success_text="Invite sent successfully!" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
+                        {% include "findshows/partials/modal_form.html" %}
+                    {% endwith %}
+                {% else %}
+                    {% with title_text="Request local artist access" success_text="Request submitted!" form_html="findshows/htmx/request_artist_form.html" htmx_url="findshows:request_artist_access" %}
+                        {% include "findshows/partials/modal_form.html" %}
+                    {% endwith %}
+                {% endif %}
+            </div>
         </div>
-
-        {% if is_local_artist_account %}
-            {% with title_text="Invite Artist" success_text="Invite sent successfully!" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
-                {% include "findshows/partials/modal_form.html" %}
-            {% endwith %}
-        {% else %}
-            {% with title_text="Request local artist access" success_text="Request submitted!" form_html="findshows/htmx/request_artist_form.html" htmx_url="findshows:request_artist_access" %}
-                {% include "findshows/partials/modal_form.html" %}
-            {% endwith %}
-        {% endif %}
-
     </form>
+</div>
 {% endblock %}

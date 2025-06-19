@@ -1,5 +1,5 @@
-<div class="flex h-full flex-col justify-around text-center text-gray-800">
-    {% if user.email_is_verified %}
+<div class="text-center m-auto fieldgroup">
+    {% if not user.userprofile.email_is_verified %}
         You must verify your email before requesting artist access.
     {% else %}
         You've already submitted an artist request; please wait for a response from

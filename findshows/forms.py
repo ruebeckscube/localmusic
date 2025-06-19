@@ -287,7 +287,7 @@ class TempArtistForm(DefaultStylingModelForm):
         return artist
 
 
-class RequestArtistForm(forms.ModelForm):
+class RequestArtistForm(DefaultStylingModelForm):
     prefix = "request_artist"
     use_required_attribute = False
 
@@ -358,7 +358,7 @@ class ShowFinderForm(forms.Form):
         return cleaned_data
 
 
-class ContactForm(forms.Form):
+class ContactForm(DefaultStylingForm):
     class Types(models.TextChoices):
         REPORT_BUG = "bug", "Bug report"
         OTHER = "oth", "Other"

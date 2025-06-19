@@ -2,12 +2,15 @@
 
 {% block content %}
 
+<div class="p-3">
     {% if error %}
         <h1> Error verifying email </h1>
-        <p>{{ error }}</p>
+        <p class="text-center m-auto fieldgroup max-w-4xl">{{ error }}</p>
     {% else %}
         <h1> Successfully verified email </h1>
-        <p> Return <a href="{% url 'findshows:home' %}">home</a></p>
+        <p class="text-center m-auto fieldgroup max-w-4xl">
+            Return <a class="link" href="{% url 'findshows:home' %}">home</a>
+        </p>
     {% endif %}
-
+</div>
 {% endblock %}

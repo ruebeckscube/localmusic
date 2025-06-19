@@ -4,4 +4,8 @@
     media handle where we can reach out to verify your identity.
 </p>
 
-{{ request_artist_form }}
+{% for field in request_artist_form %}
+    <div class="fieldgroup flex flex-col">
+        {{ field.as_field_group }}
+    </div>
+{% endfor %}

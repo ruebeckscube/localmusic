@@ -91,7 +91,7 @@
   }
 
   .select-wrapper {
-    @apply w-full border bg-white grid items-center pr-2;
+    @apply w-full border bg-white grid items-center pr-2 z-0;
     grid-template-areas: "select";
   }
 

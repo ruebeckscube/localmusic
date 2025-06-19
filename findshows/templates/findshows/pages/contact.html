@@ -10,16 +10,16 @@
 
     <form method="post" action="{% url 'findshows:contact' %}">
         {% csrf_token %}
-        <div>
-            {{  form.non_field_errors }}
-        </div>
-        <div class="flex flex-col">
+        <div class="flex flex-col max-w-2xl">
+            <div class="errorlist">
+                {{  form.non_field_errors }}
+            </div>
             {% for field in form %}
-                {{ field.as_field_group }}
+                <div class="fieldgroup flex flex-col">
+                    {{ field.as_field_group }}
+                </div>
             {% endfor %}
-        </div>
-        <div>
-            <input type="submit" value="send">
+            <input class="btn w-30 ml-auto mr-6" type="submit" value="Send">
         </div>
     </form>
 

@@ -1,14 +1,6 @@
 {% for artist in artists %}
-    <li class="odd:bg-white even:bg-slate-50 hover:bg-slate-200">
-        <button class="w-full text-left"
-                type="button"
-                @click="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}')"
-        >
-            <div class="flex">
-                <div>
-                    {{artist.name}}
-                </div>
-            </div>
-        </button>
+    <li class="menuitem hover:text-clickable-h"
+        @click="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}')">
+        {{artist.name}}
     </li>
 {% endfor %}
