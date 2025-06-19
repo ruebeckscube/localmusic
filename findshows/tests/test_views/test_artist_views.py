@@ -608,7 +608,7 @@ class ManageArtistAccessTests(TestCaseHelpers):
         self.create_artist_linking_info('temp@em.ail', artist)
 
         response = self.client.post(reverse("findshows:manage_artist_access", args=(artist.pk,))) # No post populates initial
-        initial_data = response.context['form'].fields['users'].initial
+        initial_data = response.context['artist_access_form'].fields['users'].initial
 
         self.assertIn({'email': 'temp@em.ail', 'type': ArtistAccessWidget.Types.UNLINKED.value},
                       initial_data)
@@ -627,7 +627,7 @@ class ManageArtistAccessTests(TestCaseHelpers):
                              user_json('another@em.ail', ArtistAccessWidget.Types.NEW.value),
                          ]))
         self.assert_records_created(ArtistLinkingInfo, 0)
-        form = response.context['form']
+        form = response.context['artist_access_form']
         errors = form.non_field_errors()
         self.assertEqual(len(errors), 1)
         self.assertIn("notanemail", errors[0])
