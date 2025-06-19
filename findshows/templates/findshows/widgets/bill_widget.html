@@ -1,20 +1,23 @@
-<div class="bg-gray-100 flex flex-col items-center justify-center"
+{% load static %}
+
+<div class="flex flex-col items-center justify-center"
      x-data="bill_data()"
      x-init="bill_init({{widget.value}})" {# don't need |escapejs because it's already encoded as JSON? #}
      x-cloak>
 
-    <div class="flex w-full p-4 h-full items-center">
+    <div class="flex w-full p-2 h-full items-center">
 
         <input type="hidden" name="{{widget.name}}" :value="JSON.stringify(bill_order)">
 
         <ol id="bill-editor" class="w-full">
             <template x-for="(artist, idx) in bill_order" :key="idx">
-                <li class="flex w-full justify-between my-2"
+                <li class="flex w-full max-w-lg justify-between my-2"
                     x-init="$nextTick(() => htmx.process($el))"> {# necessary for any HTMX in an x-for #}
-                    <div @focusin="open_dropdown(artist)"
+                    <div class="w-full"
+                         @focusin="open_dropdown(artist)"
                          @click.outside="close_dropdown(artist)"
                     >
-                        <input class="" type="search"
+                        <input class="textinput w-full" type="search"
                                id="artist-search-field"
                                name="artist-search" placeholder="Select an artist..."
                                x-model="artist.search_text"
@@ -32,20 +35,28 @@
                         </ul>
                     </div>
 
-                    <div class="flex justify-around">
-                        <button type="button" @click="move_artist(idx, -1)">
-                            Up
-                        </button>
-                        <button type="button" @click="move_artist(idx, 1)">
-                            Down
-                        </button>
-                        <button type="button" @click="remove_artist(idx)">
-                            Remove
-                        </button>
+                    <div class="flex justify-around w-21">
+                        {# Up arrow #}
+                        <svg class="clickable-svg fill-current w-7"
+                             viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"
+                             @click="move_artist(idx, -1)">
+                            <path d="M17.504 26.025l.001-14.287 6.366 6.367L26 15.979 15.997 5.975 6 15.971 8.129 18.1l6.366-6.368v14.291z"/>
+                        </svg>
+                        {# Down arrow #}
+                        <svg class="clickable-svg fill-current w-7"
+                             viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"
+                             @click="move_artist(idx, 1)">
+                            <path d="M14.496 5.975l-.001 14.287-6.366-6.367L6 16.021l10.003 10.004L26 16.029 23.871 13.9l-6.366 6.368V5.977z"/></svg>
+                        {# Remove button #}
+                        <svg class="clickable-svg fill-current w-7 stroke-3"
+                             viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"
+                             @click="remove_artist(idx)">
+                            <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
+                        </svg>
                     </div>
                 </li>
             </template>
-            <li @click="add_artist()"> Add set</li>
+            <li class="btn" @click="add_artist()"> Add set</li>
         </ol>
     </div>
 
@@ -57,78 +68,4 @@
 
 </div>
 
-<script>
- function bill_data() {
-     return {
-         show_search: false,
-         search_text: '',
-         bill_order: [],
-
-         bill_init(initial_widget_val) {
-             this.bill_order = initial_widget_val;
-             for (artist of this.bill_order) {
-                 artist.show_search = false;
-                 artist.search_text = artist.name;
-             }
-             if (!this.bill_order.length) this.add_artist();
-         },
-
-         open_dropdown(artist) {
-             if (artist.show_search) return;
-             artist.show_search = true;
-         },
-
-         close_dropdown(artist, focusAfter) {
-             if (! artist.show_search) return;
-             artist.show_search = false;
-             if (artist.name) {
-                 artist.search_text = artist.name;
-             }
-             focusAfter && focusAfter.focus();
-         },
-
-         select_artist(idx, selected_name, selected_id) {
-             this.bill_order[idx].search_text = selected_name;
-             this.bill_order[idx].name = selected_name;
-             this.bill_order[idx].id = selected_id;
-         },
-
-         move_artist(idx, incr) {
-             if (idx + incr > this.bill_order.length - 1 || idx + incr < 0) return;
-             [this.bill_order[idx], this.bill_order[idx + incr]] = [this.bill_order[idx + incr], this.bill_order[idx]];
-         },
-
-         artist_from_args(name, id) {
-             return {
-                 'search_text': name,
-                 'name': name,
-                 'id': id,
-                 'show_search': false
-             }
-         },
-
-         add_artist(artist) {
-             artist = artist || this.artist_from_args('','')
-             this.bill_order.push(artist);
-         },
-
-         remove_artist(idx) {
-             this.bill_order.splice(idx, 1);
-         },
-
-         on_temp_artist_create(event) {
-             new_artist = this.artist_from_args(event.detail.created_record_name,
-                                                event.detail.created_record_id)
-
-             empty_idx = this.bill_order.findIndex(artist => artist.id === "");
-             if (empty_idx === -1) {
-                 this.add_artist(new_artist);
-             }
-             else {
-                 this.bill_order[empty_idx] = new_artist
-             }
-
-         },
-     }
- }
-</script>
+<script src='{% static "findshows/js/bill_data.js" %}'></script>

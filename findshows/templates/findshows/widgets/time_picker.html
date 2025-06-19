@@ -1,16 +1,16 @@
-<div class="flex align-middle">
+<div class="flex items-center justify-center">
     <input name="{{widget.name}}_hour"
            value="{{hour}}"
            x-mask="99" placeholder="07"
            {% if widget.required %} required {% endif %}
-           class="w-5 text-right"
+           class="textinput w-8 text-right"
     >
     :
     <input name="{{widget.name}}_minutes"
            value="{{minutes}}"
            x-mask="99" placeholder="00"
            {% if widget.required %} required {% endif %}
-           class="w-5 text-right"
+           class="textinput w-8 text-right"
     >
     <div class="flex rounded-xl bg-gray-200 ml-2">
         <div>
@@ -19,7 +19,9 @@
                    {% if ampm == 'am' %} checked {% endif %}
                    class="peer hidden" />
             <label for="{{widget.name}}_am"
-                   class="block cursor-pointer select-none p-1 rounded-xl text-xs text-center peer-checked:bg-blue-500 peer-checked:font-bold peer-checked:text-white">
+                   class="block cursor-pointer select-none p-1 text-xs text-center
+                          hover:text-clickable-h
+                          peer-checked:bg-clickable peer-checked:font-bold peer-checked:text-white">
                 AM</label>
             </div>
         <div>
@@ -28,7 +30,9 @@
                    {% if ampm == 'pm' or not ampm %} checked {% endif %}
                    class="peer hidden" />
             <label for="{{widget.name}}_pm"
-                   class="block cursor-pointer select-none p-1 rounded-xl text-xs text-center peer-checked:bg-blue-500 peer-checked:font-bold peer-checked:text-white">
+                   class="block cursor-pointer select-none p-1 text-xs text-center
+                          hover:text-clickable-h
+                          peer-checked:bg-clickable peer-checked:font-bold peer-checked:text-white">
                 PM</label>
         </div>
     </div>

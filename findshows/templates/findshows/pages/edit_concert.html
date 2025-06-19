@@ -11,54 +11,62 @@
     >
         {% csrf_token %}
         <div>
-            <div>
-                {{ form.non_field_errors }}
-            </div>
-            <div class="flex flex-row flex-none w-full h-full">
-                <div class="w-1/2 flex flex-col">
-                    <div class= "flex flex-col">
-                        {{ form.date.as_field_group }}
-                    </div>
-                    <div class= "flex flex-col">
-                        {{ form.doors_time.as_field_group }}
-                    </div>
-                    <div class= "flex flex-col">
-                        {{ form.start_time.as_field_group }}
-                    </div>
-                    <div class= "flex flex-col">
-                        {{ form.end_time.as_field_group }}
-                    </div>
-                    <div class= "flex flex-col">
+            {{ form.non_field_errors }}
+        </div>
+        <div class="flex max-md:flex-col w-full h-full">
+            <div class="md:w-1/2 flex flex-col">
+                <div class="flex flex-col fieldgroup">
+                    {{ form.poster.as_field_group }}
+                </div>
+                <div class="flex flex-col fieldgroup">
+                    {{ form.bill.as_field_group }}
+                </div>
+                <div class="flex max-xl:flex-col">
+                    <div class="flex flex-col fieldgroup xl:w-3/4">
                         {{ form.venue.as_field_group }}
                     </div>
-                    <div class= "flex flex-col">
-                        {{ form.ages.as_field_group }}
-                    </div>
-                    <div>
-                        {{ form.ticket_link.as_field_group }}
-                    </div>
-                    <div>
-                        {{ form.ticket_description.as_field_group }}
-                    </div>
-                    <div class= "flex flex-col">
-                        {{ form.poster.as_field_group }}
-                    </div>
-                    <div class= "flex flex-col">
-                        {{ form.description.as_field_group }}
+                    <div class="flex flex-col fieldgroup xl:w-1/4">
+                        {{ form.ages.errors }}
+                        {{ form.ages.label_tag }}
+                        <div class="helptext" id="{{ form.ages.auto_id }}_helptext">
+                            {{ form.ages.help_text }}
+                        </div>
+                        <div class="select-wrapper">
+                            {{ form.ages }}
+                        </div>
                     </div>
                 </div>
-                <div class="w-1/2 flex flex-col">
-                    <div class= "flex flex-col">
-                        {{ form.bill.as_field_group }}
+            </div>
+            <div class="md:w-1/2 flex flex-col">
+                <div class="flex flex-col fieldgroup">
+                    {{ form.date.as_field_group }}
+                </div>
+                <div class="flex max-xs:flex-col">
+                    <div class="flex flex-col fieldgroup grow">
+                        {{ form.doors_time.as_field_group }}
                     </div>
-                    <div class= "flex flex-col">
-                        {{ form.tags.as_field_group }}
+                    <div class="flex flex-col fieldgroup grow">
+                        {{ form.start_time.as_field_group }}
                     </div>
-                    <div>
-                        <input type="submit" value="save">
+                    <div class="flex flex-col fieldgroup grow">
+                        {{ form.end_time.as_field_group }}
                     </div>
                 </div>
-
+                <div class="flex flex-col fieldgroup">
+                    {{ form.ticket_link.as_field_group }}
+                </div>
+                <div class="flex flex-col fieldgroup">
+                    {{ form.ticket_description.as_field_group }}
+                </div>
+                <div class="flex flex-col fieldgroup">
+                    {{ form.description.as_field_group }}
+                </div>
+                <div class="flex flex-col fieldgroup">
+                    {{ form.tags.as_field_group }}
+                </div>
+                <div>
+                    <input class="block btn w-full max-w-30 m-8 mx-auto" type="submit" value="Save">
+                </div>
             </div>
     </form>
 

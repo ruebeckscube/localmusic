@@ -1,97 +1,51 @@
-{# modal based on https://alpinetoolbox.com/examples/modal #}
+{% load static %}
 
-<div class="bg-gray-100 flex items-center justify-center"
+<div class="flex items-center"
      x-data="venue_picker_data('{{widget.value|escapejs}}', '{{widget.venue.name|escapejs}}', {{widget.venue.is_verified|yesno:"true,false"}}, {{widget.venue.declined_listing|yesno:"true,false"}} )"
      x-cloak>
 
-    <div class="flex p-4 h-full items-center">
+    <input type="hidden" name="{{widget.name}}" :value="selected_venue_id">
 
-        <input type="hidden" name="{{widget.name}}" :value="selected_venue_id">
-
-        <div x-ref="venue-search-plus-dropdown"
-             @focusin="open_dropdown()"
-             @click.outside="close_dropdown()"
+    <div class="grow p-2"
+         x-ref="venue-search-plus-dropdown"
+         @focusin="open_dropdown()"
+         @click.outside="close_dropdown()"
+    >
+        <input class="textinput w-full" type="search"
+               name="venue-search" placeholder="Select a venue..."
+               x-model="search_text"
+               hx-get="{% url 'findshows:venue_search_results' %}"
+               hx-trigger="keyup changed delay:500ms"
+               hx-target="#venue-search-results"
         >
-            <input class="" type="search"
-                   name="venue-search" placeholder="Select a venue..."
-                   x-model="search_text"
-                   hx-get="{% url 'findshows:venue_search_results' %}"
-                   hx-trigger="keyup changed delay:500ms"
-                   hx-target="#venue-search-results"
-            >
 
-            <ul id="venue-search-results"
-                class="absolute"
-                x-show="show_search"
-                @click="close_dropdown()"
-                style="display: none;"
-            >
-            </ul>
+        <ul id="venue-search-results"
+            class="absolute popup-menu"
+            x-show="show_search"
+            @click="close_dropdown()"
+            style="display: none;"
+        >
+        </ul>
 
-            <div x-show="selected_venue_name && (!selected_venue_is_verified)">
-                This venue has not yet been verified; the show will be listed
-                after verification is complete.
-            </div>
-
-            <div x-show="selected_venue_declined_listing">
-                This venue has declined to be listed on this website. This might
-                be opted for by a DIY venue that has safety, capacity, or other
-                concerns. Thanks for your understanding!
-            </div>
-
+        <div x-show="selected_venue_name && (!selected_venue_is_verified)" class="text-sm">
+            This venue has not yet been verified; the show will be listed
+            after verification is complete.
         </div>
 
-        <div @modal-form-success="on_venue_create">
-            {% with title_text="New Venue" success_text="Venue created successfully!" form_html="findshows/htmx/venue_form.html" htmx_url="findshows:create_venue" %}
-                {% include "findshows/partials/modal_form.html" %}
-            {% endwith %}
+        <div x-show="selected_venue_declined_listing" class="text-sm">
+            This venue has declined to be listed on this website. This might
+            be opted for by a DIY venue that has safety, capacity, or other
+            concerns. Thanks for your understanding!
         </div>
 
+    </div>
 
+    <div class="w-32" @modal-form-success="on_venue_create">
+        {% with title_text="New Venue" success_text="Venue created successfully!" form_html="findshows/htmx/venue_form.html" htmx_url="findshows:create_venue" %}
+            {% include "findshows/partials/modal_form.html" %}
+        {% endwith %}
     </div>
 
 </div>
 
-<script>
- function venue_picker_data(initial_venue_id, initial_venue_name, initial_venue_is_verified, initial_venue_declined_listing) {
-     return {
-         search_text: initial_venue_name,
-         show_search: false,
-
-         selected_venue_name: initial_venue_name,
-         selected_venue_id: initial_venue_id,
-         selected_venue_is_verified: initial_venue_is_verified,
-         selected_venue_declined_listing: initial_venue_declined_listing,
-
-         created_venue_name: '',
-         created_venue_id: '',
-
-         open_dropdown() {
-             if (this.show_search) return;
-             this.show_search = true;
-         },
-
-         close_dropdown(focusAfter) {
-             if (! this.show_search) return;
-             this.show_search = false;
-             if (this.selected_venue_name) {
-                 this.search_text = this.selected_venue_name;
-             }
-             focusAfter && focusAfter.focus();
-         },
-
-         select_venue(venue_name, venue_id, is_verified, declined_listing) {
-             this.search_text = venue_name;
-             this.selected_venue_name = venue_name;
-             this.selected_venue_id = venue_id;
-             this.selected_venue_is_verified = is_verified;
-             this.selected_venue_declined_listing = declined_listing;
-         },
-
-         on_venue_create(event) {
-             this.select_venue(event.detail.created_record_name, event.detail.created_record_id)
-         },
-
-     }
- }
-</script>
+<script src='{% static "findshows/js/venue_picker_data.js" %}'></script>

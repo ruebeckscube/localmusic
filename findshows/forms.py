@@ -7,6 +7,7 @@ from django.core.validators import EmailValidator, FileExtensionValidator
 from django.db import models
 from django.views.generic.dates import timezone_today
 from django.conf import settings
+from multiselectfield.forms.fields import MultiSelectFormField
 
 from findshows.models import Artist, Concert, ConcertTags, LabeledURLsValidator, MusicBrainzArtist, UserProfile, Venue
 from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, ImageInput, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
@@ -15,6 +16,11 @@ from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, D
 def add_default_styling_to_fields(fields):
     field_type_to_css_class = {
         forms.CharField: 'textinput',
+        forms.URLField: 'textinput',
+        forms.EmailField: 'textinput',
+        forms.TypedChoiceField: 'select',
+        MultiSelectFormField: 'accent-clickable',
+        forms.BooleanField: 'accent-clickable mr-auto',
     }
     for field in fields:
         field.widget.attrs.update({
@@ -122,7 +128,7 @@ class ArtistEditForm(DefaultStylingModelForm):
         return artist
 
 
-class ConcertForm(forms.ModelForm):
+class ConcertForm(DefaultStylingModelForm):
     date = DatePickerField()
     doors_time = TimePickerField(required=False)
     start_time = TimePickerField()
@@ -137,7 +143,10 @@ class ConcertForm(forms.ModelForm):
     class Meta:
         model=Concert
         fields=("poster", "date", "doors_time", "start_time", "end_time", "venue", "ages", "ticket_link", "ticket_description", "tags", "description")
-        widgets={"venue": VenuePickerWidget}
+        widgets={
+            "venue": VenuePickerWidget,
+            "poster": ImageInput,
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -212,7 +221,7 @@ class ConcertForm(forms.ModelForm):
         return concert
 
 
-class VenueForm(forms.ModelForm):
+class VenueForm(DefaultStylingModelForm):
     prefix = "venue"
     use_required_attribute = False
 
@@ -259,7 +268,7 @@ class ArtistAccessForm(forms.Form):
         return self.cleaned_data['users']
 
 
-class TempArtistForm(forms.ModelForm):
+class TempArtistForm(DefaultStylingModelForm):
     prefix = "temp_artist"
     use_required_attribute = False
     email=forms.EmailField(required=True, help_text="""Please check with the
