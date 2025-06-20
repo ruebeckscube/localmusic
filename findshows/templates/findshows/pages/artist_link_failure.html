@@ -1,10 +1,8 @@
-{% extends "localmusic/base.html" %}
+{% extends "localmusic/small_page.html" %}
 
-{% block content %}
-<div class="p-3">
-    <h1> Error linking artist </h1>
+{% block small_content %}
+    <h1 class="text-center"> Error linking artist </h1>
     <div class="text-center m-auto fieldgroup max-w-4xl">
         {{ error }}
-    <div>
-</div>
+    </div>
 {% endblock %}

@@ -65,6 +65,10 @@
     @apply  m-0.5 p-1 border bg-white resize-none;
   }
 
+  .textinput-wrapper > input {
+    @apply m-0.5 p-1 border bg-white resize-none w-full;
+  }
+
   .fieldgroup {
     @apply bg-sub-background mx-3 my-1 p-2;
   }

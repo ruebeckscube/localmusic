@@ -1,44 +1,45 @@
-{% extends "localmusic/base.html" %}
+{% extends "localmusic/small_page.html" %}
 
-{% block content %}
+{% block small_content %}
 
-{% if form.errors %}
-<p>Your username and password didn't match. Please try again.</p>
-{% endif %}
+    <h1 class="text-center"> Log in </h1>
 
-{% if next %}
-    {% if user.is_authenticated %}
-    <p>Your account doesn't have access to this page. To proceed,
-    please login with an account that has access.</p>
-    {% else %}
-    <p>Please login to see this page.</p>
+    {% if form.errors %}
+        <p class="errorlist">Your username and password don't match. Please try again.</p>
     {% endif %}
-{% endif %}
 
-<form method="post" action="{% url 'login' %}">
-{% csrf_token %}
-<table>
-<tr>
-    <td>Email</td>
-    <td>{{ form.username }}</td>
-</tr>
-<tr>
-    <td>{{ form.password.label_tag }}</td>
-    <td>{{ form.password }}</td>
-</tr>
-</table>
+    {% if next %}
+        {% if user.is_authenticated %}
+            <p class="errorlist">Your account doesn't have access to this page. To proceed,
+                please login with an account that has access.</p>
+        {% else %}
+            <p class="errorlist">Please login to see this page.</p>
+        {% endif %}
+    {% endif %}
 
-<input type="submit" value="login">
-<input type="hidden" name="next" value="{{ next }}">
-</form>
+    <form class="flex flex-col w-full items-center" method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <div class="flex flex-col fieldgroup w-full max-w-md">
+            <div><label for="{{form.username.auto_id}}">Email:</label></div>
+            <div class="textinput-wrapper">{{ form.username }}</div>
+        </div>
+        <div class="flex flex-col fieldgroup w-full max-w-md">
+            <div>{{ form.password.label_tag }}</div>
+            <div class="textinput-wrapper">{{ form.password }}</div>
+        </div>
 
+        <input class="block btn w-40 m-2" type="submit" value="Log in">
 
-{% if next %}
-    <p><a href="{% url 'create_account' %}?next={{ next | urlencode}}">Create account</a></p>
-    <p><a href="{% url 'password_reset' %}?next={{ next | urlencode }}">Lost password?</a></p>
-{% else %}
-    <p><a href="{% url 'create_account' %}">Create account</a></p>
-    <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
-{% endif %}
+        {% if next %}
+            <a class="link text-sm m-1" href="{% url 'password_reset' %}?next={{ next | urlencode }}">Lost password?</a>
+            <a class="link text-sm m-1" href="{% url 'create_account' %}?next={{ next | urlencode}}">Create account</a>
+        {% else %}
+            <a class="link text-sm m-1" href="{% url 'password_reset' %}">Lost password?</a>
+            <a class="link text-sm m-1" href="{% url 'create_account' %}">Create account</a>
+        {% endif %}
+
+        <input type="hidden" name="next" value="{{ next }}">
+
+    </form>
 
 {% endblock %}

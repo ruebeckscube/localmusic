@@ -47,12 +47,19 @@ class DefaultStylingModelForm(forms.ModelForm):
 
 
 class UserCreationFormE(UserCreationForm):
+    required_css_class = "required"
     class Meta:
         model = User
         fields = ("username", "password1", "password2")
         labels = {
             "username": "Email"
         }
+
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        add_default_styling_to_fields(self.fields.values())
+
 
     def clean_username(self):
         # Enforce username-as-email
