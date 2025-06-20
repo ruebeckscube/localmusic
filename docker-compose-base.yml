@@ -1,6 +1,7 @@
 services:
   web:
     build: .
+    init: true
     env_file:
       - .env
     environment:
