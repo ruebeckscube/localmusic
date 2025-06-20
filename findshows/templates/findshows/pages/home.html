@@ -3,7 +3,7 @@
 {% block content %}
     {% if not user.is_authenticated %}
         <div class="banner">
-            <a href="{% url 'create_account' %}">Create an account</a> to save your search terms
+            <a class="link" href="{% url 'create_account' %}">Create an account</a> to save your search terms
             and get a weekly email of personalized show recommendations!
         </div>
     {% elif not user.userprofile.email_is_verified %}
