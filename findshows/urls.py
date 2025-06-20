@@ -32,7 +32,6 @@ urlpatterns = [
     path("htmx/resend_invite/<int:pk>", views.resend_invite, name="resend_invite"),
     path("htmx/approve_artist_request/<int:pk>", views.approve_artist_request, name="approve_artist_request"),
 
-    path("search", views.concert_search, name="concert_search"),
     path("htmx/concert_search/", views.concert_search, name="concert_search"),
 
     path("htmx/mb_artist_search_results/", views.musicbrainz_artist_search_results, name="musicbrainz_artist_search_results"),

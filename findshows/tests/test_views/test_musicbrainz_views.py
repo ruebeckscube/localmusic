@@ -15,5 +15,5 @@ class MusicbrainzArtistSearchTests(TestCaseHelpers):
 
         query = 'devo'
         response = self.client.get(reverse("findshows:musicbrainz_artist_search_results"),
-                                   data={'mb-search': query})
+                                   data={'mb_search': query})
         self.assert_equal_as_sets([a.mbid for a in response.context['musicbrainz_artists']], ['2'])

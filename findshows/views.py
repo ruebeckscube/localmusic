@@ -546,10 +546,10 @@ def create_venue(request):
 
 
 def musicbrainz_artist_search_results(request):
-    if not (request.GET and request.GET["mb-search"]):
+    if not (request.GET and request.GET["mb_search"]):
         return HttpResponse("")
 
-    q = request.GET['mb-search']
+    q = request.GET['mb_search']
     mb_artists = MusicBrainzArtist.objects.defer('similar_artists', 'similar_artists_cache_datetime')
     mb_artists = mb_artists.annotate(similarity=TrigramSimilarity('name', q)
                                      ).filter(name__fuzzy_index=q).order_by('-similarity')[:10]

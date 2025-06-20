@@ -10,15 +10,25 @@
         {% include "findshows/htmx/email_verification_banner.html" %}
     {% endif %}
 
-    <div hx-on::after-request="update_url(event.detail.pathInfo, '{% url 'findshows:home' %}')"
+    <div hx-on::after-request="update_url(event.detail.pathInfo, '{% url 'findshows:concert_search' %}', '{% url 'findshows:home' %}')"
          x-init="$nextTick(() => {$dispatch('widget-update')})">
         {% include "findshows/htmx/concert_search.html" %}
     </div>
 
     <script>
-     function update_url(pathInfo, baseURL) {
-         query = pathInfo.finalRequestPath.slice(pathInfo.requestPath.length);
-         window.history.pushState('', '', baseURL + query);
+     function update_url(pathInfo, expectedRequestPath, finalBasePath) {
+         if (pathInfo.requestPath!==expectedRequestPath) return;
+
+         params = new URLSearchParams(
+             pathInfo.finalRequestPath.slice(pathInfo.requestPath.length)
+         );
+         params.delete('mb_search');
+         if (params.get('is_date_range')!=='true') {
+             params.delete('is_date_range');
+             params.delete('end_date');
+         }
+
+         window.history.pushState('', '', finalBasePath + '?' + params.toString());
      }
     </script>
 

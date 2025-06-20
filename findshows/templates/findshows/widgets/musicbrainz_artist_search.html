@@ -10,12 +10,13 @@
          @htmx:after-request="open_dropdown()"
     >
             <input class="textinput" type="search"
-                   name="mb-search" placeholder="Search artists..."
+                   name="mb_search" placeholder="Search artists..."
                    x-model="search_text"
                    hx-get="{% url 'findshows:musicbrainz_artist_search_results' %}"
                    hx-trigger="keyup changed delay:500ms, click from:#search-results"
                    hx-target="#musicbrainz-search-results"
                    hx-swap="innerHTML"
+                   hx-include="this"
             >
 
             <ul id="musicbrainz-search-results"
