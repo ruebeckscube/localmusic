@@ -9,12 +9,12 @@
         <title> {% block subtitle %} {% endblock %} {% custom_text 'ST' %}</title>
 
         {# HTMX https://htmx.org/ #}
-        <script src="https://unpkg.com/htmx.org@2.0.1"></script>
+        <script src="https://unpkg.com/htmx.org@2.0.4"></script>
         {# Alpine plugins (load BEFORE core)#}
         <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/mask@3.x.x/dist/cdn.min.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
         {# Alpine core https://alpinejs.dev/ #}
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.12.3/dist/cdn.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
         {# Rough.js #}
         <script src="https://unpkg.com/roughjs@latest/bundled/rough.js"></script>
         {# Tailwind https://tailwindcss.com/docs/transition-property #}
@@ -43,5 +43,7 @@
     </body>
 
     <script src='{% static "findshows/js/rough_classes.js" %}'></script>
+    {# loading date picker here because it was doing weird shit when loaded by htmx #}
+    <script src='{% static "findshows/js/date_picker_data.js" %}'></script>
 
 </html>
