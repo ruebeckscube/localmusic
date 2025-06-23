@@ -7,7 +7,7 @@
         {% endif %}
         <form type="post">
             {% csrf_token %}
-            <input class=""
+            <input class="btn"
                    type="button"
                    name="approve-request"
                    hx-post="{% url 'findshows:approve_artist_request' artist.id %}"
@@ -16,14 +16,9 @@
                    hx-target="closest .mod-artist-buttons"
                    hx-swap="outerHTML"
             >
-    {% elif artist.artistlinkinginfo_set %}
+    {% elif artist.artistlinkinginfo_set.all %}
         {% for ali in artist.artistlinkinginfo_set.all %}
-            <div class="flex justify-between">
-                <div>
-                    {{ ali.invited_email }}
-                </div>
-                {% include "findshows/htmx/mod_resend_invite_button.html" %}
-            </div>
+            {% include "findshows/htmx/mod_resend_invite_button.html" %}
         {% endfor %}
     {% elif artist.is_temp_artist %}
         Artist linked; profile incomplete

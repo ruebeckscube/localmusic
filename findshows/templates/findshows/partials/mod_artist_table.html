@@ -1,0 +1,47 @@
+{% if artists %}
+    <table class="w-full text-center max-w-5xl fieldgroup p-5">
+        <tr class="bg-highlight-item-light text-lg">
+            <th> Artist name </th>
+            <th> Website </th>
+            <th> Email </th>
+            <th> Actions </th>
+            {% if is_admin %}
+                <th> Admin </th>
+            {% endif %}
+        </tr>
+
+        {% for artist in artists %}
+            <tr class="odd:bg-white">
+                <td>
+                    {% if artist.is_temp_artist %}
+                        {{  artist.name }}
+                    {% else %}
+                        <a class="link" href="{% url 'findshows:view_artist' artist.pk %}"> {{ artist.name }} </a>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if artist.socials_links %}
+                        {% for link in artist.socials_links %}
+                            <a class="link" href="{{link.1}}" target="_blank">{{  link.0 }}</a>
+                        {% endfor %}
+                    {% endif %}
+                </td>
+                <td>
+                    <a class="link" href="mailto:{{ artist.created_by.user.email }}">{{ artist.created_by.user.email }}</a>
+                </td>
+                <td>
+                    {% include "findshows/htmx/mod_artist_buttons.html" %}
+                </td>
+                {% if is_admin %}
+                    <td>
+                        <a class="link" href="{% url 'admin:findshows_artist_change' artist.pk %}">Admin edit</a>
+                    </td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <div class="ml-3">
+        {{ empty_message }}
+    </div>
+{% endif %}

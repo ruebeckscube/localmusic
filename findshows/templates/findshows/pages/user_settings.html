@@ -2,14 +2,14 @@
 
 {% block content %}
 <div class="p-3">
-    <h1> User Settings </h1>
 
     <form method="post" action="{% url 'findshows:user_settings' %}">
         {% csrf_token %}
 
-        <div class="flex flex-col items-center max-w-2xl">
+        <div class="flex flex-col items-center w-full">
+    <h1> User Settings </h1>
             {% for field in form %}
-                <div class="fieldgroup w-full">
+                <div class="fieldgroup w-full max-w-2xl">
                     {{ field.as_field_group }}
                 </div>
             {% endfor %}

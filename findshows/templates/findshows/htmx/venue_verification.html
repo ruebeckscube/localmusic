@@ -6,7 +6,7 @@
     {% else %}
         <form type="post">
             {% csrf_token %}
-            <input class=""
+            <input class="btn"
                    type="button"
                    name="verify-venue"
                    hx-post="{% url 'findshows:venue_verification' venue.id %}"
@@ -16,7 +16,7 @@
                    hx-swap="outerHTML"
                    hx-vals='{"action": "verify"}'
             >
-            <input class=""
+            <input class="btn"
                    type="button"
                    name="decline-venue"
                    hx-post="{% url 'findshows:venue_verification' venue.id %}"

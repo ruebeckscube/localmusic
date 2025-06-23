@@ -3,41 +3,31 @@
      hx-include="#mod-digest-form"
      hx-target="this"
 >
-    <div> Review records created on a given date.</div>
-    <form method="GET" action="" id="mod-digest-form">
-        <div class="flex">
-            {{ form }}
-        </div>
+    <div class="text-lg"> Review records created on a given date.</div>
+    <form class="flex" method="GET" action="" id="mod-digest-form">
+        {% for field in form %}
+            <div class="fieldgroup">
+                {{ field.as_field_group }}
+            </div>
+        {% endfor %}
     </form>
 
     <h2 class="my-4"> Artists </h2>
-    {% for artist in artists %}
-        {% include "findshows/partials/mod_artist_card.html" %}
-    {% empty %}
-        <div>
-            No artists created on this date.
-        </div>
-    {% endfor %}
+    {% include "findshows/partials/mod_artist_table.html" with empty_message="No artists created on this date." %}
 
     <h2 class="my-4"> Venues </h2>
-    {% for venue in venues %}
-        {% include "findshows/partials/mod_venue_card.html" %}
-    {% empty %}
-        <div>
-            No venues created on this date.
-        </div>
-    {% endfor %}
+    {% include "findshows/partials/mod_venue_table.html" with empty_message="No venues created on this date." %}
 
     <h2 class="my-4"> Concerts </h2>
     {% for concert in concerts %}
-        <div class="flex">
+        <div class="flex items-center">
             {% include "findshows/partials/concert_card.html" %}
             {% if is_admin %}
-                <a href="{% url 'admin:findshows_concert_change' concert.pk %}">Admin edit</a>
+                <a class="link w-30" href="{% url 'admin:findshows_concert_change' concert.pk %}">Admin edit</a>
             {% endif %}
         </div>
     {% empty %}
-        <div>
+        <div class="ml-3">
             No concerts created on this date.
         </div>
     {% endfor %}

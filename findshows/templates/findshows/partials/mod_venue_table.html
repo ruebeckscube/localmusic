@@ -1,0 +1,39 @@
+{% if venues %}
+    <table class="w-full text-center max-w-5xl fieldgroup">
+        <tr class="bg-highlight-item-light text-lg">
+            <th> Name </th>
+            <th> Website </th>
+            <th> Ages </th>
+            <th> Verification </th>
+            {% if is_admin %}
+                <th> Admin </th>
+            {% endif %}
+        </tr>
+
+        {% for venue in venues %}
+            <tr class="odd:bg-white">
+                <td>
+                    {{ venue.name }}
+                </td>
+                <td>
+                    <a class="link" href="{{ venue.website }}" target="_blank">{{venue.website}}</a>
+                </td>
+                <td>
+                    {{ venue.get_ages_display}}
+                </td>
+                <td>
+                    {% include "findshows/htmx/venue_verification.html" %}
+                </td>
+                {% if is_admin %}
+                    <td>
+                        <a class="link" href="{% url 'admin:findshows_venue_change' venue.pk %}">Admin edit</a>
+                    </td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <div class="ml-3">
+        {{ empty_message }}
+    </div>
+{% endif %}

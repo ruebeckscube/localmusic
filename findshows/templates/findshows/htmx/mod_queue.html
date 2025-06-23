@@ -1,23 +1,12 @@
 <div>
-    <div>
+    <div class="text-lg">
         Review outstanding requests for artist access and new venue listings.
     </div>
 
     <h2 class="my-4"> Artists </h2>
-    {% for artist in artists %}
-        {% include "findshows/partials/mod_artist_card.html" %}
-    {% empty %}
-        <div>
-            No artists need approval.
-        </div>
-    {% endfor %}
+    {% include "findshows/partials/mod_artist_table.html" with empty_message="No artists need approval." %}
 
     <h2 class="my-4"> Venues </h2>
-    {% for venue in venues %}
-        {% include "findshows/partials/mod_venue_card.html" %}
-    {% empty %}
-        <div>
-            No venues need verification.
-        </div>
-    {% endfor %}
+    {% include "findshows/partials/mod_venue_table.html" with empty_message="No venues need verification." %}
+
 </div>

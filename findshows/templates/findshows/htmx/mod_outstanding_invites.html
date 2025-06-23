@@ -1,27 +1,47 @@
 <div>
-    <div>
-        Reveiw outstanding invites.
-    </div>
+    <div class="text-lg"> Reveiw outstanding invites. </div>
     <h2 class="my-4"> Invites </h2>
-    {% for ali in artist_linking_infos %}
-        <div class="flex justify-around">
-            <div>
-                {{ ali.invited_email }}
-            </div>
-            <div>
-                {{ ali.artist }}
-            </div>
-            <div>
-                {% include "findshows/htmx/mod_resend_invite_button.html" %}
-            </div>
-            {% if is_admin %}
-                <a href="{% url 'admin:findshows_artistlinkinginfo_change' ali.pk %}">Admin edit</a>
-            {% endif %}
+    {% if artist_linking_infos %}
+        <table class="w-full text-center max-w-5xl fieldgroup p-5">
+            <tr class="bg-highlight-item-light text-lg">
+                <th> Artist name </th>
+                <th> Website </th>
+                <th> Email </th>
+                <th> Actions </th>
+                {% if is_admin %}
+                    <th> Admin </th>
+                {% endif %}
+            </tr>
 
-        </div>
-    {% empty %}
-        <div>
+            {% for ali in artist_linking_infos %}
+                <tr class="odd:bg-white">
+                    <td>
+                        {{ ali.artist }}
+                    </td>
+                    <td>
+                        {% if ali.artist.socials_links %}
+                            {% for link in ali.artist.socials_links %}
+                                <a class="link" href="{{link.1}}" target="_blank">{{link.0}}</a>
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a class="link" href="mailto:{{ ali.invited_email }}">{{ ali.invited_email }}</a>
+                    </td>
+                    <td>
+                        {% include "findshows/htmx/mod_resend_invite_button.html" %}
+                    </td>
+                    {% if is_admin %}
+                        <td>
+                            <a class="link" href="{% url 'admin:findshows_artistlinkinginfo_change' ali.pk %}">Admin edit</a>
+                        </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <div class="ml-3">
             No outstanding invites.
         </div>
-    {% endfor %}
+    {% endif %}
 </div>

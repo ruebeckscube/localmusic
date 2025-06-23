@@ -336,7 +336,7 @@ class EmailCodeMixin(models.Model):
         except cls.DoesNotExist:
             raise EmailCodeError('Could not find record in the database. Please request a re-send.')
         if user_email != email_code.invited_email:
-            raise EmailCodeError("User's email does not match the link. Please log back in with an account associated with the email that the link was sent to.")
+            raise EmailCodeError("User's email does not match the link. Please log back in with the email that the link was sent to.")
         if email_code.generated_datetime + timedelta(settings.INVITE_CODE_EXPIRATION_DAYS) < timezone.now():
             raise EmailCodeError("Expired link. Please request a re-send.")
         if not email_code.check_invite_code(code):

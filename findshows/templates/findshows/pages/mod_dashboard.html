@@ -1,45 +1,56 @@
 {% extends "localmusic/base.html" %}
 
 {% block content %}
-<h1> Mod Dashboard </h1>
+    <div class="p-3">
+        <h1> Mod Dashboard </h1>
 
-<div class="flex">
+        <div x-data="{selectedTab: 'actionRequired'}"
+            class="flex flex-wrap max-w-4xl fieldgroup items-center">
 
-    <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
-            hx-get="{% url 'findshows:mod_daily_digest' %}"
-            hx-trigger="click,load"
-            hx-target="#mod-content"
-            hx-swap="innerHTML">
-        Daily digest
-    </button>
+            <button type="button" class="btn"
+                    @mouseup="selectedTab='actionRequired'"
+                    :class="selectedTab==='actionRequired' ? 'bg-highlight-item-light border-4 border-clickable font-semibold text-black shadow-none' : 'shadow-2xl border-transparent' "
+                    hx-get="{% url 'findshows:mod_queue' %}"
+                    hx-trigger="click,load"
+                    hx-target="#mod-content"
+                    hx-swap="innerHTML">
+                Action required
+            </button>
 
-    <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
-            hx-get="{% url 'findshows:mod_queue' %}"
-            hx-trigger="click"
-            hx-target="#mod-content"
-            hx-swap="innerHTML">
-        Action required
-    </button>
+            <button type="button" class="btn"
+                    @mouseup="selectedTab='dailyDigest'"
+                    :class="selectedTab==='dailyDigest' ? 'bg-highlight-item-light border-4 border-clickable font-semibold text-black shadow-none' : 'shadow-2xl border-transparent' "
+                    hx-get="{% url 'findshows:mod_daily_digest' %}"
+                    hx-trigger="click"
+                    hx-target="#mod-content"
+                    hx-swap="innerHTML">
+                Daily digest
+            </button>
 
-    <button type="button" class="px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400 mr-2"
-            hx-get="{% url 'findshows:mod_outstanding_invites' %}"
-            hx-trigger="click"
-            hx-target="#mod-content"
-            hx-swap="innerHTML">
-        Outstanding invites
-    </button>
+            <button type="button" class="btn"
+                    @mouseup="selectedTab='outstandingInvites'"
+                    :class="selectedTab==='outstandingInvites' ? 'bg-highlight-item-light border-4 border-clickable font-semibold text-black shadow-none' : 'shadow-2xl border-transparent' "
+                    hx-get="{% url 'findshows:mod_outstanding_invites' %}"
+                    hx-trigger="click"
+                    hx-target="#mod-content"
+                    hx-swap="innerHTML">
+                Outstanding invites
+            </button>
 
-    <form>
-        {% csrf_token %}
-        {% with title_text="Invite Artist" success_text="Invite sent successfully!" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
-            {% include "findshows/partials/modal_form.html" %}
-        {% endwith %}
-    </form>
+            <div class="basis-0 grow"></div>
+
+            <form>
+                {% csrf_token %}
+                {% with title_text="Invite Artist" success_text="Invite sent successfully!" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
+                    {% include "findshows/partials/modal_form.html" %}
+                {% endwith %}
+            </form>
 
 
-</div>
+        </div>
 
-<div id="mod-content">
-</div>
+        <div class="p-3" id="mod-content"></div>
+
+    </div>
 
 {% endblock %}
