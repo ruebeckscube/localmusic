@@ -4,14 +4,18 @@
     <div class="p-3">
         <h1> Mod Dashboard </h1>
 
-        <div x-data="{selectedTab: 'actionRequired'}"
+        <div x-data="{selectedTab: '{{ date|yesno:'dailyDigest,actionRequired'}}'}"
             class="flex flex-wrap max-w-4xl fieldgroup items-center">
 
             <button type="button" class="btn"
                     @mouseup="selectedTab='actionRequired'"
                     :class="selectedTab==='actionRequired' ? 'bg-highlight-item-light border-4 border-clickable font-semibold text-black shadow-none' : 'shadow-2xl border-transparent' "
                     hx-get="{% url 'findshows:mod_queue' %}"
+                    {% if date %}
+                    hx-trigger="click"
+                    {% else %}
                     hx-trigger="click,load"
+                    {% endif %}
                     hx-target="#mod-content"
                     hx-swap="innerHTML">
                 Action required
@@ -21,6 +25,12 @@
                     @mouseup="selectedTab='dailyDigest'"
                     :class="selectedTab==='dailyDigest' ? 'bg-highlight-item-light border-4 border-clickable font-semibold text-black shadow-none' : 'shadow-2xl border-transparent' "
                     hx-get="{% url 'findshows:mod_daily_digest' %}"
+                    {% if date %}
+                    hx-trigger="click,load"
+                    hx-vals='{"date": "{{date}}"}'
+                    {% else %}
+                    hx-trigger="click"
+                    {% endif %}
                     hx-trigger="click"
                     hx-target="#mod-content"
                     hx-swap="innerHTML">

@@ -128,8 +128,8 @@ def daily_mod_email(date):
                                  for label, records in zip(query_labels, records_tuple)
                                  if records
                                  )
-
-    message = f"There are new or actionable listings to review from {str(date)}.\n\n{local_url_to_email(reverse('findshows:mod_dashboard'))}\n\n{records_string}"
+    url = local_url_to_email(reverse('findshows:mod_dashboard', query={'date': date.isoformat()}))
+    message = f"There are new or actionable listings to review from {str(date)}.\n\n{url}\n\n{records_string}"
     recipient_list = [mod.user.email for mod in UserProfile.objects.filter(is_mod=True)]
     return send_mail_helper(f"{CustomText.get_text(CustomText.SITE_TITLE)} Moderation reminder",
                             message, recipient_list)

@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@source inline('{grid-rows-,@2xs:grid-cols-}{1..4}');
+
 @theme {
   --color-background: #F9F9ED;
   --color-sub-background: #ebe7eb;

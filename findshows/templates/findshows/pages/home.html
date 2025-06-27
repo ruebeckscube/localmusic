@@ -28,7 +28,7 @@
              params.delete('end_date');
          }
 
-         window.history.pushState('', '', finalBasePath + '?' + params.toString());
+         window.history.replaceState('', '', finalBasePath + '?' + params.toString());
      }
     </script>
 

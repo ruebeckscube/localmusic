@@ -634,7 +634,9 @@ def is_mod(user):
 
 @user_passes_test(is_mod)
 def mod_dashboard(request):
-    return render(request, "findshows/pages/mod_dashboard.html")
+    return render(request, "findshows/pages/mod_dashboard.html", context={
+        'date': request.GET.get('date') if request.GET else None
+    })
 
 
 @user_passes_test(is_mod)
