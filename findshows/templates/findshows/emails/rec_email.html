@@ -3,15 +3,30 @@
 
 {% mjml %}
 <mjml>
-    <mj-body>
+    <mj-head>
+        <mj-title>{% custom_text 'ST' %}</mj-title>
+        <mj-preview>{% custom_text 'EH' %}</mj-preview>
+        <mj-attributes>
+            <mj-text align="center" font-family="Courier New" font-size="17px"/>
+        </mj-attributes>
+        <mj-style>
+            a {
+              color: #9719ea;
+              text-decoration: inherit;
+              font-weight: bold;
+            }
+        </mj-style>
+    </mj-head>
+
+    <mj-body width="1000px" background-color="#F9F9ED">
         <mj-section>
             <mj-column>
-                <mj-text>{% custom_text 'ST' %}</mj-text>
+                <mj-text font-size="26px">{% custom_text 'ST' %}</mj-text>
                 <mj-text>{% custom_text 'EH' %}</mj-text>
             </mj-column>
         </mj-section>
 
-        <mj-section>
+        <mj-section background-color="#ebe7eb">
             <mj-column>
                 <mj-text>
                     {% if has_recs %}
@@ -26,20 +41,36 @@
                     Click a concert poster to view details and listen to previews,
                     or <a href='{{search_url}}' target="_blank">view them all on the website</a>.
                 </mj-text>
-
-                {% for concert in concerts %}
-                    <mj-image alt="{{concert}}" width="300px"
-                              src="{% email_raw_url  concert.poster.url %}"
-                              href="{% email_url 'findshows:view_concert' concert.pk %}"/>
-                {% empty %}
-                    <mj-text>
-                        No shows listed for this week!
-                    </mj-text>
-                {% endfor %}
             </mj-column>
         </mj-section>
 
-        <mj-section>
+        {% for concert in concerts %}
+            {% if forloop.first %}
+                <mj-section>
+            {% elif forloop.counter0|divisibleby:3 %}
+                </mj-section><mj-section>
+            {% endif %}
+
+            <mj-column vertical-align="middle" width="33%">
+                <mj-image alt="{{concert}}" width="300px"
+                          src="{% email_raw_url  concert.poster.url %}"
+                          href="{% email_url 'findshows:view_concert' concert.pk %}"/>
+            </mj-column>
+
+            {% if forloop.last %}
+                </mj-section>
+            {% endif %}
+        {% empty %}
+            <mj-section>
+                <mj-column>
+                    <mj-text>
+                        No shows listed for this week!
+                    </mj-text>
+                </mj-column>
+            </mj-section>
+        {% endfor %}
+
+        <mj-section background-color="#ebe7eb">
             <mj-column>
                 <mj-text>
                     To unsubscribe, please visit your

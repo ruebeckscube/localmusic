@@ -169,7 +169,7 @@ LOGOUT_REDIRECT_URL = "/"
 match os.getenv("EMAIL_BACKEND", "CONSOLE"):
     case "FILEBASED":
         EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-        EMAIL_FILE_PATH = os.path.join(BASE_DIR, '/emails')
+        EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
     case "SMTP":
         EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
         EMAIL_HOST = os.getenv("EMAIL_HOST")
@@ -194,7 +194,7 @@ MAX_DATE_RANGE = int(os.getenv("MAX_DATE_RANGE", '7'))
 MAX_DAILY_CONCERT_CREATES = int(os.getenv("MAX_DAILY_CONCERT_CREATES", '3'))
 MAX_DAILY_VENUE_CREATES = int(os.getenv("MAX_DAILY_VENUE_CREATES", '2'))
 MAX_DAILY_INVITES = int(os.getenv("MAX_DAILY_INVITES", '3'))
-CONCERT_RECS_PER_EMAIL = int(os.getenv("CONCERT_RECS_PER_EMAIL", '9'))
+CONCERT_RECS_PER_EMAIL = int(os.getenv("CONCERT_RECS_PER_EMAIL", '6'))
 INVITE_CODE_EXPIRATION_DAYS = int(os.getenv("INVITE_CODE_EXPIRATION_DAYS", '7'))
 INVITE_BUFFER_DAYS = int(os.getenv("INVITE_BUFFER_DAYS", '2'))
 MAX_FUTURE_CONCERT_WEEKS = int(os.getenv("MAX_FUTURE_CONCERT_WEEKS", '52'))

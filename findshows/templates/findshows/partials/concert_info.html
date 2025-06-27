@@ -3,6 +3,17 @@
 <div class="flex flex-col justify-around text-center items-center @container
             p-2">
     <div class="flex flex-col justify-around py-3">
+        {% if not concert.venue.is_verified %}
+            <div class="errorlist">
+                This concert will not be publically visible until the venue is
+                verified.
+            </div>
+        {% elif concert.venue.declined_listing %}
+            <div class="errorlist">
+                This venue declined listing and the concert will not
+                be publicially visible.
+            </div>
+        {% endif %}
         <div>
             {% if concert.venue.website %}
                 <a class="link" href="{{ concert.venue.website }}" target="_blank">{{concert.venue.name}}</a> ({{concert.ages_with_default}})
@@ -36,6 +47,8 @@
             <div>
                 <a class="link" href="{{ concert.ticket_link }}" target="_blank">Tickets </a>
             </div>
+        {% else %}
+            <div> Tickets </div>
         {% endif %}
         <div>
             {{ concert.ticket_description  }}

@@ -172,7 +172,7 @@ def rec_email_generator():
         search_params['musicbrainz_artists'] = [mb_artist.mbid
                                                 for mb_artist in user_profile.favorite_musicbrainz_artists.all()]
         search_params['concert_tags'] = user_profile.preferred_concert_tags
-        search_url = local_url_to_email(reverse('findshows:concert_search', query=search_params))
+        search_url = local_url_to_email(reverse('findshows:home', query=search_params))
 
         tag_filtered_concerts = next_week_concerts.all()
         if search_params['concert_tags']:
@@ -180,7 +180,7 @@ def rec_email_generator():
 
         scored_concerts = ((c.relevance_score(search_params['musicbrainz_artists']), c) for c in tag_filtered_concerts)
 
-        top_scored_concerts = sorted(s_c for s_c in scored_concerts if s_c[0] != 0)
+        top_scored_concerts = sorted((s_c for s_c in scored_concerts if s_c[0] != 0), reverse=True)
 
         has_recs = len(top_scored_concerts) > 0
         if has_recs:

@@ -7,19 +7,6 @@
         <h1 class="text-center"> This concert is cancelled! </h1>
     {% endif %}
 
-
-    {% if not concert.venue.is_verified %}
-        <div class="errorlist">
-            This concert will not be publically visible until the venue is
-            verified.
-        </div>
-    {% elif concert.venue.declined_listing %}
-        <div class="errorlist">
-            This venue declined listing and the concert will not
-            be publicially visible.
-        </div>
-    {% endif %}
-
     <!-- Page -->
     <div class="flex max-md:flex-col h-full">
 
@@ -50,8 +37,10 @@
                                 {{artist.name}}
                             </a></div>
                             <div class="flex justify-center items-center p-2">
-                                <img class="max-w-full max-h-52 object-contain"
-                                     src="{{ artist.profile_picture.url }}">
+                                {% if artist.profile_picture %}
+                                    <img class="max-w-full max-h-52 object-contain"
+                                         src="{{ artist.profile_picture.url }}">
+                                {% endif %}
                             </div>
                             <div>
                                 {% for similar_musicbrainz_artist in artist.similar_musicbrainz_artists.all %}

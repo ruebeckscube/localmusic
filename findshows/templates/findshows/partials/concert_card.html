@@ -1,18 +1,6 @@
 {% load findshows_tags %}
 
 <div class="@container flex justify-center w-full relative my-2 z-0">
-    {% if not concert.venue.is_verified %}
-        <div class="errorlist">
-            This concert will not be publically visible until the venue is
-            verified.
-        </div>
-    {% elif concert.venue.declined_listing %}
-        <div class="errorlist">
-            This venue declined listing and the concert will not
-            be publicially visible.
-        </div>
-    {% endif %}
-
     <svg class="rough-bg-rect absolute w-full h-full @max-4xl:max-w-[670px] -z-10" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio='none'></svg>
 
     <div class="flex flex-wrap justify-between w-full relative z-10 p-2
