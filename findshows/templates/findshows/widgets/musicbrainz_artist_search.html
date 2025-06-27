@@ -2,6 +2,8 @@
 
 <div x-data="musicbrainz_artist_search_data({{ widget.artist_dicts }},{{ widget.max_artists }})"
      @keydown.escape.prevent.stop="close_dropdown()"
+     {#  @add-musicbrainz-card="add_rough_to_node($el.getElementById($event.detail.id))" #}
+     @add-musicbrainz-card="$nextTick(() => add_rough_to_node(document.getElementById($event.detail.id)))"
 >
 
     <div x-ref="musicbrainz-search-plus-dropdown"
@@ -26,7 +28,7 @@
                 style="display: none;"
             >
             </ul>
-        </div>
+    </div>
 
     <div class="flex flex-wrap">
         <template x-for="(musicbrainz_artist, index) in selected_musicbrainz_artists" :key="index">

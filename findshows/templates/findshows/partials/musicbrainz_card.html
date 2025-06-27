@@ -1,4 +1,5 @@
 <div class="flex items-center p-1 min-h-12 relative"
+     {{ dynamic|yesno:":id=musicbrainz_artist.mbid," }}
 >
     <svg class="rough-bg-musicbrainz-card h-full w-full absolute -z-0" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio='none'></svg>
     <div class="m-1 ml-2 z-10" {{ dynamic|yesno:"x-text=musicbrainz_artist.name," }}>
