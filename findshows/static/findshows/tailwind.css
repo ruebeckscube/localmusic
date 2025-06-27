@@ -1409,18 +1409,6 @@
       }
     }
   }
-  .select {
-    z-index: 10;
-    margin: calc(var(--spacing) * 1);
-    height: 100%;
-    width: 100%;
-    cursor: pointer;
-    appearance: none;
-    background-color: transparent;
-    --tw-outline-style: none;
-    outline-style: none;
-    grid-area: select;
-  }
   .select-wrapper {
     z-index: 0;
     display: grid;
@@ -1440,6 +1428,18 @@
     content: "";
     grid-area: select;
     clip-path: polygon(100% 0%, 0 0%, 50% 100%);
+  }
+  .select-wrapper > select {
+    z-index: 10;
+    margin: calc(var(--spacing) * 1);
+    height: 100%;
+    width: 100%;
+    cursor: pointer;
+    appearance: none;
+    background-color: transparent;
+    --tw-outline-style: none;
+    outline-style: none;
+    grid-area: select;
   }
 }
 @property --tw-space-x-reverse {

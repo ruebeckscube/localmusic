@@ -18,7 +18,6 @@ def add_default_styling_to_fields(fields):
         forms.CharField: 'textinput',
         forms.URLField: 'textinput',
         forms.EmailField: 'textinput',
-        forms.TypedChoiceField: 'select',
         MultiSelectFormField: 'accent-clickable',
         forms.BooleanField: 'accent-clickable mr-auto',
     }
@@ -373,7 +372,7 @@ class ContactForm(DefaultStylingForm):
         OTHER = "oth", "Other"
 
     email = forms.EmailField(max_length=100, label="Your email")
-    type = forms.ChoiceField(choices=Types)
+    type = forms.ChoiceField(choices=Types, widget=StyledSelect)
     subject = forms.CharField()
     message = forms.CharField(widget=forms.Textarea)
 

@@ -89,11 +89,6 @@
     @apply cursor-pointer hover:bg-sub-background text-clickable hover:text-clickable-h;
   }
 
-  .select {
-    @apply appearance-none outline-none bg-transparent z-10 w-full h-full cursor-pointer m-1;
-    grid-area: select;
-  }
-
   .select-wrapper {
     @apply w-full border bg-white grid items-center pr-2 z-0;
     grid-template-areas: "select";
@@ -105,5 +100,11 @@
     grid-area: select;
     clip-path: polygon(100% 0%, 0 0%, 50% 100%);
   }
+
+  .select-wrapper > select {
+    @apply appearance-none outline-none bg-transparent z-10 w-full h-full cursor-pointer m-1;
+    grid-area: select;
+  }
+
 
 }
