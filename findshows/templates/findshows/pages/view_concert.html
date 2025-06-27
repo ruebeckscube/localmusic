@@ -55,7 +55,7 @@
                             </div>
                             <div>
                                 {% for similar_musicbrainz_artist in artist.similar_musicbrainz_artists.all %}
-                                    {% similar_artist_name_with_relevancy similar_musicbrainz_artist forloop.last searched_musicbrainz_artists True %}
+                                    {% similar_artist_name_with_relevancy similar_musicbrainz_artist forloop.last searched_musicbrainz_artists True user %}
                                 {% endfor %}
                             </div>
                         </div>

@@ -13,7 +13,7 @@
 {% endif %}
 
 <span
-    class="text-xs {{ always_inline|yesno:' ,@md:hidden' }}
+    class="text-xs {{ always_inline|yesno:' , @md:hidden' }} {# space necessary for tailwind to pick it up #}
     {% if relevant_names %}
     text-highlight-text font-bold"
     title="Similar to {{relevant_names}}"

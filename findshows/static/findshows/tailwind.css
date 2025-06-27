@@ -1204,6 +1204,11 @@
       margin-right: calc(var(--spacing) * 4);
     }
   }
+  .\@md\:hidden {
+    @container (width >= 28rem) {
+      display: none;
+    }
+  }
   .\@md\:max-h-90 {
     @container (width >= 28rem) {
       max-height: calc(var(--spacing) * 90);

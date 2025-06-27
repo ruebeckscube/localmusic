@@ -31,9 +31,13 @@ def time_short(value: datetime.time):
 
 
 @register.inclusion_tag("findshows/partials/similar_artist_name_with_relevancy.html")
-def similar_artist_name_with_relevancy(similar_musicbrainz_artist, is_last, searched_musicbrainz_artists=None, always_inline=False):
+def similar_artist_name_with_relevancy(similar_musicbrainz_artist, is_last, searched_musicbrainz_artists=None, always_inline=False, user=None):
     if not searched_musicbrainz_artists:
-        searched_musicbrainz_artists = []
+        if user is None or user.is_anonymous:
+            searched_musicbrainz_artists = []
+        else:
+            searched_musicbrainz_artists = user.userprofile.favorite_musicbrainz_artists.all()
+
     relevant_names = ", ".join(searched_artist.name
                                for searched_artist in searched_musicbrainz_artists
                                if similar_musicbrainz_artist.similarity_score(searched_artist.mbid))
