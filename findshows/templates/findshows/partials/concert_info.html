@@ -1,0 +1,55 @@
+{% load findshows_tags %}
+
+<div class="flex flex-col justify-around text-center items-center @container
+            p-2">
+    <div class="flex flex-col justify-around py-3">
+        <div>
+            {% if concert.venue.website %}
+                <a class="link" href="{{ concert.venue.website }}" target="_blank">{{concert.venue.name}}</a> ({{concert.ages_with_default}})
+            {% else %}
+                {{concert.venue.name}} ({{concert.ages_with_default}})
+            {% endif %}
+        </div>
+        <div>
+            {{concert.date}}
+        </div>
+    </div>
+
+    {% num_true_args concert.doors_time concert.end_time 1 as num_times %}
+    <div class="grid w-full py-3 grid-col
+                grid-flow-row grid-rows-{{num_times}} grid-cols-2
+                @2xs:grid-flow-col @2xs:grid-rows-2 @2xs:grid-cols-{{num_times}} @2xs:auto-cols-fr">
+        {% if concert.doors_time %}
+            <div>Doors</div>
+            <div>{{concert.doors_time|time_short}}</div>
+        {% endif %}
+        <div>Music</div>
+        <div>{{concert.start_time|time_short}}</div>
+        {% if concert.end_time %}
+            <div>Ends</div>
+            <div>{{concert.end_time|time_short}}</div>
+        {% endif %}
+    </div>
+
+    <div class="flex flex-col py-3">
+        {% if concert.ticket_link %}
+            <div>
+                <a class="link" href="{{ concert.ticket_link }}" target="_blank">Tickets </a>
+            </div>
+        {% endif %}
+        <div>
+            {{ concert.ticket_description  }}
+        </div>
+    </div>
+    <div class="flex flex-col py-3">
+        {% if concert.description %}
+            <div>
+                {{ concert.description|default:""|upper }}
+            </div>
+        {% endif %}
+        <div class="text-xs text-gray-600">
+            {{  concert.get_tags_display }}
+        </div>
+    </div>
+
+</div>

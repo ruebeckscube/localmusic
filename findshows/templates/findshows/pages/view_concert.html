@@ -1,11 +1,82 @@
 {% extends "localmusic/base.html" %}
+{% load findshows_tags %}
 
 {% block content %}
 
-{% if concert.cancelled %}
-    <h1> This concert is cancelled! </h1>
-{% endif %}
+    {% if concert.cancelled %}
+        <h1 class="text-center"> This concert is cancelled! </h1>
+    {% endif %}
 
-{% include "findshows/partials/concert_card.html" %}
+
+    {% if not concert.venue.is_verified %}
+        <div class="errorlist">
+            This concert will not be publically visible until the venue is
+            verified.
+        </div>
+    {% elif concert.venue.declined_listing %}
+        <div class="errorlist">
+            This venue declined listing and the concert will not
+            be publicially visible.
+        </div>
+    {% endif %}
+
+    <!-- Page -->
+    <div class="flex max-md:flex-col h-full">
+
+        <!-- Poster & info -->
+        <div class="flex flex-col sm:max-md:flex-row items-center w-full md:w-1/3 fieldgroup h-fit">
+            <!-- Concert poster -->
+            <div class="flex flex-col sm:max-md:w-1/2 justify-center items-center @max-md:px-9 @max-md:py-4">
+                <a href={% url 'findshows:view_concert' concert.pk %}>
+                    <img src="{{concert.poster.url}}" alt="Concert poster"
+                         class="object-contain max-w-full
+                              max-h-[30em]" />
+                </a>
+            </div>
+            <!-- Info -->
+            <div class="w-full sm:max-md:w-1/2">
+                {% include "findshows/partials/concert_info.html" %}
+            </div>
+        </div>
+
+        <!-- Artists -->
+        <div class="flex flex-col w-full md:w-2/3">
+            {% for artist in concert.sorted_artists %}
+                <div class="flex flex-col items-center fieldgroup @container">
+                    <div class="flex @max-md:flex-col w-full justify-between my-1">
+                        <div class="flex flex-col w-full @md:w-1/2 justify-center text-center">
+                            <div><a href="{% url 'findshows:view_artist' artist.pk %}"
+                                    class="text-2xl link">
+                                {{artist.name}}
+                            </a></div>
+                            <div class="flex justify-center items-center p-2">
+                                <img class="max-w-full max-h-52 object-contain"
+                                     src="{{ artist.profile_picture.url }}">
+                            </div>
+                            <div>
+                                {% for similar_musicbrainz_artist in artist.similar_musicbrainz_artists.all %}
+                                    {% similar_artist_name_with_relevancy similar_musicbrainz_artist forloop.last searched_musicbrainz_artists True %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="flex flex-col justify-center items-center w-full @md:w-1/2">
+                            {% if artist.is_temp_artist %}
+                                <div class="errorlist">
+                                    This artist has not yet filled out their
+                                    profile; the concert will not be publically
+                                    visible until they do.
+                                </div>
+                            {% else %}
+                                {% preview_player artist False %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="text-xs @md:text-sm m-2">
+                        {{ artist.bio }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
 
 {% endblock %}

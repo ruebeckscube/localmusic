@@ -1,3 +1,4 @@
+{% if not always_inline %}
 <div
     class="text-xs @max-md:hidden
     {% if relevant_names %}
@@ -9,10 +10,10 @@
     >
     {{name}}
 </div>
-
+{% endif %}
 
 <span
-    class="text-xs @md:hidden
+    class="text-xs {{ always_inline|yesno:' ,@md:hidden' }}
     {% if relevant_names %}
     text-highlight-text font-bold"
     title="Similar to {{relevant_names}}"

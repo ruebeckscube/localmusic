@@ -43,9 +43,13 @@ Valid values for 'type' are defined in findshows.widgets.ArtistAccessWidget.Type
                                 Undo re-send
                             </button>
                         </template>
-
                     </div>
                 </li>
+            </template>
+            <template x-if="!users">
+                <div>
+                    No other users have acess to this artist.
+                </div>
             </template>
         </ol>
     </div>

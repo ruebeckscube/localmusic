@@ -31,7 +31,7 @@ def time_short(value: datetime.time):
 
 
 @register.inclusion_tag("findshows/partials/similar_artist_name_with_relevancy.html")
-def similar_artist_name_with_relevancy(similar_musicbrainz_artist,  is_last, searched_musicbrainz_artists=None):
+def similar_artist_name_with_relevancy(similar_musicbrainz_artist, is_last, searched_musicbrainz_artists=None, always_inline=False):
     if not searched_musicbrainz_artists:
         searched_musicbrainz_artists = []
     relevant_names = ", ".join(searched_artist.name
@@ -41,6 +41,7 @@ def similar_artist_name_with_relevancy(similar_musicbrainz_artist,  is_last, sea
         'name': similar_musicbrainz_artist.name,
         'relevant_names': relevant_names,
         'is_last': is_last,
+        'always_inline': always_inline,
     }
 
 
