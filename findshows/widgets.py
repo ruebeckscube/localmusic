@@ -3,7 +3,7 @@ import json
 from django.forms import ClearableFileInput, FileInput
 from django.forms.fields import DateField, TimeField
 
-from django.forms.widgets import Input
+from django.forms.widgets import Input, Select
 
 from findshows.models import MusicBrainzArtist, Venue
 
@@ -134,3 +134,7 @@ class ArtistAccessWidget(Input):
 
 class ImageInput(ClearableFileInput):
     template_name="findshows/widgets/image_widget.html"
+
+
+class StyledSelect(Select):
+    template_name="findshows/widgets/styled_select.html"

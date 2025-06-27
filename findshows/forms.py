@@ -10,7 +10,7 @@ from django.conf import settings
 from multiselectfield.forms.fields import MultiSelectFormField
 
 from findshows.models import Artist, Concert, ConcertTags, LabeledURLsValidator, MusicBrainzArtist, UserProfile, Venue
-from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, ImageInput, SocialsLinksWidget, MusicBrainzArtistSearchWidget, TimePickerField, VenuePickerWidget
+from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, ImageInput, SocialsLinksWidget, MusicBrainzArtistSearchWidget, StyledSelect, TimePickerField, VenuePickerWidget
 
 
 def add_default_styling_to_fields(fields):
@@ -153,6 +153,7 @@ class ConcertForm(DefaultStylingModelForm):
         widgets={
             "venue": VenuePickerWidget,
             "poster": ImageInput,
+            "ages": StyledSelect,
         }
 
     def __init__(self, *args, **kwargs):
@@ -235,6 +236,7 @@ class VenueForm(DefaultStylingModelForm):
     class Meta:
         model=Venue
         fields=("name", "address", "ages", "website")
+        widgets={"ages": StyledSelect}
 
 
 class ArtistAccessForm(forms.Form):
