@@ -10,10 +10,8 @@ fi
 
 if docker compose version >/dev/null 2>&1; then
     DOCKER_COMPOSE_CMD="docker compose"
-    echo "Using development compose file."
 else
     DOCKER_COMPOSE_CMD="docker-compose"
-    echo "Using production compose file."
 fi
 
 if [ ! -e ".env" ]; then
@@ -26,8 +24,10 @@ fi
 invoke_docker_compose() {
     if [ "$IS_DEV" = "True" ]; then
         COMPOSE_FILE="docker-compose-dev.yml"
+        echo "Using development compose file."
     else
         COMPOSE_FILE="docker-compose-prod.yml"
+        echo "Using production compose file."
     fi
 
     $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE \
