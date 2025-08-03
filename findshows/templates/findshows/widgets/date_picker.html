@@ -22,24 +22,24 @@
 
         {# Header of date form #}
         <div class="flex justify-between items-center mb-2">
-            <div>
-                <span x-text="MONTH_NAMES[calMonth-1]" class="text-lg font-semibold"></span>
-                <span x-text="calYear" class="ml-1 text-lg text-gray-600 font-normal"></span>
+            <div class="flex justify-between items-center grow mr-2">
+                <div x-text="MONTH_NAMES[calMonth-1]" class="text-lg font-semibold"></div>
+                <div x-text="calYear" class="ml-1 text-lg text-gray-600 font-normal"></div>
             </div>
-            <div>
+            <div class="flex justify-between">
                 <button
                     type="button"
-                    class="clickable-svg transition ease-in-out duration-100 inline-flex p-1"
+                    class="clickable-svg transition ease-in-out duration-100 p-1"
                     @click="incrementCalDisplay(-1)">
-                    <svg class="h-6 w-6 inline-flex"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-6 w-6"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
                 </button>
                 <button
                     type="button"
-                    class="clickable-svg transition ease-in-out duration-100 inline-flex p-1"
+                    class="clickable-svg transition ease-in-out duration-100 p-1"
                     @click="incrementCalDisplay(1)">
-                    <svg class="h-6 w-6 inline-flex"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-6 w-6"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
                 </button>
