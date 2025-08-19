@@ -8,6 +8,7 @@ from django.db import models
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 from multiselectfield.forms.fields import MultiSelectFormField
+from captcha.fields import CaptchaField
 
 from findshows.models import Artist, Concert, ConcertTags, LabeledURLsValidator, MusicBrainzArtist, UserProfile, Venue
 from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, ImageInput, SocialsLinksWidget, MusicBrainzArtistSearchWidget, StyledSelect, TimePickerField, VenuePickerWidget
@@ -20,6 +21,7 @@ def add_default_styling_to_fields(fields):
         forms.EmailField: 'textinput',
         MultiSelectFormField: 'accent-clickable',
         forms.BooleanField: 'accent-clickable mr-auto',
+        CaptchaField: 'textinput',
     }
     for field in fields:
         field.widget.attrs.update({
@@ -368,6 +370,9 @@ class ShowFinderForm(forms.Form):
 
 class ContactForm(DefaultStylingForm):
     class Types(models.TextChoices):
+        HELP = "hlp", "Tech support/help"
+        CONTACT_MOD = "mod", "Moderator question"
+        FEATURE_REQUEST = "ftr", "Feature request"
         REPORT_BUG = "bug", "Bug report"
         OTHER = "oth", "Other"
 
@@ -375,6 +380,7 @@ class ContactForm(DefaultStylingForm):
     type = forms.ChoiceField(choices=Types, widget=StyledSelect)
     subject = forms.CharField()
     message = forms.CharField(widget=forms.Textarea)
+    captcha = CaptchaField()
 
     def clean_subject(self):
         data = self.cleaned_data["subject"]

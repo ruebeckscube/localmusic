@@ -18,11 +18,17 @@ def contact_post_request():
         'email': ['test@em.ail'],
         'subject': ['bad'],
         'message': ["wow this website sucks"],
-        'type': [ContactForm.Types.OTHER]
+        'type': [ContactForm.Types.OTHER.value],
+        'captcha_0': ['this_doesnt_matter'],
+        'captcha_1': ['PASSED'],
     }
 
 
 class ContactTests(TestCaseHelpers):
+    def setUp(self):
+        from captcha.conf import settings as captcha_settings
+        captcha_settings.CAPTCHA_TEST_MODE = True
+
     def test_contact_GET(self):
         response = self.client.get(reverse("findshows:contact"))
         self.assertEqual(response.status_code, 200)

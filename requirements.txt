@@ -3,6 +3,7 @@ psycopg2-binary
 mjml
 django-mjml
 django-multiselectfield
+django-simple-captcha
 requests
 pymemcache
 Pillow

@@ -23,7 +23,9 @@ from findshows import views
 
 urlpatterns = [
     path('', include("findshows.urls")),
+
     path('admin/', admin.site.urls),
+
     path("accounts/", include("django.contrib.auth.urls")),
     # accounts/login/ [name='login']
     # accounts/logout/ [name='logout']
@@ -36,6 +38,8 @@ urlpatterns = [
     path("accounts/create_account", views.create_account, name='create_account'),
     path("accounts/verify_email", views.verify_email, name='verify_email'),
     path("accounts/resend_email_verification", views.resend_email_verification, name='resend_email_verification'),
+
+    path('captcha/', include("captcha.urls")),
 ]
 
 if settings.DEBUG:

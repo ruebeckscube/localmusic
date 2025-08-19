@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'mjml',
+    'captcha',
 ]
 
 MIDDLEWARE = [
@@ -188,6 +189,10 @@ MJML_BACKEND_MODE = 'tcpserver'
 MJML_TCPSERVERS = [
     (os.getenv("MJML_HOST"), int(os.getenv("MJML_PORT", '0'))),
 ]
+
+
+# Captcha
+CAPTCHA_FONT_SIZE = 44
 
 # Misc
 MAX_DATE_RANGE = int(os.getenv("MAX_DATE_RANGE", '7'))

@@ -90,19 +90,19 @@ def send_artist_setup_info(user_email: str):
 
 
 def contact_email(cf: ContactForm):
-    match cf.cleaned_data['type']:
-        case cf.Types.REPORT_BUG:
+    try:
+        type = cf.Types(cf.cleaned_data['type'])
+    except ValueError:
+        type = cf.Types.OTHER
+
+    match type:
+        case cf.Types.REPORT_BUG | cf.Types.FEATURE_REQUEST:
             recipient_list = [admin[1] for admin in settings.ADMINS] # Tuples (Name, email)
-            type = cf.Types.REPORT_BUG.label
-        case cf.Types.OTHER:
+        case cf.Types.CONTACT_MOD | cf.Types.HELP | cf.Types.OTHER:
             mods = UserProfile.objects.filter(is_mod=True)
             recipient_list = [mod.user.email for mod in mods]
-            type = cf.Types.OTHER.label
-        case _:
-            recipient_list = []
-            type = ""
 
-    return send_mail_helper(f"[Contact|{type}] {cf.cleaned_data['subject']}",
+    return send_mail_helper(f"[Contact|{type.label}] {cf.cleaned_data['subject']}",
                             cf.cleaned_data['message'],
                             recipient_list,
                             cf,
