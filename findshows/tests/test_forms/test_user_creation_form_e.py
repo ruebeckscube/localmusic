@@ -8,11 +8,18 @@ def form_data(username='test@em.ail',
     return {
         'username': username,
         'password1': password1,
-        'password2': password2
+        'password2': password2,
+        'captcha_0': 'this_doesnt_matter',
+        'captcha_1': 'PASSED',
     }
 
 
 class UserCreationFormETests(TestCase):
+    def setUp(self):
+        from captcha.conf import settings as captcha_settings
+        captcha_settings.CAPTCHA_TEST_MODE = True
+
+
     def test_email_handling(self):
         form = UserCreationFormE(data=form_data(username='myunique@em.ail'))
         user1 = form.save()

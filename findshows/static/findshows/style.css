@@ -64,7 +64,7 @@
   }
 
   .textinput {
-    @apply  m-0.5 p-1 border bg-white resize-none;
+    @apply  m-0.5 p-1 border bg-white resize-none accent-clickable;
   }
 
   .textinput-wrapper > input {

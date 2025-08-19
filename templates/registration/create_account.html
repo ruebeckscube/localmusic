@@ -13,19 +13,14 @@
                             {{ field.as_field_group }}
                         </div>
                     {% endfor %}
-                    <div class="fieldgroup">
-                        <input type="checkbox" name="sendartistinfo">
-                        Send info about making an artist page and listing shows?
-                    </div>
                 </div>
 
                 <div class="flex flex-col md:w-1/2">
-                    {% for field in profile_form %}
-                        <div class="fieldgroup">
-                            {{field.as_field_group}}
-                        </div>
-                    {% endfor %}
-
+                    {% include "findshows/partials/user_settings_form.html" with form=profile_form %}
+                    <div class="fieldgroup">
+                        <input type="checkbox" name="sendartistinfo" class="accent-clickable">
+                        Send info about making an artist page and listing shows?
+                    </div>
                 </div>
             </div>
             <div>

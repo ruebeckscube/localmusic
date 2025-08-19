@@ -54,6 +54,16 @@ class ContactTests(TestCaseHelpers):
         self.assert_not_blank_form(response.context['form'], ContactForm)
 
 
+    def test_contact_captcha_fail(self):
+        data = contact_post_request()
+        data['captcha_1'] = ['NOT_PASSED']
+        response = self.client.post(reverse("findshows:contact"), data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'findshows/pages/contact.html')
+        self.assert_emails_sent(0)
+        self.assert_not_blank_form(response.context['form'], ContactForm)
+
+
 def user_settings_post_request(musicbrainz_artists=[], weekly_email=True, preferred_concert_tags=[]):
     return {
         'favorite_musicbrainz_artists': musicbrainz_artists,
@@ -138,11 +148,18 @@ def create_account_post_request():
         'password2': ['sn384ydi9hs43i03489d4sa'],
         'weekly_email': ['on'],
         'preferred_concert_tags': ['CV'],
+        'captcha_0': ['this_doesnt_matter'],
+        'captcha_1': ['PASSED'],
         'next': ['']
     }
 
 
 class CreateAccountTests(TestCaseHelpers):
+    def setUp(self):
+        from captcha.conf import settings as captcha_settings
+        captcha_settings.CAPTCHA_TEST_MODE = True
+
+
     def test_create_account_GET(self):
         response = self.client.get(reverse("create_account"))
         self.assertTemplateUsed('create_account.html')
@@ -192,6 +209,16 @@ class CreateAccountTests(TestCaseHelpers):
     def test_create_account_POST_fail(self):
         data = create_account_post_request()
         data['username'] = 'notanemail'
+        response = self.client.post(reverse("create_account"), data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'registration/create_account.html')
+        self.assert_records_created(User, 0)
+        self.assert_records_created(UserProfile, 0)
+
+
+    def test_create_account_captcha_fail(self):
+        data = create_account_post_request()
+        data['captcha_1'] = 'NOT_PASSED'
         response = self.client.post(reverse("create_account"), data)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'registration/create_account.html')

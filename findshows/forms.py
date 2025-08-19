@@ -49,6 +49,8 @@ class DefaultStylingModelForm(forms.ModelForm):
 
 class UserCreationFormE(UserCreationForm):
     required_css_class = "required"
+    captcha = CaptchaField()
+
     class Meta:
         model = User
         fields = ("username", "password1", "password2")
@@ -81,10 +83,10 @@ class UserCreationFormE(UserCreationForm):
         return user
 
 
-class UserProfileForm(forms.ModelForm):
+class UserProfileForm(DefaultStylingModelForm):
     class Meta:
         model=UserProfile
-        fields=("favorite_musicbrainz_artists", "weekly_email", "preferred_concert_tags")
+        fields=("favorite_musicbrainz_artists", "preferred_concert_tags", "weekly_email")
         widgets={"favorite_musicbrainz_artists": MusicBrainzArtistSearchWidget(max_artists=settings.MAX_USER_ARTISTS)}
 
 

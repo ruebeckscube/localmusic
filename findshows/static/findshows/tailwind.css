@@ -1391,6 +1391,7 @@
     border-width: 1px;
     background-color: var(--color-white);
     padding: calc(var(--spacing) * 1);
+    accent-color: var(--color-clickable);
   }
   .textinput-wrapper > input {
     margin: calc(var(--spacing) * 0.5);

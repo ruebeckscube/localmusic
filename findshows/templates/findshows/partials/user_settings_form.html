@@ -1,0 +1,13 @@
+<div class="fieldgroup {{wfull | yesno:'w-full, '}}">
+    {{form.favorite_musicbrainz_artists.as_field_group}}
+</div>
+<div class="fieldgroup {{wfull | yesno:'w-full, '}}">
+    {{form.preferred_concert_tags.as_field_group}}
+</div>
+<div class="fieldgroup {{wfull | yesno:'w-full, '}}">
+    {{form.weekly_email}}
+    <label for="{{form.weekly_email.id_for_label}}">
+        {{form.weekly_email.label}}
+    </label>
+    <div class="helptext">{{form.weekly_email.help_text}}</div>
+</div>
