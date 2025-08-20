@@ -38,7 +38,7 @@ http {
        # Requests to /static/ are served directly from the /static/ directory
        location /static/ {
            alias /static/;
-           expires 7d;
+           expires 6M;
        }
 
        # Configuration for serving media files
