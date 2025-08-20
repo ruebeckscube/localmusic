@@ -381,7 +381,8 @@ class ContactForm(DefaultStylingForm):
     email = forms.EmailField(max_length=100, label="Your email")
     type = forms.ChoiceField(choices=Types, widget=StyledSelect)
     subject = forms.CharField()
-    message = forms.CharField(widget=forms.Textarea)
+    message = forms.CharField(widget=forms.Textarea,
+                              help_text="Please include as much detail as possible for the quickest help.")
     captcha = CaptchaField()
 
     def clean_subject(self):

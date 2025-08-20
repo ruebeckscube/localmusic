@@ -9,9 +9,18 @@ services:
       - DATABASE_PORT=5432
       - MJML_HOST=mjml
       - MJML_PORT=28101
+      - CACHE_LOCATION=memcached:11211
     depends_on:
       - db
       - mjml
+      - memcached
+
+  memcached:
+    image: memcached
+    command:
+      - --conn-limit=1024
+      - --memory-limit=64
+      - --threads=4
 
   db:
     image: postgres:15

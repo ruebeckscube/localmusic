@@ -152,11 +152,12 @@ USER_AGENT_HEADER=os.getenv("USER_AGENT_HEADER")
 LISTENBRAINZ_SIMILAR_ARTIST_CACHE_DAYS=30
 
 # Memcache
+MEMCACHE_LOCATION = os.getenv("CACHE_LOCATION")
 if not IS_DEV:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
-            "LOCATION": os.getenv("CACHE_LOCATION"),
+            "LOCATION": MEMCACHE_LOCATION,
         }
     }
 
@@ -206,3 +207,4 @@ MAX_FUTURE_CONCERT_WEEKS = int(os.getenv("MAX_FUTURE_CONCERT_WEEKS", '52'))
 MIN_LISTENERS_TO_IMPORT_MB = int(os.getenv("MIN_LISTENERS_TO_IMPORT_MB", '4'))
 MAX_IMAGE_SIZE_IN_MB = int(os.getenv("MAX_IMAGE_SIZE_IN_MB", '2'))
 MAX_USER_ARTISTS = 9
+MAX_CONTACTS_PER_MINUTE = int(os.getenv("MAX_CONTACTS_PER_MINUTE", '50'))

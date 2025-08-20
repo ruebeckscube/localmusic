@@ -3,8 +3,6 @@ services:
     extends:
       file: docker-compose-base.yml
       service: web
-    environment:
-      - CACHE_LOCATION=memcached:11211
     volumes:
       - static:/app/staticfiles
       - media:/app/media
@@ -45,11 +43,10 @@ services:
     restart: always
 
   memcached:
-    image: memcached
-    command:
-      - --conn-limit=1024
-      - --memory-limit=64
-      - --threads=4
+    extends:
+      file: docker-compose-base.yml
+      service: memcached
+    restart: always
 
 volumes:
    postgres_data:

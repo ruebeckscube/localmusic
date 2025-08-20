@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.core import mail
 from django.urls import reverse
 from django.utils import timezone
+from pymemcache import Client
 from findshows.forms import ContactForm
 from findshows.models import ConcertTags, EmailVerification, UserProfile
 
@@ -28,6 +29,10 @@ class ContactTests(TestCaseHelpers):
     def setUp(self):
         from captcha.conf import settings as captcha_settings
         captcha_settings.CAPTCHA_TEST_MODE = True
+
+        memcache_client = Client(settings.MEMCACHE_LOCATION, timeout=3, connect_timeout=3)
+        memcache_client.delete('num_recent_contacts')
+
 
     def test_contact_GET(self):
         response = self.client.get(reverse("findshows:contact"))
@@ -62,6 +67,17 @@ class ContactTests(TestCaseHelpers):
         self.assertTemplateUsed(response, 'findshows/pages/contact.html')
         self.assert_emails_sent(0)
         self.assert_not_blank_form(response.context['form'], ContactForm)
+
+
+    def test_max_emails_per_minute(self):
+        for i in range(settings.MAX_CONTACTS_PER_MINUTE):
+            response = self.client.post(reverse("findshows:contact"), contact_post_request())
+            self.assert_emails_sent(i + 1)
+        response = self.client.post(reverse("findshows:contact"), contact_post_request())
+        self.assert_emails_sent(settings.MAX_CONTACTS_PER_MINUTE)
+        self.assert_not_blank_form(response.context['form'], ContactForm)
+        self.assertIn("High contact volume; please try again in a minute. This is a spam prevention measure, thanks for understanding.",
+                      response.context['form'].non_field_errors())
 
 
 def user_settings_post_request(musicbrainz_artists=[], weekly_email=True, preferred_concert_tags=[]):

@@ -3,6 +3,7 @@ from operator import and_, or_
 from functools import reduce
 import json
 from random import random, shuffle
+from pymemcache.client.base import Client
 
 from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied
@@ -32,9 +33,19 @@ def contact(request):
     success = False
     if request.POST:
         form = ContactForm(request.POST)
-        if form.is_valid() and contact_email(form):
-            success = True
-            form = ContactForm()
+
+        if form.is_valid():
+            memcache_client = Client(settings.MEMCACHE_LOCATION, timeout=3, connect_timeout=3)
+            recent_contacts = memcache_client.incr('num_recent_contacts', 1)
+            if recent_contacts is None:
+                memcache_client.set('num_recent_contacts', 1, 60, True)
+                recent_contacts = 1
+
+            if recent_contacts > settings.MAX_CONTACTS_PER_MINUTE:
+                form.add_error(None, "High contact volume; please try again in a minute. This is a spam prevention measure, thanks for understanding.")
+            elif contact_email(form):
+                success = True
+                form = ContactForm()
     else:
         form = ContactForm()
 
