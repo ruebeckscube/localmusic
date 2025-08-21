@@ -13,6 +13,7 @@ SHELL=/bin/sh
 # |  |  |  |  |
 # *  *  *  *  * user-name  command to be executed
 
-01 00 1,15 * * cd /<abs-path-to-project-folder>/localmusic;./develop.sh biweekly-tasks
-01 00 * * * cd /<abs-path-to-project-folder>/localmusic;./develop.sh manage send_mod_reminder
-00 08 * * 0 cd /<abs-path-to-project-folder>/localmusic;./develop.sh manage send_weekly_recs
+01 00 1,15 * * cd /<abs-path-to-project-folder>/localmusic;./develop.sh biweekly-tasks >> /var/log/biweekly_tasks.log 2>&1
+01 00 * * * cd /<abs-path-to-project-folder>/localmusic;./develop.sh manage send_mod_reminder >> /var/log/send_mod_reminder.log 2>&1
+00 08 * * 0 cd /<abs-path-to-project-folder>/localmusic;./develop.sh manage send_weekly_recs >> /var/log/send_weekly_recs.log 2>&1
+00 01 * * * cd /<abs-path-to-project-folder>/localmusic;./develop.sh backup >> /var/log/backups.log 2>&1

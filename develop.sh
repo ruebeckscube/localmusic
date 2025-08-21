@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # based on a similar script from listenbrainz
 # https://github.com/metabrainz/listenbrainz-server/blob/f1b2ad535c0de29f3dd3a02cc2969f1a30a58dd9/develop.sh
@@ -19,17 +19,19 @@ if [ ! -e ".env" ]; then
     exit 1
 fi
 
+# Load env variables, mostly for IS_DEV
 . ./.env
 
-invoke_docker_compose() {
-    if [ "$IS_DEV" = "True" ]; then
-        COMPOSE_FILE="docker-compose-dev.yml"
-        echo "Using development compose file."
-    else
-        COMPOSE_FILE="docker-compose-prod.yml"
-        echo "Using production compose file."
-    fi
 
+if [ "$IS_DEV" = "True" ]; then
+    COMPOSE_FILE="docker-compose-dev.yml"
+    echo "Using development compose file."
+else
+    COMPOSE_FILE="docker-compose-prod.yml"
+    echo "Using production compose file."
+fi
+
+invoke_docker_compose() {
     $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE \
         -p localmusic \
         --env-file .env \
@@ -74,6 +76,72 @@ dump_data() {
         > "${1:-datadump.json}"
 }
 
+load_data() {
+    DATABASE_FILE="${1:-datadump.json}"
+    echo "Importing database from $DATABASE_FILE"
+    invoke_docker_compose cp "$DATABASE_FILE" web:/app/temp_database_file.json
+    # invoke_manage loaddata /app/temp_database_file.json
+    invoke_docker_compose run --rm web sh -c "python3 manage.py loaddata /app/temp_database_file.json && rm /app/temp_database_file.json"
+}
+
+check_for_backup_dir() {
+    if [ -z "$BACKUP_DIR" ]; then
+        echo "failed: missing BACKUP_DIR in env file."
+        exit
+    fi
+    if [ ! -d "$BACKUP_DIR" ]; then
+        echo "failed: $BACKUP_DIR does not exist; make directory or edit BACKUP_DIR in env file."
+        exit
+    fi
+}
+
+backup() {
+    check_for_backup_dir
+    TODAY=$(date +"%F")
+    TODAY_DIR="$BACKUP_DIR/$TODAY"
+
+    mkdir "$TODAY_DIR"
+    echo
+    echo "Exporting database"
+    dump_data "$TODAY_DIR/database.json"
+    echo
+    echo "Copying media files"
+    invoke_docker_compose cp web:/app/media "$TODAY_DIR/"
+    echo
+    DELETE_DATE=$(date -v "-2d" +"%F")
+    echo "Deleting backups from $DELETE_DATE and older"
+    CUTOFF=$((${#BACKUP_DIR} + 2))
+    for d in "$BACKUP_DIR"/*; do
+        DATE=$(echo "$d" | cut -c "$CUTOFF-")
+        if [[ ! "$DATE" > "$DELETE_DATE" ]]; then
+            echo "removed $d"
+            rm -rf "$d"
+        fi
+    done
+}
+
+load_backup() {
+    check_for_backup_dir
+    echo "Available backups:"
+    ls "$BACKUP_DIR"
+    printf "Enter date to restore backup from: "
+    read -r DATE
+    DATE_DIR="$BACKUP_DIR/$DATE"
+    if [ ! -d "$DATE_DIR" ]; then
+        echo "failed: $DATE_DIR does not exist"
+        exit
+    fi
+    echo
+    echo "Restoring database"
+    load_data "$DATE_DIR/database.json"
+    echo
+    echo "Restoring media files"
+    invoke_docker_compose cp "$DATE_DIR/media" web:/app/
+    echo
+    echo "Successfully restored from backup"
+
+}
+
 coverage_report() {
     if [ "$IS_DEV" = "True" ]; then
         invoke_docker_compose run --rm web sh -c "coverage run ./manage.py test && coverage html"
@@ -105,6 +173,12 @@ elif [ "$1" = "biweekly-tasks" ]; then
     biweekly_tasks
 elif [ "$1" = "dump-data" ]; then shift
     dump_data "$@"
+elif [ "$1" = "load-data" ]; then shift
+    load_data "$@"
+elif [ "$1" = "backup" ]; then shift
+    backup "$@"
+elif [ "$1" = "load-backup" ]; then shift
+    load_backup "$@"
 elif [ "$1" = "coverage" ]; then
     coverage_report
 elif [ "$1" = "psql" ]; then
