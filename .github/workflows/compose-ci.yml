@@ -5,7 +5,6 @@ on:
     branches:
       - master
   pull_request:
-  workflow_dispatch:
 
 jobs:
   docker:
@@ -27,4 +26,4 @@ jobs:
 
       - name: Run tests
         run: |
-          ./develop.sh manage test --parallel
+          ./develop.sh manage test
