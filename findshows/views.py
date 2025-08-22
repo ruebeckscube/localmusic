@@ -34,7 +34,7 @@ def contact(request):
     if request.POST:
         form = ContactForm(request.POST)
 
-        if False: # form.is_valid():
+        if form.is_valid():
             memcache_client = Client(settings.MEMCACHE_LOCATION, timeout=3, connect_timeout=3)
             recent_contacts = memcache_client.incr('num_recent_contacts', 1)
             if recent_contacts is None:
