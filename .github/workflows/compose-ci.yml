@@ -19,6 +19,7 @@ jobs:
 
       - name: Build Docker Compose
         run: |
+          echo "IS_DEV=True" >> .env
           ./develop.sh build
 
       - name: Run tests
