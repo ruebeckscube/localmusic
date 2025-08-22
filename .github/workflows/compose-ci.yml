@@ -19,6 +19,7 @@ jobs:
       - name: Build Docker Compose
         run: |
           echo "IS_DEV=True" >> .env
+          echo "SECRET_KEY=test_secret_key" >> .env
           echo "DATABASE_NAME=localmusic" >> .env
           echo "DATABASE_USER=django" >> .env
           echo "DATABASE_PASSWORD=test_password" >> .env
