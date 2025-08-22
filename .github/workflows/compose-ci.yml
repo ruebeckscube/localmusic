@@ -1,0 +1,25 @@
+name: Build and Test Docker Compose
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Compose
+        uses: docker/setup-compose-action@v1
+
+      - name: Build Docker Compose
+        run: |
+          ./develop.sh build
+
+      - name: Run tests
+        run: |
+          ./develop.sh manage test --parallel
