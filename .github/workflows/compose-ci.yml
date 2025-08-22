@@ -3,7 +3,7 @@ name: Build and Test Docker Compose
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
   workflow_dispatch:
 
@@ -20,6 +20,9 @@ jobs:
       - name: Build Docker Compose
         run: |
           echo "IS_DEV=True" >> .env
+          echo "DATABASE_NAME=localmusic" >> .env
+          echo "DATABASE_USER=django" >> .env
+          echo "DATABASE_PASSWORD=test_password" >> .env
           ./develop.sh build
 
       - name: Run tests
