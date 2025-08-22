@@ -155,9 +155,35 @@ connect_to_database() {
     psql "postgresql://$DATABASE_USER:$DATABASE_PASSWORD@localhost:5431/$DATABASE_NAME"
 }
 
+update_app() {
+    git pull
+    invoke_docker_compose up --build -d
+}
+
+nightly_tasks() {
+    echo
+    date
+    echo "MOD REMINDER"
+    invoke_manage send_mod_reminder
+    echo "BACKUP"
+    backup
+    echo "UPDATING APP"
+    update_app
+}
+
+weekly_tasks() {
+    echo
+    date
+    echo "SENDING WEEKLY EMAIL"
+    invoke_manage send_weekly_recs
+}
 
 biweekly_tasks() {
+    echo
+    date
+    echo "RENEWING SSL CERTICFICATES"
     invoke_docker_compose run --rm certbot renew
+    echo "UPDATING MUSICBRAINZ DATA"
     invoke_manage update_musicbrainz_data
 }
 
@@ -169,6 +195,10 @@ elif [ "$1" = "update-config" ]; then shift
     update_config "$@"
 elif [ "$1" = "init" ]; then
     setup_initial_server
+elif [ "$1" = "nightly-tasks" ]; then
+    biweekly_tasks
+elif [ "$1" = "weekly-tasks" ]; then
+    biweekly_tasks
 elif [ "$1" = "biweekly-tasks" ]; then
     biweekly_tasks
 elif [ "$1" = "dump-data" ]; then shift
