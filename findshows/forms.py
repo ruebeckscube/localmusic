@@ -10,7 +10,7 @@ from django.conf import settings
 from multiselectfield.forms.fields import MultiSelectFormField
 from captcha.fields import CaptchaField
 
-from findshows.models import Artist, Concert, ConcertTags, LabeledURLsValidator, MusicBrainzArtist, UserProfile, Venue
+from findshows.models import MAX_UPLOADED_IMAGE_SIZE_IN_MB, Artist, Concert, ConcertTags, LabeledURLsValidator, MusicBrainzArtist, UserProfile, Venue
 from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, ImageInput, SocialsLinksWidget, MusicBrainzArtistSearchWidget, StyledSelect, TimePickerField, VenuePickerWidget
 
 
@@ -91,8 +91,7 @@ class UserProfileForm(DefaultStylingModelForm):
 
 
 def validate_image(image):
-    FileExtensionValidator(allowed_extensions=('jpg', 'jpeg'))(image)
-    if image.size > settings.MAX_IMAGE_SIZE_IN_MB*1024*1024:
+    if image.size > MAX_UPLOADED_IMAGE_SIZE_IN_MB*1024*1024:
         raise ValidationError("Image file too large")
     return image
 

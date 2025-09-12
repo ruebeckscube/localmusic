@@ -21,7 +21,7 @@ from django.conf import settings
 from findshows.email import contact_email, invite_artist, invite_user_to_artist, send_artist_setup_info, send_verify_email
 from findshows.widgets import ArtistAccessWidget
 
-from .models import Artist, ArtistLinkingInfo, Concert, ConcertTags, EmailCodeError, EmailVerification, InviteDelayError, MusicBrainzArtist, Venue
+from .models import Artist, ArtistLinkingInfo, Concert, ConcertTags, EmailCodeError, EmailVerification, InviteDelayError, JPEGImageException, MusicBrainzArtist, Venue
 from .forms import ArtistAccessForm, ArtistEditForm, ConcertForm, ContactForm, ModDailyDigestForm, RequestArtistForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
 
 
@@ -204,8 +204,11 @@ def edit_artist(request, pk):
     else:
         form = ArtistEditForm(request.POST, request.FILES, instance=artist)
         if form.is_valid():
-            form.save()
-            return redirect(reverse('findshows:view_artist', args=[pk]))
+            try:
+                form.save()
+                return redirect(reverse('findshows:view_artist', args=[pk]))
+            except JPEGImageException as e:
+                form.add_error('profile_picture', e.message)
 
     context = {'form': form,
                'pk': pk,
@@ -453,8 +456,11 @@ def edit_concert(request, pk=None):
         form = ConcertForm(request.POST, request.FILES, instance=concert)
         form.set_editing_user(request.user)
         if form.is_valid():
-            form.save()
-            return redirect(reverse('findshows:my_concert_list'))
+            try:
+                form.save()
+                return redirect(reverse('findshows:my_concert_list'))
+            except JPEGImageException as e:
+                form.add_error('poster', e.message)
 
     context = {'form': form,
                'pk': pk}

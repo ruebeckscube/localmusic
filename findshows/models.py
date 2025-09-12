@@ -5,12 +5,16 @@ import urllib.request
 import re
 from statistics import mean
 import secrets
+from PIL import Image
+import io
 
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, ImageField
+from django.db.models.fields.files import ImageFieldFile
 from django.contrib.auth.models import User
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
@@ -22,7 +26,8 @@ from multiselectfield import MultiSelectField
 from findshows import musicbrainz
 
 
-IMAGE_HELP_TEXT = f"JPG of at most {settings.MAX_IMAGE_SIZE_IN_MB}MB."
+MAX_UPLOADED_IMAGE_SIZE_IN_MB = 30
+IMAGE_HELP_TEXT = f"Uploaded file must be at most {MAX_UPLOADED_IMAGE_SIZE_IN_MB}MB."
 
 
 class CreationTrackingMixin(models.Model):
@@ -42,6 +47,40 @@ class Similar(models.Lookup):
         rhs_sql, rhs_params = self.process_rhs(compiler, connection)
         params = lhs_params + rhs_params
         return f"{lhs_sql} %% {rhs_sql}", params
+
+
+class JPEGImageException(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
+class JPEGImageFieldFile(ImageFieldFile):
+    def save(self, name, content, save=True):
+        if not name or not content:
+            return super(JPEGImageFieldFile, self).save(name, content, save)
+
+        if name.split('.')[-1].lower() not in ('jpg','jpeg'):
+            image = Image.open(content)  # Don't need to try/except because Django handles it first
+            if image.mode not in ('L', 'RGB'):
+                image = image.convert("RGB")
+            buf = io.BytesIO()
+            image.save(buf, format="JPEG", subsampling=1, quality=80)
+            content = ContentFile(buf.getvalue())
+            name = f"{name.split('.')[:-1]}.jpeg"
+
+        if content.size > 2*1024*1024:
+            raise JPEGImageException("JPEG file after conversion is larger than 2MB; please try a smaller image.")
+
+        return super(JPEGImageFieldFile, self).save(name, content, save)
+
+
+class JPEGImageField(ImageField):
+    """
+    ImageField that converts all images to JPEG on save.
+    """
+    attr_class = JPEGImageFieldFile
+
 
 
 class LabeledURLsValidator(URLValidator):
@@ -161,7 +200,7 @@ class Artist(CreationTrackingMixin):
     }
 
     name=models.CharField(verbose_name="Artist Name", max_length=60)
-    profile_picture=models.ImageField(null=True, help_text=f"{IMAGE_HELP_TEXT}")
+    profile_picture=JPEGImageField(null=True, help_text=f"{IMAGE_HELP_TEXT}")
     bio=models.TextField(null=True, max_length=800)
     local=models.BooleanField(help_text="Check if this is a local artist. It will give them permission to list shows and invite other artists.")
 
@@ -483,7 +522,7 @@ class Venue(CreationTrackingMixin):
 
 
 class Concert(CreationTrackingMixin):
-    poster=models.ImageField(help_text=f"{IMAGE_HELP_TEXT} Vertical or square orientations display best.")
+    poster=JPEGImageField(help_text=f"{IMAGE_HELP_TEXT} Vertical or square orientations display best.")
     date=models.DateField()
     doors_time=models.TimeField(blank=True, null=True)
     start_time=models.TimeField()

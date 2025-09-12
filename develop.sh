@@ -80,7 +80,6 @@ load_data() {
     DATABASE_FILE="${1:-datadump.json}"
     echo "Importing database from $DATABASE_FILE"
     invoke_docker_compose cp "$DATABASE_FILE" web:/app/temp_database_file.json
-    # invoke_manage loaddata /app/temp_database_file.json
     invoke_docker_compose run --rm web sh -c "python3 manage.py loaddata /app/temp_database_file.json && rm /app/temp_database_file.json"
 }
 
