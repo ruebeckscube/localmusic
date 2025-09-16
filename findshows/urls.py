@@ -10,6 +10,7 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("user_settings", views.user_settings, name="user_settings"),
     path('about/', TemplateView.as_view(template_name='findshows/pages/about.html'), name="about"),
+    path('artist_faq/', TemplateView.as_view(template_name='findshows/pages/artist_faq.html'), name="artist_faq"),
     path('contact/', views.contact, name="contact"),
 
     path("my_artists", views.managed_artist_list, name="managed_artist_list"),

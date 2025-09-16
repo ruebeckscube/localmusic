@@ -39,6 +39,11 @@
     @apply text-2xl mb-2;
   }
 
+  h3 {
+    @apply text-xl mb-1;
+  }
+
+
   .helptext {
     @apply text-xs font-light px-3 py-1;
   }

@@ -1,8 +1,7 @@
 import datetime
-import json
 
 from django import template
-from django.conf import settings
+from django.template.loader import render_to_string
 from django.urls import reverse
 
 from findshows.email import local_url_to_email
@@ -64,3 +63,10 @@ def email_raw_url(raw_url: str):
 @register.simple_tag
 def num_true_args(*args):
     return sum(1 for arg in args if arg)
+
+@register.simple_block_tag
+def accordion_element(content, title):
+    return render_to_string('findshows/partials/accordion_element.html', context={
+        'content': content,
+        'title': title,
+    })

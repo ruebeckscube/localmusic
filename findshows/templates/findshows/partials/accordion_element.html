@@ -1,0 +1,8 @@
+{# To use, all titles must be unique on a given page! #}
+<div class="border border-transparent hover:border-clickable-h fieldgroup m-2 max-w-4xl"
+     @click="selected_title=selected_title=='{{title|escapejs}}' ? '' : '{{title|escapejs}}'">
+    <h3>{{ title }}</h3>
+    <p class="m-4" x-show="selected_title=='{{title|escapejs}}'">
+        {{ content }}
+    </p>
+</div>

@@ -656,6 +656,10 @@
   .rounded-xl {
     border-radius: var(--radius-xl);
   }
+  .border {
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+  }
   .border-4 {
     border-style: var(--tw-border-style);
     border-width: 4px;
@@ -924,6 +928,13 @@
   .even\:bg-sub-background {
     &:nth-child(even) {
       background-color: var(--color-sub-background);
+    }
+  }
+  .hover\:border-clickable-h {
+    &:hover {
+      @media (hover: hover) {
+        border-color: var(--color-clickable-h);
+      }
     }
   }
   .hover\:text-clickable-h {
@@ -1341,6 +1352,11 @@
     margin-bottom: calc(var(--spacing) * 2);
     font-size: var(--text-2xl);
     line-height: var(--tw-leading, var(--text-2xl--line-height));
+  }
+  h3 {
+    margin-bottom: calc(var(--spacing) * 1);
+    font-size: var(--text-xl);
+    line-height: var(--tw-leading, var(--text-xl--line-height));
   }
   .helptext {
     padding-inline: calc(var(--spacing) * 3);
