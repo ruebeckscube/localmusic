@@ -237,7 +237,7 @@ class VenueForm(DefaultStylingModelForm):
 
     class Meta:
         model=Venue
-        fields=("name", "address", "ages", "website")
+        fields=("name", "ages", "website")
         widgets={"ages": StyledSelect}
 
 

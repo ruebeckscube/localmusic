@@ -32,7 +32,6 @@ class VenueSearchTests(TestCaseHelpers):
 
 def venue_post_data():
     return {'venue-name': 'Gallery Cabaret',
-            'venue-address': ['anetseonahoeint'],
             'venue-ages': ['17'],
             'venue-website': ['asoeth.com']}
 

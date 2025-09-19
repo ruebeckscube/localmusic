@@ -184,7 +184,6 @@ class TestCaseHelpers(TestCase):
     @classmethod
     def create_venue(cls,
                      name=None,
-                     address="100 West Hollywood",
                      ages=Ages.TWENTYONE,
                      website="https://thevenue.com",
                      created_by=None,
@@ -198,7 +197,6 @@ class TestCaseHelpers(TestCase):
                 name = None
         venue=Venue(
             name=name,
-            address=address,
             ages=ages,
             website=website,
             is_verified=is_verified,
