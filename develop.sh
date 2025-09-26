@@ -151,12 +151,21 @@ coverage_report() {
 }
 
 connect_to_database() {
-    psql "postgresql://$DATABASE_USER:$DATABASE_PASSWORD@localhost:5431/$DATABASE_NAME"
+    invoke_docker_compose exec -e PGPASSWORD="$DATABASE_PASSWORD" db sh -c "psql -U $DATABASE_USER -d $DATABASE_NAME"
 }
 
 update_app() {
     git pull
     invoke_docker_compose up --build -d
+}
+
+tailwind() {
+    # Tailwind's gotta be installed on the system, can't figure out how to dockerize it
+    if [ "$IS_DEV" = "True" ]; then
+        npx @tailwindcss/cli -i findshows/static/findshows/style.css -o findshows/static/findshows/tailwind.css --watch
+    else
+        echo "Only run tailwind in dev"
+    fi
 }
 
 nightly_tasks() {
@@ -212,6 +221,9 @@ elif [ "$1" = "coverage" ]; then
     coverage_report
 elif [ "$1" = "psql" ]; then
     connect_to_database
+elif [ "$1" = "tailwind" ]; then
+    tailwind
+
 else
     echo "Running docker-compose with the given command..."
     invoke_docker_compose "$@"
