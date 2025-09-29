@@ -237,6 +237,11 @@ def has_exceeded_daily_invites(user):
     return (not is_mod(user) and
             records_created_today(ArtistLinkingInfo, user.userprofile) >= settings.MAX_DAILY_INVITES)
 
+def is_new_artist_account(user):
+    if is_mod(user):
+        return False
+    return (not user.userprofile.given_artist_access_datetime or
+            user.userprofile.given_artist_access_datetime > timezone.now() - timedelta(settings.INVITE_BUFFER_DAYS))
 
 def create_temp_artist(request):
     if not (has_edit_privileges(request.user)):
@@ -247,8 +252,7 @@ def create_temp_artist(request):
     if has_exceeded_daily_invites(request.user):
         return render(request, 'findshows/htmx/cant_create_artist.html')
 
-    if (not request.user.userprofile.given_artist_access_datetime or
-        request.user.userprofile.given_artist_access_datetime > timezone.now() - timedelta(settings.INVITE_BUFFER_DAYS)):
+    if is_new_artist_account(request.user):
         return render(request, 'findshows/htmx/cant_create_artist.html', context={'new_account_delay': settings.INVITE_BUFFER_DAYS})
 
     # The latter condition is a slightly hacky way of telling whether this HTMX
