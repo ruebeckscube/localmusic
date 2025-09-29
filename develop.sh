@@ -52,18 +52,21 @@ update_config() {
 setup_initial_server() {
     update_config "nginx_temp_cert.template"
 
-    # nginx must be running to respond to Certificate Authority requests, and gotta build the whole thing anyway
     echo "Building Docker containers"
-    # invoke_docker_compose up -d --wait --build;
-    invoke_docker_compose up -d --build
+    invoke_docker_compose build
+    invoke_docker_compose run --rm -u root web sh -c "chown appuser: media/;chown appuser: staticfiles/"
 
     echo "Setting up SSL certificates"
+    invoke_docker_compose up -d proxy
     invoke_docker_compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ -d "$HOST_NAME" -d "www.$HOST_NAME"
+    invoke_docker_compose down proxy
 
     update_config "nginx.template"
-    invoke_docker_compose restart
 
     invoke_manage update_musicbrainz_data
+
+    invoke_docker_compose up -d
+    echo "Initialization complete; server started at $HOST_NAME"
 }
 
 dump_data() {
