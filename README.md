@@ -1,49 +1,16 @@
-# Installation
+# The localmusic project
 
-1. Install [Docker](https://www.docker.com) (including docker-compose)
+We aim to make local music more discoverable and accessible, with minimal
+demands on your attention (one email a week! or on-demand on the website) and
+minimal dependence on the big social media platforms. You can discover shows on
+your own by sampling artists' music with one click, or use our recommendation
+system (always optional and user-controlled) powered by the open-source [MusicBrainz](https://musicbrainz.org/)
+database.
 
-2. Clone the repo, navigate to project root.
+Artists post their own shows and create their own profiles&mdash; The project is
+free as in freedom, free as in beer for self-hosting, and open-source. To get
+started, see [self-hosting instructions](/docs/self-hosting.md).
 
-3. Copy `example.env` to a new file named `.env`, and set any field that says
-   "set_this". `SECRET_KEY` and `DATABASE_PASSWORD` are arbitrary but should be
-   set to secure strings. See [MusicBrainz API
-   documentation](https://musicbrainz.org/doc/MusicBrainz_API) for instructions
-   on obtaining a `MUSICBRAINZ_TOKEN` and choosing a meaningful
-   `USER_AGENT_HEADER`. For a development environment, set `IS_DEV=True`.
-   Especially important in production is the `HOST_NAME` variable, as this is
-   used to set up SSL certificates and other things.
-
-4. In a PRODUCTION environment, simply run:
-   ```
-   ./develop.sh init
-   ```
-   This will perform one-time tasks like database setup, SSL certificates, and nginx configuration, as well as building all Docker services.
-   
-   In a DEVELOPMENT environment, run the following commands:
-   ```
-   ./develop.sh up --build
-   ./develop.sh manage migrate
-   ./develop.sh manage update_musicbrainz_data
-   ```
-
-# Create/load data dump
-If you want to send/load some test data from your database, run
-```
-./develop.sh dump-data > localmusic-db-dump.json
-```
-to dump and
-```
-./develop.sh manage loaddata ./localmusic-db-dump.json
-```
-to load. Be aware that media files must be copied manually.
-
-
-# Running the server
-
-Run the server:
-```
-./develop.sh up
-```
 
 # Releases
 
