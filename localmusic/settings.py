@@ -150,8 +150,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 # Spotify API credentials
-SPOTIFY_CLIENT_ID=os.getenv("SPOTIFY_CLIENT_ID")
-SPOTIFY_CLIENT_SECRET=os.getenv("SPOTIFY_CLIENT_SECRET")
+SPOTIFY_CLIENT_ID=os.getenv("SPOTIFY_CLIENT_ID", '')
+SPOTIFY_CLIENT_SECRET=os.getenv("SPOTIFY_CLIENT_SECRET", '')
 
 # MusicBrainz
 MUSICBRAINZ_TOKEN=os.getenv("MUSICBRAINZ_TOKEN")
@@ -177,7 +177,7 @@ LOGOUT_REDIRECT_URL = "/"
 
 
 # Email
-match os.getenv("EMAIL_BACKEND", "CONSOLE"):
+match os.getenv("EMAIL_BACKEND", "SMTP"):
     case "FILEBASED":
         EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
         EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
