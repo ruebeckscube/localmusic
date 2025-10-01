@@ -91,6 +91,10 @@ check_for_backup_dir() {
         echo "failed: missing BACKUP_DIR in env file."
         exit
     fi
+    if [ -z "$BACKUP_DAYS_TO_KEEP" ]; then
+        echo "failed: missing BACKUP_DAYS_TO_KEEP in env file."
+        exit
+    fi
     if [ ! -d "$BACKUP_DIR" ]; then
         echo "failed: $BACKUP_DIR does not exist; make directory or edit BACKUP_DIR in env file."
         exit
@@ -104,13 +108,12 @@ backup() {
 
     mkdir "$TODAY_DIR"
     echo
-    echo "Exporting database"
     dump_data "$TODAY_DIR/database.json"
     echo
     echo "Copying media files"
     invoke_docker_compose cp web:/app/media "$TODAY_DIR/"
     echo
-    DELETE_DATE=$(date -v "-2d" +"%F")
+    DELETE_DATE=$(date --date="${BACKUP_DAYS_TO_KEEP} days ago" +"%F")
     echo "Deleting backups from $DELETE_DATE and older"
     CUTOFF=$((${#BACKUP_DIR} + 2))
     for d in "$BACKUP_DIR"/*; do
@@ -207,9 +210,9 @@ elif [ "$1" = "update-config" ]; then shift
 elif [ "$1" = "init" ]; then
     setup_initial_server
 elif [ "$1" = "nightly-tasks" ]; then
-    biweekly_tasks
+    nightly_tasks
 elif [ "$1" = "weekly-tasks" ]; then
-    biweekly_tasks
+    weekly_tasks
 elif [ "$1" = "biweekly-tasks" ]; then
     biweekly_tasks
 elif [ "$1" = "dump-data" ]; then shift
