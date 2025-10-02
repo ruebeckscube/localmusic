@@ -3,7 +3,7 @@
 # based on a similar script from listenbrainz
 # https://github.com/metabrainz/listenbrainz-server/blob/f1b2ad535c0de29f3dd3a02cc2969f1a30a58dd9/develop.sh
 
-if [ ! -f "manage.py" ]; then
+if [ ! -f "README.md" ]; then
     echo "This script must be run from the top level directory of the localmusic project."
     exit 1
 fi
@@ -24,10 +24,10 @@ fi
 
 
 if [ "$IS_DEV" = "True" ]; then
-    COMPOSE_FILE="docker-compose-dev.yml"
+    COMPOSE_FILE="docker-compose/dev.yml"
     echo "Using development compose file."
 else
-    COMPOSE_FILE="docker-compose-prod.yml"
+    COMPOSE_FILE="docker-compose/prod.yml"
     echo "Using production compose file."
 fi
 
@@ -45,12 +45,13 @@ invoke_manage() {
 }
 
 update_config() {
-    echo "Updating nginx config file from ${1:-nginx.template}"
-    sed "s/TEMPLATE_HOST_NAME/$HOST_NAME/g" < "${1:-nginx.template}" > nginx.conf
+    echo "Updating nginx config file from ${1:-config/nginx.template}"
+    sed "s/TEMPLATE_HOST_NAME/$HOST_NAME/g" < "${1:-config/nginx.template}" > config/nginx.conf
 }
 
 setup_initial_server() {
-    update_config "nginx_temp_cert.template"
+    update_config "config/nginx_temp_cert.template"
+    mkdir "$BACKUP_DIR"
 
     echo "Building Docker containers"
     invoke_docker_compose build
@@ -61,7 +62,7 @@ setup_initial_server() {
     invoke_docker_compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ -d "$HOST_NAME" -d "www.$HOST_NAME"
     invoke_docker_compose down proxy
 
-    update_config "nginx.template"
+    update_config "config/nginx.template"
 
     invoke_manage update_musicbrainz_data
 
@@ -150,7 +151,7 @@ load_backup() {
 coverage_report() {
     if [ "$IS_DEV" = "True" ]; then
         invoke_docker_compose run --rm web sh -c "coverage run ./manage.py test && coverage html"
-        open htmlcov/index.html
+        open app/htmlcov/index.html
     else
         echo "Don't run coverage/tests in prod."
     fi
@@ -168,7 +169,7 @@ update_app() {
 tailwind() {
     # Tailwind's gotta be installed on the system, can't figure out how to dockerize it
     if [ "$IS_DEV" = "True" ]; then
-        npx @tailwindcss/cli -i findshows/static/findshows/style.css -o findshows/static/findshows/tailwind.css --watch
+        npx @tailwindcss/cli -i app/findshows/static/findshows/style.css -o app/findshows/static/findshows/tailwind.css --watch
     else
         echo "Only run tailwind in dev"
     fi

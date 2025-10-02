@@ -22,8 +22,11 @@
    ```
    and navigate to project root.
 
-6. Copy `example.env` to a new file named `.env`, and set any field that says
-   "set\_this", following instructions in the file.
+6. Copy `config/example.env` to a new file named `.env` (in the main project directory):
+   ```
+   cp config/example.env .env
+   ```
+   and set any field that says "set\_this", following instructions in the file.
 
 7. Run the initialization script, which will take a solid ~10 minutes to
    download MusicBrainz data
@@ -39,8 +42,7 @@
    createsuperuser)
    ```./develop.sh manage add_superuser```
    
-9. Set up cron jobs and backups; create a directory outside the project folder
-   to hold local backups, and set BACKUP_DIR in the .env file. Copy the contents
+9. Set up cron jobs;Copy the contents
    of crontab.env into your crontab and edit file paths appropriately. Please
    edit the "biweekly\_tasks" line to run on different days of the month; e.g.
    5,19 rather than 1,14 (to respect MusicBrainz resources).

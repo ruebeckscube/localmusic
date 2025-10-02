@@ -1,30 +1,30 @@
 services:
   web:
     extends:
-      file: docker-compose-base.yml
+      file: base.yml
       service: web
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/app
+      - ../app:/app
     ports:
       - "8000:8000"
     restart: always
 
   db:
     extends:
-      file: docker-compose-base.yml
+      file: base.yml
       service: db
     ports:
       - "5431:5432"
 
   mjml:
     extends:
-      file: docker-compose-base.yml
+      file: base.yml
       service: mjml
 
   memcached:
     extends:
-      file: docker-compose-base.yml
+      file: base.yml
       service: memcached
 
 volumes:
