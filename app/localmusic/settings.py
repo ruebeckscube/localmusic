@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+from copy import deepcopy
+
+from django.utils.log import DEFAULT_LOGGING
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -216,3 +219,42 @@ MAX_FUTURE_CONCERT_WEEKS = int(os.getenv("MAX_FUTURE_CONCERT_WEEKS", '52'))
 MIN_LISTENERS_TO_IMPORT_MB = int(os.getenv("MIN_LISTENERS_TO_IMPORT_MB", '4'))
 MAX_USER_ARTISTS = 9
 MAX_CONTACTS_PER_MINUTE = int(os.getenv("MAX_CONTACTS_PER_MINUTE", '50'))
+
+
+# Logging
+LOGGING = deepcopy(DEFAULT_LOGGING)
+LOGGING['loggers']['django']['handlers'] = ['console']
+LOGGING.update({
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "verbose",
+            'maxBytes': 1024*1024*10,  # 10 MB
+            'backupCount': 5,
+            "filename": "/logs/django.log",
+        },
+        "mail_admins": {
+            "level": "ERROR",
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "verbose",
+            'maxBytes': 1024*1024*10,  # 10 MB
+            'backupCount': 5,
+            "filename": "/logs/errors.log",
+    },
+    },
+    "loggers": {
+        "": {
+            "level": "DEBUG" if IS_DEV else "INFO",
+            "handlers": ["file"],
+        },
+    },
+    "formatters": {
+        "verbose": {
+            # Docker handles timestamps
+            "format": "[{asctime}] [{levelname}] {module}: {message}",
+            "style": "{",
+        },
+    }
+})

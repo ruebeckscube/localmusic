@@ -54,25 +54,28 @@ def send_mail_helper(subject, message, recipient_list, form=None, from_email=Non
         form.add_error(None, display_error)
     if errorlist is not None:
         errorlist.append(display_error)
-    logger.error(log_error)
+    logger.warning(log_error)
     return 0
 
 
 def send_verify_email(email_verification: EmailVerification, invite_code, form=None, errorlist=None):
     subject = "Confirm your email address"
     message = f"Please click the following link to verify your email address:\n\n{local_url_to_email(email_verification.get_url(invite_code))}"
+    logger.info("Sending verification email")
     return send_mail_helper(subject, message, [email_verification.invited_email], form, errorlist=errorlist)
 
 
 def invite_artist(link_info: ArtistLinkingInfo, invite_code, form=None, errorlist=None):
     subject = "Artist profile invite"
     message = f"You've been invited to create an artist profile on {settings.HOST_NAME}. Click the link to claim it and fill out your profile!\n\n{local_url_to_email(link_info.get_url(invite_code))}"
+    logger.info("Sending artist invite email")
     return send_mail_helper(subject, message, [link_info.invited_email], form, errorlist=errorlist)
 
 
 def invite_user_to_artist(link_info: ArtistLinkingInfo, invite_code, form):
     subject = "Artist profile invite"
     message = f"You've been invited to manage an artist profile on {settings.HOST_NAME}. Click the link to claim access:\n\n{local_url_to_email(link_info.get_url(invite_code))}"
+    logger.info("Sending user_to_artist invite email")
     return send_mail_helper(subject, message, [link_info.invited_email], form)
 
 
@@ -106,6 +109,7 @@ def contact_email(cf: ContactForm):
             mods = UserProfile.objects.filter(is_mod=True)
             recipient_list = [mod.user.email for mod in mods]
 
+    logger.info("Sending contact email")
     return send_mail_helper(f"[Contact|{type.label}] {cf.cleaned_data['subject']}",
                             cf.cleaned_data['message'],
                             recipient_list,
@@ -135,6 +139,7 @@ def daily_mod_email(date):
     url = local_url_to_email(reverse('findshows:mod_dashboard', query={'date': date.isoformat()}))
     message = f"There are new or actionable listings to review from {str(date)}.\n\n{url}\n\n{records_string}"
     recipient_list = [mod.user.email for mod in UserProfile.objects.filter(is_mod=True)]
+    logger.info("Sending daily mod email")
     return send_mail_helper(f"{CustomText.get_text(CustomText.SITE_TITLE)} Moderation reminder",
                             message, recipient_list)
 
@@ -159,7 +164,7 @@ def send_mass_html_mail(datatuples):
                 message.send()
                 sent += 1
             except SMTPException as e:
-                logger.error(f"Email failure: {str(e)}")
+                logger.warning(f"Email failure: {str(e)}")
     return sent
 
 
@@ -211,4 +216,6 @@ def rec_email_generator():
 def send_rec_email():
     datatuple = ( (CustomText.get_text(CustomText.WEEKLY_EMAIL_SUBJECT), text_message, html_message, None, [email])
                   for text_message, html_message, email in rec_email_generator() )
-    return send_mass_html_mail(datatuple)
+    sent = send_mass_html_mail(datatuple)
+    logger.info(f"Sent {sent} recommendation emails")
+    return sent
