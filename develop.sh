@@ -59,7 +59,6 @@ setup_initial_server() {
 
     echo "Building Docker containers"
     invoke_docker_compose build
-    invoke_docker_compose run --rm -u root web sh -c "chown appuser: media/;chown appuser: staticfiles/;chown appuser: /logs"
 
     echo "Setting up SSL certificates"
     invoke_docker_compose up -d proxy
