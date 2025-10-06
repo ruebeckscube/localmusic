@@ -55,10 +55,11 @@ update_config() {
 setup_initial_server() {
     update_config "config/nginx_temp_cert.template"
     mkdir "$BACKUP_DIR"
+    mkdir logs
 
     echo "Building Docker containers"
     invoke_docker_compose build
-    invoke_docker_compose run --rm -u root web sh -c "chown appuser: media/;chown appuser: staticfiles/"
+    invoke_docker_compose run --rm -u root web sh -c "chown appuser: media/;chown appuser: staticfiles/;chown appuser: /logs"
 
     echo "Setting up SSL certificates"
     invoke_docker_compose up -d proxy
