@@ -46,7 +46,10 @@ invoke_manage() {
 
 update_config() {
     echo "Updating nginx config file from ${1:-config/nginx.template}"
-    sed "s/TEMPLATE_HOST_NAME/$HOST_NAME/g" < "${1:-config/nginx.template}" > config/nginx.conf
+    sed "s=TEMPLATE_HOST_NAME=$HOST_NAME=g" < "${1:-config/nginx.template}" > config/nginx.conf
+
+    echo "Updating logrotate config from config/logrotate.template"
+    sed "s=TEMPLATE_DIRECTORY_NAME=$(pwd)=g" < config/logrotate.template > config/logrotate.conf
 }
 
 setup_initial_server() {
@@ -177,25 +180,27 @@ tailwind() {
 
 nightly_tasks() {
     echo
-    date
+    date -Iseconds
     echo "MOD REMINDER"
     invoke_manage send_mod_reminder
     echo "BACKUP"
     backup
     echo "UPDATING APP"
     update_app
+    echo "ROTATING LOGS"
+    logrotate config/logrotate.conf
 }
 
 weekly_tasks() {
     echo
-    date
+    date -Iseconds
     echo "SENDING WEEKLY EMAIL"
     invoke_manage send_weekly_recs
 }
 
 biweekly_tasks() {
     echo
-    date
+    date -Iseconds
     echo "RENEWING SSL CERTICFICATES"
     invoke_docker_compose run --rm certbot renew
     echo "UPDATING MUSICBRAINZ DATA"
@@ -211,11 +216,11 @@ elif [ "$1" = "update-config" ]; then shift
 elif [ "$1" = "init" ]; then
     setup_initial_server
 elif [ "$1" = "nightly-tasks" ]; then
-    nightly_tasks
+    nightly_tasks >> logs/nightly_tasks.log 2>&1
 elif [ "$1" = "weekly-tasks" ]; then
-    weekly_tasks
+    weekly_tasks >> logs/weekly_tasks.log 2>&1
 elif [ "$1" = "biweekly-tasks" ]; then
-    biweekly_tasks
+    biweekly_tasks >> logs/biweekly_tasks.log 2>&1
 elif [ "$1" = "dump-data" ]; then shift
     dump_data "$@"
 elif [ "$1" = "load-data" ]; then shift

@@ -14,7 +14,8 @@
 3. Set up an SMTP relay for sending emails.
 
 4. Install [Docker](https://www.docker.com) (including docker-compose) following
-   their instructions for your server's operating system
+   their instructions for your server's operating system, and make sure `logrotate`
+   is installed (install it if not)
 
 5. Clone the repo
    ```

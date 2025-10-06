@@ -1,3 +1,3 @@
-01 00 * * * cd /<abs-path-to-project-folder>/localmusic;./develop.sh nightly-tasks >> /var/log/nightly_tasks.log 2>&1
-00 08 * * 0 cd /<abs-path-to-project-folder>/localmusic;./develop.sh weekly-tasks >> /var/log/weekly_tasks.log 2>&1
-01 00 1,15 * * cd /<abs-path-to-project-folder>/localmusic;./develop.sh biweekly-tasks >> /var/log/biweekly_tasks.log 2>&1
+01 00 * * * cd /<abs-path-to-project-folder>/localmusic;./develop.sh nightly-tasks
+00 08 * * 0 cd /<abs-path-to-project-folder>/localmusic;./develop.sh weekly-tasks
+01 00 1,15 * * cd /<abs-path-to-project-folder>/localmusic;./develop.sh biweekly-tasks

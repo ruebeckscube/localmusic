@@ -92,3 +92,4 @@ notes.org
 /package-lock.json
 /package.json
 /backups/
+/config/logrotate.conf
