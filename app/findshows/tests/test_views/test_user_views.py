@@ -208,7 +208,7 @@ class CreateAccountTests(TestCaseHelpers):
         self.client.post(reverse("create_account"), data)
 
         self.assert_emails_sent(0)
-        mock_logger.error.assert_called_once()
+        mock_logger.warning.assert_called_once()
         self.assertEqual(0, EmailVerification.objects.count())
 
 
@@ -377,7 +377,7 @@ class ResendEmailVerificationTests(TestCaseHelpers):
         response = self.client.post(reverse('resend_email_verification'))
 
         self.assert_emails_sent(0)
-        mock_logger.error.assert_called_once()
+        mock_logger.warning.assert_called_once()
         self.assertEqual(0, EmailVerification.objects.count())
         self.assertIn("Unable to send email", response.context['errorlist'][0])
         self.assertFalse(response.context['success'])

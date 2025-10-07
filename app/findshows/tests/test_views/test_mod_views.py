@@ -151,7 +151,7 @@ class ResendInviteTests(TestCaseHelpers):
         self.assertIn(f"Unable to send email to invited@em.ail",
                       response.context['errors'])
         self.assert_emails_sent(0)
-        mock_logger.error.assert_called_once()
+        mock_logger.warning.assert_called_once()
 
     def test_success(self):
         self.login_static_user(self.StaticUsers.MOD_USER)
@@ -211,7 +211,7 @@ class ApproveArtistRequestTests(TestCaseHelpers):
         self.assertIn(f"Unable to send email to {self.get_static_instance(self.StaticUsers.DEFAULT_CREATOR).user.email}",
                       response.context['errors'])
         self.assert_emails_sent(0)
-        mock_logger.error.assert_called_once()
+        mock_logger.warning.assert_called_once()
         self.assert_records_created(ArtistLinkingInfo, 0)
         artist.refresh_from_db()
         self.assertTrue(artist.is_active_request)

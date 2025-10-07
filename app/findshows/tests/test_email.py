@@ -21,14 +21,13 @@ class SendMailHelperTests(TestCaseHelpers):
     @patch('findshows.email.EmailMessage.send')
     def test_email_failure(self, mock_send_mail: MagicMock, mock_logger: MagicMock):
         mock_send_mail.side_effect = SMTPConnectError(123, "error message")
-        mock_logger.error = MagicMock()
         mock_form = MagicMock()
         errorlist=[]
         success = send_mail_helper('subject', 'message message message', ['test@em.ail'], mock_form, errorlist=errorlist)
 
         mock_send_mail.assert_called_once()
         self.assertEqual(success, 0)
-        mock_logger.error.assert_called_once()
+        mock_logger.warning.assert_called_once()
         mock_form.add_error.assert_called_once()
         self.assertEqual(len(errorlist), 1)
 
@@ -60,13 +59,12 @@ class SendMassHtmlMailTests(TestCaseHelpers):
     def test_email_failure(self, MockEmail: MagicMock, mock_logger: MagicMock):
         send = MagicMock(side_effect=SMTPConnectError(123, "error message"))
         MockEmail.return_value = MagicMock(send=send)
-        mock_logger.error = MagicMock()
         success = send_mass_html_mail((('subject', 'text', 'html', None, ['test@em.ail']),
                                        ('subject2', 'text2', 'html2', None, ['test2@em.ail'])))
 
         self.assertEqual(send.call_count, 2)
         self.assertEqual(success, 0)
-        self.assertEqual(mock_logger.error.call_count, 2)
+        self.assertEqual(mock_logger.warning.call_count, 2)
 
 
 class SendRecEmailTests(TestCaseHelpers):

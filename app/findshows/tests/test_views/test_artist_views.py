@@ -344,7 +344,7 @@ class CreateTempArtistTests(TestCaseHelpers):
         self.assertFalse('HX-Trigger' in response.headers)
 
         self.assert_emails_sent(0)
-        mock_logger.error.assert_called_once()
+        mock_logger.warning.assert_called_once()
 
     def test_artist_invite_limit(self):
         """Make sure we can invite the max number of artists but no more"""
@@ -805,7 +805,7 @@ class ManageArtistAccessTests(TestCaseHelpers):
                              user_json("anew@em.ail", ArtistAccessWidget.Types.NEW.value),
                          ]))
 
-        mock_logger.error.assert_called_once()
+        mock_logger.warning.assert_called_once()
         self.assert_records_created(ArtistLinkingInfo, 0)
         partial_errors = response.context['partial_errors']()
         self.assertEqual(len(partial_errors), 1)
@@ -829,7 +829,7 @@ class ManageArtistAccessTests(TestCaseHelpers):
                              user_json(other_user_profile.user.email, ArtistAccessWidget.Types.RESEND.value),
                          ]))
 
-        mock_logger.error.assert_called_once()
+        mock_logger.warning.assert_called_once()
         self.assert_records_created(ArtistLinkingInfo, 1)
         partial_errors = response.context['partial_errors']()
         self.assertEqual(len(partial_errors), 1)
