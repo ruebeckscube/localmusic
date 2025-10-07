@@ -187,10 +187,10 @@ nightly_tasks() {
     invoke_manage send_mod_reminder
     echo "BACKUP"
     backup
-    echo "UPDATING APP"
-    update_app
+    # echo "UPDATING APP"
+    # update_app
     echo "ROTATING LOGS"
-    logrotate config/logrotate.conf
+    logrotate -v -s config/logrotate.status config/logrotate.conf
 }
 
 weekly_tasks() {

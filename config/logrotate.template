@@ -1,6 +1,4 @@
 TEMPLATE_DIRECTORY_NAME/logs/*_tasks.log {
   rotate 5
-  daily
   size 10M
-  endscript
 }
