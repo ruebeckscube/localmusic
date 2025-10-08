@@ -24,8 +24,6 @@ jobs:
           echo "DATABASE_USER=django" >> .env
           echo "DATABASE_PASSWORD=test_password" >> .env
           ./develop.sh build
-          sleep 3
-          ./develop.sh run --rm -u root web chown -R appuser:appuser /logs/
       - name: Run tests
         run: |
           ./develop.sh manage test

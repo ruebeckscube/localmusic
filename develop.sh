@@ -60,7 +60,7 @@ setup_initial_server() {
     echo "Building Docker containers"
     invoke_docker_compose build
     sleep 3
-    invoke_docker_compose run --rm -u root web sh -c "chown -R appuser:appuser media/ && chown -R appuser:appuser staticfiles/ && chown -R appuser:appuser /logs/"
+    invoke_docker_compose run --rm -u root web sh -c "chown -R appuser:appuser media/ && chown -R appuser:appuser staticfiles/"
 
     echo "Setting up SSL certificates"
     invoke_docker_compose up -d proxy
@@ -219,10 +219,13 @@ elif [ "$1" = "init" ]; then
     setup_initial_server
 elif [ "$1" = "nightly-tasks" ]; then
     nightly_tasks >> logs/nightly_tasks.log 2>&1
+    echo "logs saved to logs/nightly_tasks.log"
 elif [ "$1" = "weekly-tasks" ]; then
     weekly_tasks >> logs/weekly_tasks.log 2>&1
+    echo "logs saved to logs/weekly_tasks.log"
 elif [ "$1" = "biweekly-tasks" ]; then
     biweekly_tasks >> logs/biweekly_tasks.log 2>&1
+    echo "logs saved to logs/biweekly_tasks.log"
 elif [ "$1" = "dump-data" ]; then shift
     dump_data "$@"
 elif [ "$1" = "load-data" ]; then shift

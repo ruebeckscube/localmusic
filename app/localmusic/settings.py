@@ -223,26 +223,15 @@ MAX_CONTACTS_PER_MINUTE = int(os.getenv("MAX_CONTACTS_PER_MINUTE", '50'))
 
 # Logging
 LOGGING = deepcopy(DEFAULT_LOGGING)
-LOGGING['loggers']['django']['handlers'] = ['console']
+LOGGING['loggers']['django']['handlers'] = ['console'] # disables AdminEmailHandler
 LOGGING.update({
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {
         "file": {
-            "class": "logging.handlers.RotatingFileHandler",
+            "class": "logging.StreamHandler",
             "formatter": "verbose",
-            'maxBytes': 1024*1024*10,  # 10 MB
-            'backupCount': 5,
-            "filename": "/logs/django.log",
         },
-        "mail_admins": {
-            "level": "ERROR",
-            "class": "logging.handlers.RotatingFileHandler",
-            "formatter": "verbose",
-            'maxBytes': 1024*1024*10,  # 10 MB
-            'backupCount': 5,
-            "filename": "/logs/errors.log",
-    },
     },
     "loggers": {
         "": {
@@ -252,7 +241,6 @@ LOGGING.update({
     },
     "formatters": {
         "verbose": {
-            # Docker handles timestamps
             "format": "[{asctime}] [{levelname}] {module}: {message}",
             "style": "{",
         },

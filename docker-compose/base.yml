@@ -10,8 +10,6 @@ services:
       - MJML_HOST=mjml
       - MJML_PORT=28101
       - CACHE_LOCATION=memcached:11211
-    volumes:
-      - ../logs:/logs
     depends_on:
       - db
       - mjml
