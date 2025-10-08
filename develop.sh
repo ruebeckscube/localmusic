@@ -76,13 +76,16 @@ setup_initial_server() {
 }
 
 dump_data() {
-    echo "Exporting database to ${1:-datadump.json}"
+    FILENAME="${1:-datadump.json}"
+    echo "Exporting database to $FILENAME"
     invoke_manage dumpdata \
         --natural-foreign --natural-primary \
         -e contenttypes -e auth.Permission -e admin -e sessions \
         -e findshows.MusicBrainzArtist \
         --indent 4 \
-        > "${1:-datadump.json}"
+        -o /app/temp_database_file.json
+    invoke_docker_compose cp web:/app/temp_database_file.json "$FILENAME"
+    invoke_docker_compose run --rm web rm /app/temp_database_file.json
 }
 
 load_data() {
