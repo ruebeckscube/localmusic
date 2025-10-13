@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+import sys
+import logging
 from copy import deepcopy
 
 from django.utils.log import DEFAULT_LOGGING
@@ -246,3 +248,5 @@ LOGGING.update({
         },
     }
 })
+if 'test' in sys.argv:
+    logging.disable(logging.CRITICAL)
