@@ -21,8 +21,11 @@
    ```
    git clone https://github.com/ruebeckscube/localmusic.git
    ```
-   and navigate to project root.
-
+   and navigate to project root:
+   ```
+   cd localmusic
+   ```
+   
 6. Copy `config/example.env` to a new file named `.env` (in the main project directory):
    ```
    cp config/example.env .env
@@ -30,8 +33,10 @@
    and set any field that says "set\_this", following instructions in the file.
 
 7. Run the initialization script, which will take a solid ~10 minutes to
-   download MusicBrainz data
-   ``` ./develop.sh init ```
+   download MusicBrainz data:
+   ```
+   ./develop.sh init 
+   ```
    This will perform one-time tasks like
    database setup, SSL certificates, and nginx configuration, as well as
    building and starting all Docker services. It will take a few minutes.
