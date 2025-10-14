@@ -67,15 +67,17 @@ def send_verify_email(email_verification: EmailVerification, invite_code, form=N
 
 
 def invite_artist(link_info: ArtistLinkingInfo, invite_code, form=None, errorlist=None):
+    name = CustomText.get_text(CustomText.SITE_TITLE) or settings.HOST_NAME
     subject = "Artist profile invite"
-    message = f"You've been invited to create an artist profile on {settings.HOST_NAME}. Click the link to claim it and fill out your profile!\n\n{local_url_to_email(link_info.get_url(invite_code))}"
+    message = f"You've been invited to create an artist profile on {name}. Click the link to claim it and fill out your profile!\n\n{local_url_to_email(link_info.get_url(invite_code))}"
     logger.info("Sending artist invite email")
     return send_mail_helper(subject, message, [link_info.invited_email], form, errorlist=errorlist)
 
 
 def invite_user_to_artist(link_info: ArtistLinkingInfo, invite_code, form):
+    name = CustomText.get_text(CustomText.SITE_TITLE) or settings.HOST_NAME
     subject = "Artist profile invite"
-    message = f"You've been invited to manage an artist profile on {settings.HOST_NAME}. Click the link to claim access:\n\n{local_url_to_email(link_info.get_url(invite_code))}"
+    message = f"You've been invited to manage an artist profile on {name}. Click the link to claim access:\n\n{local_url_to_email(link_info.get_url(invite_code))}"
     logger.info("Sending user_to_artist invite email")
     return send_mail_helper(subject, message, [link_info.invited_email], form)
 
@@ -83,16 +85,16 @@ def invite_user_to_artist(link_info: ArtistLinkingInfo, invite_code, form):
 def send_artist_setup_info(user_email: str):
     return send_mail_helper(
         f"Make an Artist page on {settings.HOST_NAME}",
-        f"""There are two ways to get artist access! If you know somebody who
-        already has artist access, they can invite you via their Settings page
-        (or via the concert creation page if you have a show coming up
-        together). If not, go to your user settings page
-        ({local_url_to_email(reverse('findshows:user_settings'))}) and click
-        'Request local artist access.' You will need to provide your artist
-        name, as well as a website or social media account where we can contact
-        you to verify your identity. A mod will review the request and reach out
-        as soon as possible. For other questions, refer to the Artist FAQ:
-        {local_url_to_email(reverse('findshows:artist_faq'))}""",
+        "There are two ways to get artist access! If you know somebody who "
+        "already has artist access, they can invite you via their Settings page "
+        "(or via the concert creation page if you have a show coming up "
+        "together). If not, go to your user settings page "
+        f"({local_url_to_email(reverse('findshows:user_settings'))}) and click "
+        "'Request local artist access.' You will need to provide your artist "
+        "name, as well as a website or social media account where we can contact "
+        "you to verify your identity. A mod will review the request and reach out "
+        "as soon as possible. For other questions, refer to the Artist FAQ: "
+        f"{local_url_to_email(reverse('findshows:artist_faq'))}",
         [user_email]
     )
 
