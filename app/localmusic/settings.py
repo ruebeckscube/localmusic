@@ -225,9 +225,9 @@ MAX_CONTACTS_PER_MINUTE = int(os.getenv("MAX_CONTACTS_PER_MINUTE", '50'))
 
 
 # Logging
-LOGGING = deepcopy(DEFAULT_LOGGING)
-LOGGING['loggers']['django']['handlers'] = ['console'] # disables AdminEmailHandler
-LOGGING.update({
+log_dict = deepcopy(DEFAULT_LOGGING)
+log_dict['loggers']['django']['handlers'] = ['console'] # disables AdminEmailHandler
+log_dict.update({
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {
@@ -249,5 +249,7 @@ LOGGING.update({
         },
     }
 })
+LOGGING = log_dict
+
 if 'test' in sys.argv:
     logging.disable(logging.CRITICAL)
