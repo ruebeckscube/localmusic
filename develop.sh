@@ -39,7 +39,7 @@ invoke_docker_compose() {
 }
 
 invoke_manage() {
-    invoke_docker_compose run  --rm web \
+    invoke_docker_compose exec web \
             python3 manage.py \
             "$@"
 }
@@ -69,10 +69,11 @@ setup_initial_server() {
 
     update_config "config/nginx.template"
 
+    invoke_docker_compose up -d
+    echo "Initialization complete; server started at $HOST_NAME. It will now take 10 minutes or more to download MusicBrainz data."
+
     invoke_manage update_musicbrainz_data
 
-    invoke_docker_compose up -d
-    echo "Initialization complete; server started at $HOST_NAME"
 }
 
 dump_data() {
@@ -85,14 +86,15 @@ dump_data() {
         --indent 4 \
         -o /app/temp_database_file.json
     invoke_docker_compose cp web:/app/temp_database_file.json "$FILENAME"
-    invoke_docker_compose run --rm web rm /app/temp_database_file.json
+    invoke_docker_compose exec web rm /app/temp_database_file.json
 }
 
 load_data() {
     DATABASE_FILE="${1:-datadump.json}"
     echo "Importing database from $DATABASE_FILE"
     invoke_docker_compose cp "$DATABASE_FILE" web:/app/temp_database_file.json
-    invoke_docker_compose run --rm web sh -c "python3 manage.py loaddata /app/temp_database_file.json && rm /app/temp_database_file.json"
+    invoke_manage loaddata /app/temp_database_file.json
+    invoke_docker_compose exec web rm /app/temp_database_file.json
 }
 
 check_for_backup_dir() {
