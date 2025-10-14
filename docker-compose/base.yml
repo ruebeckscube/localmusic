@@ -32,10 +32,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   mjml:
-    build:
-      context: ../mjml-tcpserver
-      dockerfile: ../mjml-tcpserver/Dockerfile
-    command: ["--mjml.validationLevel=strict"]
+    image: liminspace/mjml-tcpserver:1
 
 volumes:
    postgres_data:
