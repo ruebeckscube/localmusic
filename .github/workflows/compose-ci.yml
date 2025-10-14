@@ -26,4 +26,4 @@ jobs:
           ./develop.sh build
       - name: Run tests
         run: |
-          ./develop.sh manage test
+          ./develop.sh run --rm web python3 manage.py test
