@@ -1,9 +1,9 @@
 from datetime import timedelta
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import BaseUserCreationForm
 from django.core.exceptions import ValidationError
-from django.core.validators import EmailValidator, FileExtensionValidator
+from django.core.validators import EmailValidator
 from django.db import models
 from django.views.generic.dates import timezone_today
 from django.conf import settings
@@ -13,6 +13,7 @@ from captcha.fields import CaptchaField
 from findshows.models import MAX_UPLOADED_IMAGE_SIZE_IN_MB, Artist, Concert, ConcertTags, LabeledURLsValidator, MusicBrainzArtist, UserProfile, Venue
 from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, ImageInput, SocialsLinksWidget, MusicBrainzArtistSearchWidget, StyledSelect, TimePickerField, VenuePickerWidget
 
+User = get_user_model()
 
 def add_default_styling_to_fields(fields):
     field_type_to_css_class = {
@@ -47,40 +48,18 @@ class DefaultStylingModelForm(forms.ModelForm):
         add_default_styling_to_fields(self.fields.values())
 
 
-class UserCreationFormE(UserCreationForm):
+class UserCreationFormE(BaseUserCreationForm):
     required_css_class = "required"
     captcha = CaptchaField()
 
     class Meta:
         model = User
-        fields = ("username", "password1", "password2")
-        labels = {
-            "username": "Email"
-        }
-
+        fields = ("email", "password1", "password2")
+        field_classes = {"email": forms.EmailField}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         add_default_styling_to_fields(self.fields.values())
-
-
-    def clean_username(self):
-        # Enforce username-as-email
-        username = super().clean_username()
-        if not username:
-            return username
-
-        EmailValidator()(username)
-        if User.objects.filter(email=username).exists(): # This should be redundant, but might as well be careful
-            raise ValidationError('A user with that email already exists.')
-        return username
-
-    def save(self, commit=True):
-        user = super(UserCreationForm, self).save(commit=False)
-        user.email = self.cleaned_data["username"]
-        if commit:
-            user.save()
-        return user
 
 
 class UserProfileForm(DefaultStylingModelForm):

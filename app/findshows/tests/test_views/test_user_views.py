@@ -1,17 +1,19 @@
 import datetime
 from smtplib import SMTPException
+from pymemcache import Client
 from unittest.mock import patch
-from django.conf import settings
-from django.contrib.auth.models import User
 
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core import mail
 from django.urls import reverse
 from django.utils import timezone
-from pymemcache import Client
+
 from findshows.forms import ContactForm
 from findshows.models import ConcertTags, EmailVerification, UserProfile
-
 from findshows.tests.test_helpers import TestCaseHelpers
+
+User = get_user_model()
 
 
 def contact_post_request():
@@ -159,7 +161,7 @@ class UserSettingsTests(TestCaseHelpers):
 
 def create_account_post_request():
     return {
-        'username': 'sth@snht.onehut',
+        'email': 'sth@snht.onehut',
         'password1': ['sn384ydi9hs43i03489d4sa'],
         'password2': ['sn384ydi9hs43i03489d4sa'],
         'weekly_email': ['on'],
@@ -216,7 +218,7 @@ class CreateAccountTests(TestCaseHelpers):
         data = create_account_post_request()  # No sendartistinfo flag
         self.client.post(reverse("create_account"), data)
         self.assert_emails_sent(1) # verification email
-        data['username'] = 'another@unique.eml'
+        data['email'] = 'another@unique.eml'
         data['sendartistinfo'] = ''
         self.client.post(reverse("create_account"), data)
         self.assert_emails_sent(3) # two more
@@ -224,7 +226,7 @@ class CreateAccountTests(TestCaseHelpers):
 
     def test_create_account_POST_fail(self):
         data = create_account_post_request()
-        data['username'] = 'notanemail'
+        data['email'] = 'notanemail'
         response = self.client.post(reverse("create_account"), data)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'registration/create_account.html')
@@ -242,10 +244,22 @@ class CreateAccountTests(TestCaseHelpers):
         self.assert_records_created(UserProfile, 0)
 
 
+    def test_case_insensitive_username(self):
+        create_account_data = create_account_post_request()
+        self.client.post(reverse("create_account"), create_account_data)
+        self.assert_records_created(User, 1)
+        login_data = {
+            'username': create_account_data['email'].upper(),
+            'password': create_account_data['password1'],
+        }
+        response = self.client.post(reverse("login"), login_data)
+        self.assertRedirects(response, reverse("findshows:home"))
+
+
 class VerifyEmailTests(TestCaseHelpers):
     def test_successful_verification(self):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
-        self.client.login(username=user_profile.user.username, password='1234')
+        self.client.login(username=user_profile.user.email, password='1234')
         email_verification, code = self.create_email_verification(user_profile.user.email)
 
         response = self.client.post(email_verification.get_url(code))
@@ -258,7 +272,7 @@ class VerifyEmailTests(TestCaseHelpers):
 
     def test_missing_params(self):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
-        self.client.login(username=user_profile.user.username, password='1234')
+        self.client.login(username=user_profile.user.email, password='1234')
         self.create_email_verification(user_profile.user.email)
 
         response = self.client.post(reverse('verify_email', query={'id': ''}))
@@ -276,7 +290,7 @@ class VerifyEmailTests(TestCaseHelpers):
 
     def test_invite_id_doesnt_exist(self):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
-        self.client.login(username=user_profile.user.username, password='1234')
+        self.client.login(username=user_profile.user.email, password='1234')
 
         response = self.client.get(reverse('verify_email',
                                    query={'id': '123', 'code': 'ESOSdtoeia928y'}))
@@ -286,7 +300,7 @@ class VerifyEmailTests(TestCaseHelpers):
 
     def test_bad_invite_code(self):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
-        self.client.login(username=user_profile.user.username, password='1234')
+        self.client.login(username=user_profile.user.email, password='1234')
         email_verification, code = self.create_email_verification(user_profile.user.email)
 
         response = self.client.post(email_verification.get_url(code + '123'))
@@ -301,7 +315,7 @@ class VerifyEmailTests(TestCaseHelpers):
     @patch('findshows.models.timezone')
     def test_expired_invite_code(self, mock_timezone):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
-        self.client.login(username=user_profile.user.username, password='1234')
+        self.client.login(username=user_profile.user.email, password='1234')
         email_verification, code = self.create_email_verification(user_profile.user.email)
         mock_timezone.now.return_value = timezone.now() + datetime.timedelta(settings.INVITE_CODE_EXPIRATION_DAYS + 2)
 
@@ -316,7 +330,7 @@ class VerifyEmailTests(TestCaseHelpers):
 
     def test_user_email_doesnt_match(self):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
-        self.client.login(username=user_profile.user.username, password='1234')
+        self.client.login(username=user_profile.user.email, password='1234')
         email_verification, code = self.create_email_verification("different@em.ail")
 
         response = self.client.post(email_verification.get_url(code))
@@ -329,7 +343,7 @@ class VerifyEmailTests(TestCaseHelpers):
 class ResendEmailVerificationTests(TestCaseHelpers):
     def test_success_existing_verification(self):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
-        self.client.login(username=user_profile.user.username, password='1234')
+        self.client.login(username=user_profile.user.email, password='1234')
         self.create_email_verification(user_profile.user.email)
 
         response = self.client.post(reverse('resend_email_verification'))
@@ -342,7 +356,7 @@ class ResendEmailVerificationTests(TestCaseHelpers):
 
     def test_success_no_existing_verification(self):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
-        self.client.login(username=user_profile.user.username, password='1234')
+        self.client.login(username=user_profile.user.email, password='1234')
 
         response = self.client.post(reverse('resend_email_verification'))
 
@@ -358,7 +372,7 @@ class ResendEmailVerificationTests(TestCaseHelpers):
 
     def test_already_verified(self):
         user_profile = self.create_user_profile(email_is_verified=True, password='1234')
-        self.client.login(username=user_profile.user.username, password='1234')
+        self.client.login(username=user_profile.user.email, password='1234')
 
         response = self.client.post(reverse('resend_email_verification'))
 
@@ -371,7 +385,7 @@ class ResendEmailVerificationTests(TestCaseHelpers):
     def test_verification_email_fails(self, mock_send_mail, mock_logger):
         mock_send_mail.side_effect = SMTPException()
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
-        self.client.login(username=user_profile.user.username, password='1234')
+        self.client.login(username=user_profile.user.email, password='1234')
         self.create_email_verification(user_profile.user.email)
 
         response = self.client.post(reverse('resend_email_verification'))

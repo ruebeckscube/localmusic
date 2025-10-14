@@ -2,7 +2,7 @@
 
 ## Initial Setup
 
-By this point in the setup, you should have a username and password to log into
+By this point in the setup, you should have a username (email) and password to log into
 the site. Do so, and click the menu in the upper right and navigate to the Admin
 Site. Click **Custom Texts**, then use the **Add custom text +** button in the upper
 right repeatedly to create the following records:

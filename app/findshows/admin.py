@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 
 from .models import Artist, ArtistLinkingInfo, CustomText, MusicBrainzArtist, UserProfile, Venue, Concert, SetOrder
 
@@ -25,6 +26,8 @@ class ArtistAdmin(admin.ModelAdmin):
 class MusicBrainzArtistAdmin(admin.ModelAdmin):
     readonly_fields=('mbid', 'name')
 
+User = get_user_model()
+admin.site.register(User)
 admin.site.register(Concert, ConcertAdmin)
 admin.site.register(UserProfile, UserProfileAdmin)
 admin.site.register(Artist, ArtistAdmin)

@@ -32,7 +32,7 @@
                             <a class="block link py-1 px-2" href="{% url 'findshows:managed_artist_list' %}">Artist profile</a>
                         </li>
                     {% endif %}
-                    {% if user.userprofile.is_mod %}
+                    {% if user.is_mod %}
                         <li class="even:bg-sub-background">
                             <a class="block link py-1 px-2" href="{% url 'findshows:mod_dashboard' %}">Mod dashboard</a>
                         </li>

@@ -569,6 +569,20 @@ class LinkArtistTests(TestCaseHelpers):
         self.assertEqual(1, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())
 
 
+    def test_user_email_case_insensitive(self):
+        artist = self.create_artist(is_temp_artist=True)
+        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        ali, invite_code = self.create_artist_linking_info(user_profile.user.email.upper(), artist)
+        response = self.client.get(ali.get_url(invite_code))
+        self.assertRedirects(response, reverse('findshows:edit_artist', args=(artist.pk,)))
+        user_profile.refresh_from_db()
+        self.assertIn(artist, user_profile.managed_artists.all())
+        self.assertEqual(0, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())
+        self.assertEqual(user_profile.given_artist_access_by, self.get_static_instance(self.StaticUsers.DEFAULT_CREATOR))
+        self.assertTrue(user_profile.given_artist_access_datetime)
+
+
+
 def artist_access_post_request(user_jsons):
     return {
         f'{ArtistAccessForm.prefix}-users': json.dumps(user_jsons)

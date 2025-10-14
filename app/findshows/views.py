@@ -650,7 +650,7 @@ def concert_search(request):
 #######################
 
 def is_mod(user):
-    return ((not user.is_anonymous) and user.userprofile.is_mod)
+    return ((not user.is_anonymous) and user.is_mod)
 
 
 @user_passes_test(is_mod)

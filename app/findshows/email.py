@@ -7,6 +7,7 @@ from smtplib import SMTPException
 
 from django.conf import settings
 from django.core.mail import EmailMessage, EmailMultiAlternatives, get_connection
+from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.db.models import Q
@@ -14,7 +15,7 @@ from django.db.models import Q
 from findshows.forms import ContactForm
 from findshows.models import Artist, ArtistLinkingInfo, Concert, CustomText, EmailVerification, UserProfile, Venue
 
-
+User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
@@ -106,8 +107,8 @@ def contact_email(cf: ContactForm):
         case cf.Types.REPORT_BUG | cf.Types.FEATURE_REQUEST:
             recipient_list = [admin[1] for admin in settings.ADMINS] # Tuples (Name, email)
         case cf.Types.CONTACT_MOD | cf.Types.HELP | cf.Types.OTHER:
-            mods = UserProfile.objects.filter(is_mod=True)
-            recipient_list = [mod.user.email for mod in mods]
+            mods = User.objects.filter(is_mod=True)
+            recipient_list = [mod.email for mod in mods]
 
     logger.info("Sending contact email")
     return send_mail_helper(f"[Contact|{type.label}] {cf.cleaned_data['subject']}",
@@ -138,7 +139,7 @@ def daily_mod_email(date):
                                  )
     url = local_url_to_email(reverse('findshows:mod_dashboard', query={'date': date.isoformat()}))
     message = f"There are new or actionable listings to review from {str(date)}.\n\n{url}\n\n{records_string}"
-    recipient_list = [mod.user.email for mod in UserProfile.objects.filter(is_mod=True)]
+    recipient_list = [mod.email for mod in User.objects.filter(is_mod=True)]
     logger.info("Sending daily mod email")
     return send_mail_helper(f"{CustomText.get_text(CustomText.SITE_TITLE)} Moderation reminder",
                             message, recipient_list)

@@ -11,7 +11,7 @@ import io
 from django.db import models
 from django.db.models import Q, ImageField
 from django.db.models.fields.files import ImageFieldFile
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
@@ -374,7 +374,7 @@ class EmailCodeMixin(models.Model):
             email_code = cls.objects.get(id=id)
         except cls.DoesNotExist:
             raise EmailCodeError('Could not find record in the database. Please request a re-send.')
-        if user_email != email_code.invited_email:
+        if user_email.lower() != email_code.invited_email.lower():
             raise EmailCodeError("User's email does not match the link. Please log back in with the email that the link was sent to.")
         if email_code.generated_datetime + timedelta(settings.INVITE_CODE_EXPIRATION_DAYS) < timezone.now():
             raise EmailCodeError("Expired link. Please request a re-send.")
@@ -442,7 +442,7 @@ class ArtistLinkingInfo(CreationTrackingMixin, EmailCodeMixin):
 
     @classmethod
     def create_and_get_invite_code(cls, artist, email, created_by):
-        if (not created_by.is_mod) and (not created_by.given_artist_access_datetime or
+        if (not created_by.user.is_mod) and (not created_by.given_artist_access_datetime or
             created_by.given_artist_access_datetime > now() - timedelta(settings.INVITE_BUFFER_DAYS)):
             raise InviteDelayError(f"Users newly given artist access must wait {settings.INVITE_BUFFER_DAYS} days before inviting other users.")
         link_info = cls(artist=artist, invited_email=email)
@@ -463,6 +463,43 @@ class ConcertTags(models.TextChoices):
     DJ = "DJ", "DJ set"
 
 
+class UserManager(BaseUserManager):
+    def create_user(self, email, password=None, create_profile=True, **extra_fields):
+        if not email:
+            raise ValueError("Email is required")
+        email = email.lower()
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save()
+        if create_profile:
+            UserProfile.objects.create(user=user)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_mod", True)
+        return self.create_user(email, password, **extra_fields)
+
+    def get_by_natural_key(self, username):
+        return self.get(**{f'{self.model.USERNAME_FIELD}__iexact': username})
+
+
+class User(AbstractBaseUser, PermissionsMixin):
+    email = models.EmailField(unique=True)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    is_mod=models.BooleanField(default=False, help_text="Gives the user access to the mod dashboard and associated permissions.")
+    date_joined = models.DateTimeField(default=timezone.now)
+
+    objects = UserManager()
+
+    USERNAME_FIELD = "email"
+
+    def __str__(self):
+        return self.email
+
+
 class UserProfile(models.Model):
     user=models.OneToOneField(User, on_delete=models.CASCADE)
 
@@ -476,7 +513,9 @@ class UserProfile(models.Model):
         a good match.""",
     )
 
-    preferred_concert_tags=MultiSelectField(choices=ConcertTags, max_length=15,
+    preferred_concert_tags=MultiSelectField(choices=ConcertTags,
+                                            blank=True,
+                                            max_length=15,
                                             verbose_name="Categories",
                                             help_text="""Select which types of
                                             shows you'd like to see in your
@@ -489,8 +528,6 @@ class UserProfile(models.Model):
 
     given_artist_access_by=models.ForeignKey('UserProfile', related_name="gave_artist_access_to", on_delete=models.CASCADE, null=True, blank=True)
     given_artist_access_datetime=models.DateTimeField(null=True, blank=True)
-
-    is_mod=models.BooleanField(default=False, help_text="Gives the user access to the mod dashboard and associated permissions.")
 
     email_is_verified=models.BooleanField(default=False)
 

@@ -2,9 +2,9 @@ import datetime
 from enum import Enum
 from uuid import uuid4
 import tempfile
-from django.conf import settings
 
-from django.contrib.auth.models import User
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
@@ -15,12 +15,14 @@ from django.views.generic.dates import timezone_today
 
 from findshows.models import Ages, Artist, ArtistLinkingInfo, Concert, ConcertTags, EmailVerification, MusicBrainzArtist, SetOrder, UserProfile, Venue
 
+User = get_user_model()
+
 @override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
 class TestCaseHelpers(TestCase):
     fixtures = ["findshows/test-fixture.json"]
 
     class StaticUsers(Enum):
-        # These must match usernames and ID/pk from the fixture listed above
+        # These must match ID/pk from the fixture listed above
         DEFAULT_CREATOR = 1
         LOCAL_ARTIST = 2
         NONLOCAL_ARTIST = 3
@@ -33,7 +35,7 @@ class TestCaseHelpers(TestCase):
             return UserProfile
 
     class StaticArtists(Enum):
-        # These must match usernames and ID/pk from the fixture listed above
+        # These must match ID/pk from the fixture listed above
         LOCAL_ARTIST = 1
         NONLOCAL_ARTIST = 2
         TEMP_ARTIST = 3
@@ -55,7 +57,16 @@ class TestCaseHelpers(TestCase):
         return model.objects.get(pk=static.value)
 
     def login_static_user(self, static_user: StaticUsers):
-        self.client.login(username=static_user.name, password='1234')  # password must match migration 0019
+        # must match order of users in fixture
+        emails_list = (
+            "default@creator.net",
+            "local@artist.net",
+            "nonlocal@artist.net",
+            "non@artist.net",
+            "temp@artist.net",
+            "mod@localmusic.net",
+        )
+        self.client.login(username=emails_list[static_user.value - 1], password='1234')
         return UserProfile.objects.get(id=static_user.value)  # this doesn't add a database call unless it's referred to in consuming code
 
 
@@ -116,26 +127,28 @@ class TestCaseHelpers(TestCase):
 
     @classmethod
     def create_user_profile(cls,
-                            username=None,
+                            email=None,
                             password='12345',
                             favorite_musicbrainz_artists=[],
                             preferred_concert_tags=[],
-                            email="test@em.ail",
                             weekly_email=True,
                             is_mod=False,
                             given_artist_access_by=None,
                             given_artist_access_datetime=None,
                             email_is_verified=True,
                             ):
-        while username is None:
-            username = str(uuid4())
-            if User.objects.filter(username=username).exists():
-                username = None
-        user = User.objects.create_user(username=username, password=password, email=email)
+        while email is None:
+            email = f"{str(uuid4())}@test.com"
+            if User.objects.filter(email=email).exists():
+                email = None
+        user = User.objects.create_user(email=email,
+                                        password=password,
+                                        is_mod=is_mod,
+                                        create_profile=False
+                                        )
         user_profile = UserProfile.objects.create(user=user,
                                                   preferred_concert_tags=preferred_concert_tags,
                                                   weekly_email=weekly_email,
-                                                  is_mod=is_mod,
                                                   email_is_verified=email_is_verified,
                                                   )
         if given_artist_access_by:

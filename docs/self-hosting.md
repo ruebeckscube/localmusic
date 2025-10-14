@@ -39,9 +39,8 @@
    address, this is for warnings about SSL certificate expiration, but it's
    optional (they will auto-renew).
    
-8. Create the initial user for the website. (Note this is NOT the default Django
-   createsuperuser)
-   ```./develop.sh manage add_superuser```
+8. Create the initial user for the website:
+   ```./develop.sh manage createsuperuser```
    
 9. Set up cron jobs;Copy the contents
    of crontab.env into your crontab and edit file paths appropriately. Please

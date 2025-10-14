@@ -79,102 +79,90 @@
     }
 },
 {
-    "model": "auth.user",
+    "model": "findshows.user",
     "fields": {
-        "password": "pbkdf2_sha256$1000000$IAU6tAbxGKnKqkGbvpM2NZ$HmjMZx4T62L7w8gB57cHT4SNX6b7muIDD9KZQ3OCrGw=",
+        "password": "pbkdf2_sha256$1000000$abcdef$i0WPAoDcupY2j/jqSxHexQfU//LxwZ+0nraTIWkhbjU=",
         "last_login": null,
         "is_superuser": false,
-        "username": "DEFAULT_CREATOR",
-        "first_name": "",
-        "last_name": "",
         "email": "default@creator.net",
         "is_staff": false,
         "is_active": true,
+        "is_mod": false,
         "date_joined": "2025-04-23T20:54:56.136Z",
         "groups": [],
         "user_permissions": []
     }
 },
 {
-    "model": "auth.user",
+    "model": "findshows.user",
     "fields": {
-        "password": "pbkdf2_sha256$1000000$5M7LrxFMCbWtvJZQ73Ict8$R3+FOZJuzR+4/yZTa0BZXFpA6dAmIw+YpocvGJyGBsE=",
+        "password": "pbkdf2_sha256$1000000$abcdef$i0WPAoDcupY2j/jqSxHexQfU//LxwZ+0nraTIWkhbjU=",
         "last_login": null,
         "is_superuser": false,
-        "username": "LOCAL_ARTIST",
-        "first_name": "",
-        "last_name": "",
         "email": "local@artist.net",
         "is_staff": false,
         "is_active": true,
+        "is_mod": false,
         "date_joined": "2025-04-23T20:55:05.761Z",
         "groups": [],
         "user_permissions": []
     }
 },
 {
-    "model": "auth.user",
+    "model": "findshows.user",
     "fields": {
-        "password": "pbkdf2_sha256$1000000$kVEQYRh1tpmmgWuolEgyUC$rCXAz0swqPkWPKbsXBouXyDkMqGkpFoTzxynQyrsVeI=",
+        "password": "pbkdf2_sha256$1000000$abcdef$i0WPAoDcupY2j/jqSxHexQfU//LxwZ+0nraTIWkhbjU=",
         "last_login": null,
         "is_superuser": false,
-        "username": "NONLOCAL_ARTIST",
-        "first_name": "",
-        "last_name": "",
         "email": "nonlocal@artist.net",
         "is_staff": false,
         "is_active": true,
+        "is_mod": false,
         "date_joined": "2025-04-23T20:55:16.612Z",
         "groups": [],
         "user_permissions": []
     }
 },
 {
-    "model": "auth.user",
+    "model": "findshows.user",
     "fields": {
-        "password": "pbkdf2_sha256$1000000$IoJm4llgnZfizD6JLIWBci$VYVeu1fKCLaWDcIOlbcHHra3BA2seRzWYTxKBPcMGxQ=",
+        "password": "pbkdf2_sha256$1000000$abcdef$i0WPAoDcupY2j/jqSxHexQfU//LxwZ+0nraTIWkhbjU=",
         "last_login": null,
         "is_superuser": false,
-        "username": "NON_ARTIST",
-        "first_name": "",
-        "last_name": "",
         "email": "non@artist.net",
         "is_staff": false,
         "is_active": true,
+        "is_mod": false,
         "date_joined": "2025-04-23T20:55:24.918Z",
         "groups": [],
         "user_permissions": []
     }
 },
 {
-    "model": "auth.user",
+    "model": "findshows.user",
     "fields": {
-        "password": "pbkdf2_sha256$1000000$FZKTwU5G3iDZcKmXSWIXDT$pq/7MXyGMz5ZeIZQMFEDaJ2JCo3uu51BESGZv13oGbY=",
+        "password": "pbkdf2_sha256$1000000$abcdef$i0WPAoDcupY2j/jqSxHexQfU//LxwZ+0nraTIWkhbjU=",
         "last_login": null,
         "is_superuser": false,
-        "username": "TEMP_ARTIST",
-        "first_name": "",
-        "last_name": "",
         "email": "temp@artist.net",
         "is_staff": false,
         "is_active": true,
+        "is_mod": false,
         "date_joined": "2025-04-23T20:55:32.686Z",
         "groups": [],
         "user_permissions": []
     }
 },
 {
-    "model": "auth.user",
+    "model": "findshows.user",
     "fields": {
-        "password": "pbkdf2_sha256$1000000$TrSqIznzIODFXng8lJ1EUr$8f1ih59xtbsJTYCqikhaKoH33nwDi3US23eQZKXI54U=",
+        "password": "pbkdf2_sha256$1000000$abcdef$i0WPAoDcupY2j/jqSxHexQfU//LxwZ+0nraTIWkhbjU=",
         "last_login": null,
         "is_superuser": false,
-        "username": "MOD_USER",
-        "first_name": "",
-        "last_name": "",
         "email": "mod@localmusic.net",
         "is_staff": false,
         "is_active": true,
+        "is_mod": true,
         "date_joined": "2025-04-23T20:55:42.564Z",
         "groups": [],
         "user_permissions": []
@@ -185,13 +173,12 @@
     "pk": 1,
     "fields": {
         "user": [
-            "DEFAULT_CREATOR"
+            "default@creator.net"
         ],
         "preferred_concert_tags": "",
         "weekly_email": false,
         "given_artist_access_by": 1,
         "given_artist_access_datetime": "2025-03-21T22:43:06.633Z",
-        "is_mod": false,
         "favorite_musicbrainz_artists": [],
         "followed_artists": [],
         "managed_artists": [],
@@ -203,13 +190,12 @@
     "pk": 2,
     "fields": {
         "user": [
-            "LOCAL_ARTIST"
+            "local@artist.net"
         ],
         "preferred_concert_tags": "",
         "weekly_email": false,
         "given_artist_access_by": 1,
         "given_artist_access_datetime": "2025-03-21T22:43:06.633Z",
-        "is_mod": false,
         "favorite_musicbrainz_artists": [],
         "followed_artists": [],
         "managed_artists": [
@@ -223,13 +209,12 @@
     "pk": 3,
     "fields": {
         "user": [
-            "NONLOCAL_ARTIST"
+            "nonlocal@artist.net"
         ],
         "preferred_concert_tags": "",
         "weekly_email": false,
         "given_artist_access_by": 1,
         "given_artist_access_datetime": "2025-03-21T22:43:06.633Z",
-        "is_mod": false,
         "favorite_musicbrainz_artists": [],
         "followed_artists": [],
         "managed_artists": [
@@ -243,13 +228,12 @@
     "pk": 4,
     "fields": {
         "user": [
-            "NON_ARTIST"
+            "non@artist.net"
         ],
         "preferred_concert_tags": "",
         "weekly_email": false,
         "given_artist_access_by": null,
         "given_artist_access_datetime": null,
-        "is_mod": false,
         "favorite_musicbrainz_artists": [],
         "followed_artists": [],
         "managed_artists": [],
@@ -261,13 +245,12 @@
     "pk": 5,
     "fields": {
         "user": [
-            "TEMP_ARTIST"
+            "temp@artist.net"
         ],
         "preferred_concert_tags": "",
         "weekly_email": false,
         "given_artist_access_by": null,
         "given_artist_access_datetime": null,
-        "is_mod": false,
         "favorite_musicbrainz_artists": [],
         "followed_artists": [],
         "managed_artists": [
@@ -281,13 +264,12 @@
     "pk": 6,
     "fields": {
         "user": [
-            "MOD_USER"
+            "mod@localmusic.net"
         ],
         "preferred_concert_tags": "",
         "weekly_email": false,
         "given_artist_access_by": 1,
         "given_artist_access_datetime": "2025-03-21T22:43:06.633Z",
-        "is_mod": true,
         "favorite_musicbrainz_artists": [],
         "followed_artists": [],
         "managed_artists": [],
