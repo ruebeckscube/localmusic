@@ -236,7 +236,7 @@ class Artist(CreationTrackingMixin):
                                    help_text="Enter links to socials, website, etc.")
 
     similar_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist, verbose_name="Sounds like",
-                                                       help_text="Select 3 artists whose fans might also like to listen to this artist.")
+                                                       help_text="Select 3 artists whose fans might also like to listen to this artist. If an artist doesn't appear on the list, it means MusicBrainz doesn't have any similarity data on them; please pick another while their database grows!")
 
 
     def similarity_score(self, searched_mbids):

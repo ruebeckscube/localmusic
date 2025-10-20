@@ -69,7 +69,7 @@ def send_verify_email(email_verification: EmailVerification, invite_code, form=N
 def invite_artist(link_info: ArtistLinkingInfo, invite_code, form=None, errorlist=None):
     name = CustomText.get_text(CustomText.SITE_TITLE) or settings.HOST_NAME
     subject = "Artist profile invite"
-    message = f"You've been invited to create an artist profile on {name}. Click the link to claim it and fill out your profile!\n\n{local_url_to_email(link_info.get_url(invite_code))}"
+    message = f"{link_info.created_by.user.email} has invited you to create an artist profile on {name}. Click the link to claim it and fill out your profile!\n\n{local_url_to_email(link_info.get_url(invite_code))}"
     logger.info("Sending artist invite email")
     return send_mail_helper(subject, message, [link_info.invited_email], form, errorlist=errorlist)
 
