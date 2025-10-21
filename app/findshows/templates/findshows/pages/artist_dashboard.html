@@ -51,9 +51,15 @@
                     </p>
                     {% endif %}
                 </div>
-                <div>
-                    <a class="btn" href="{% url 'findshows:view_artist' artist.pk %}">View</a>
-                    <a class="btn" href="{% url 'findshows:edit_artist' artist.pk %}">Edit</a>
+                <div class="flex justify-center flex-wrap">
+                    <a class="btn block" href="{% url 'findshows:view_artist' artist.pk %}">View</a>
+                    <a class="btn block" href="{% url 'findshows:edit_artist' artist.pk %}">Edit</a>
+                    <form class="mx-auto">
+                        {% csrf_token %}
+                        {% with title_text="Manage access" success_text="Artist access saved!" form_html="findshows/htmx/artist_access_form.html" htmx_url="findshows:manage_artist_access" htmx_param=artist.pk %}
+                            {% include "findshows/partials/modal_form.html"%}
+                        {% endwith %}
+                    </form>
                 </div>
             </div>
             {% endfor %}

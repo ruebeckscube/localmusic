@@ -46,12 +46,4 @@
 
         </div>
     </form>
-
-    <form class="mx-auto max-w-80">
-        {% csrf_token %}
-        {% with title_text="Manage artist access" success_text="Artist access saved!" form_html="findshows/htmx/artist_access_form.html" htmx_url="findshows:manage_artist_access" htmx_param=pk %}
-            {% include "findshows/partials/modal_form.html"%}
-        {% endwith %}
-    </form>
-
 {% endblock %}
