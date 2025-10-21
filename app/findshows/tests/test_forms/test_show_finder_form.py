@@ -60,4 +60,4 @@ class DateRangeValidationTests(TestCase):
     def test_range_max_date_range(self):
         form = ShowFinderForm(form_data(timezone_today(), timezone_today()+timedelta(settings.MAX_DATE_RANGE + 1), True))
         self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors['__all__'], ["Max date range is " + str(settings.MAX_DATE_RANGE) + " days."])
+        self.assertEqual(form.errors['date'], ["Max date range is " + str(settings.MAX_DATE_RANGE) + " days."])

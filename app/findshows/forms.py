@@ -341,7 +341,7 @@ class ShowFinderForm(forms.Form):
             if (not end_date) or end_date < cleaned_data['date']:
                 cleaned_data['end_date'] = cleaned_data['date']
             elif cleaned_data['end_date'] - cleaned_data['date'] > timedelta(settings.MAX_DATE_RANGE):
-                self.add_error(None,
+                self.add_error('date',
                     "Max date range is " + str(settings.MAX_DATE_RANGE) + " days."
                 )
 
