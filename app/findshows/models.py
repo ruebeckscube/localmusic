@@ -129,7 +129,7 @@ class MultiURLValidator(URLValidator):
 
                 listen_types = [_parse_listen_type(pu, listen_platforms[0]) for pu in parsed_urls]
                 if any(lt == Artist.NOLISTEN for lt in listen_types):
-                    raise ValidationError("Link not formatted correctly.", code=self.code, params={"value": value})
+                    raise ValidationError("Link not formatted correctly. Make sure you're linking directly to the album or track.", code=self.code, params={"value": value})
                 if len(urls) > 1 and any(lt == Artist.ALBUM for lt in listen_types):
                     raise ValidationError("If multiple links are provided, they must all be song links.", code=self.code, params={"value": value})
 
