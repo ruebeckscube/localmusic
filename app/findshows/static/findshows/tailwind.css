@@ -878,6 +878,9 @@
   .text-highlight-text {
     color: var(--color-highlight-text);
   }
+  .text-red-700 {
+    color: var(--color-red-700);
+  }
   .font-stretch-90\% {
     font-stretch: 90%;
   }
