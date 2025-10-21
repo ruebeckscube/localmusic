@@ -27,7 +27,17 @@
                     {% endif %}
                 </td>
                 <td>
-                    <a class="link" href="mailto:{{ artist.created_by.user.email }}">{{ artist.created_by.user.email }}</a>
+                    {% if artist.is_active_request %}
+                        <a class="link" href="mailto:{{ artist.created_by.user.email }}">{{ artist.created_by.user.email }}</a>
+                    {% elif artist.artistlinkinginfo_set.all %}
+                        {% for ali in artist.artistlinkinginfo_set.all %}
+                            <a class="link" href="mailto:{{ ali.invited_email }}">{{ ali.invited_email }}</a>
+                        {% endfor %}
+                    {% else %}
+                        {% for userprofile in artist.managing_users.all %}
+                            <a class="link" href="mailto:{{ userprofile.user.email }}">{{ userprofile.user.email }}</a>
+                        {% endfor %}                        
+                    {% endif %}
                 </td>
                 <td>
                     {% include "findshows/htmx/mod_artist_buttons.html" %}
