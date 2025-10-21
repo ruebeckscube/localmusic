@@ -10,7 +10,11 @@ function bill_data() {
         artist.show_search = false;
         artist.search_text = artist.name;
       }
-      if (!this.bill_order.length) this.add_artist();
+      if (!this.bill_order.length) {
+          this.add_artist()
+          this.add_artist()
+          this.add_artist()
+      };
     },
 
     open_dropdown(artist) {
