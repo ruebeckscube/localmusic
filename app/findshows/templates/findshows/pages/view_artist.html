@@ -3,7 +3,10 @@
 
 {% block content %}
     {% if can_edit %}
-        <a class="block btn mx-auto w-30 my-2" href={% url "findshows:edit_artist" artist.pk %}> Edit </a>
+        <div class="flex justify-center mx-auto w-fit">
+            <a class="block btn w-30 m-2" href={% url "findshows:edit_artist" artist.pk %}> Edit </a>
+            <a class="block btn w-60 m-2" href={% url "findshows:artist_dashboard" %}> Artist dashboard </a>
+        </div>
     {% endif %}
     <div class="flex max-md:flex-col w-full">
         {# Name and socials #}

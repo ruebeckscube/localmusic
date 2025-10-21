@@ -19,17 +19,14 @@
                     <line x1="0" y1="12" x2="24" y2="12" stroke="currentColor"/>
                     <line x1="0" y1="20" x2="24" y2="20" stroke="currentColor"/>
                 </svg>
-                <ul class="absolute right-2 top-10 popup-menu w-44 text-right"
+                <ul class="absolute right-2 top-10 popup-menu w-48 text-right"
                     x-show="show_menu"
                     @click.away="show_menu = false"
                     @keydown.escape.window="show_menu = false"
                 >
                     {% if user.userprofile.managed_artists.all|length > 0 %}
                         <li class="even:bg-sub-background">
-                            <a class="block link py-1 px-2" href="{% url 'findshows:my_concert_list' %}">My shows</a>
-                        </li>
-                        <li class="even:bg-sub-background"f>
-                            <a class="block link py-1 px-2" href="{% url 'findshows:managed_artist_list' %}">Artist profile</a>
+                            <a class="block link py-1 px-2" href="{% url 'findshows:artist_dashboard' %}">Artist dashboard</a>
                         </li>
                     {% endif %}
                     {% if user.is_mod %}

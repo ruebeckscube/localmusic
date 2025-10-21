@@ -166,12 +166,16 @@ def has_edit_privileges(user):
 
 
 @user_passes_test(is_artist_account)
-def managed_artist_list(request):
+def artist_dashboard(request):
     artists=request.user.userprofile.managed_artists.all()
-    if len(artists)==1:
-        return redirect(reverse('findshows:view_artist', args=[artists[0].pk]))
-    return render(request, "findshows/pages/managed_artist_list.html", context = {
+    # Remove duplicates in case user manages multiple artists on same bill
+    concerts = set(c for a in artists for c in a.concert_set.filter(date__gte=timezone_today()))
+    concerts = sorted(concerts, key = lambda c: c.date)
+
+    return render(request, "findshows/pages/artist_dashboard.html", context = {
         "artists": artists,
+        "concerts": concerts,
+        "is_local_artist": is_local_artist_account(request.user)
     })
 
 
@@ -462,7 +466,7 @@ def edit_concert(request, pk=None):
         if form.is_valid():
             try:
                 form.save()
-                return redirect(reverse('findshows:my_concert_list'))
+                return redirect(reverse('findshows:artist_dashboard'))
             except JPEGImageException as e:
                 form.add_error('poster', e.message)
 
@@ -470,20 +474,6 @@ def edit_concert(request, pk=None):
                'pk': pk}
 
     return render(request, 'findshows/pages/edit_concert.html', context)
-
-
-@user_passes_test(is_artist_account)
-def my_concert_list(request):
-    artists=request.user.userprofile.managed_artists.all()
-    # Remove duplicates in case user manages multiple artists on same bill
-    concerts = set(c for a in artists for c in a.concert_set.filter(date__gte=timezone_today()))
-    concerts = sorted(concerts, key = lambda c: c.date)
-
-    return render(request, "findshows/pages/concert_list_for_artist.html", context = {
-        "concerts": concerts,
-        "userprofile": request.user.userprofile,
-        "is_local_artist": is_local_artist_account(request.user)
-    })
 
 
 @user_passes_test(has_edit_privileges)

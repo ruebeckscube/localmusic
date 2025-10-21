@@ -60,52 +60,6 @@ class ViewConcertTests(ConcertViewTestHelpers):
         self.assertEqual(response.status_code, 403)
 
 
-
-class MyConcertListTests(ConcertViewTestHelpers):
-    def test_not_logged_in_my_concert_list_redirects(self):
-        self.assert_redirects_to_login(reverse("findshows:my_concert_list"))
-
-
-    def test_not_artist_user_my_concert_list_redirects(self):
-        self.login_static_user(self.StaticUsers.NON_ARTIST)
-        self.assert_redirects_to_login(reverse("findshows:my_concert_list"))
-
-
-    def test_only_shows_users_artists(self):
-        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        artist2 = self.get_static_instance(self.StaticArtists.NONLOCAL_ARTIST)
-        concert1 = self.create_concert(artists=[self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)])
-        concert2 = self.create_concert(artists=[artist2])
-
-        response = self.client.get(reverse("findshows:my_concert_list"))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'findshows/pages/concert_list_for_artist.html')
-        self.assertEqual(response.context['concerts'], [concert1])
-
-
-    def test_date_filtering_and_sorting(self):
-        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        artist1 = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
-        concert1 = self.create_concert(artists=[artist1], date=timezone_today() - datetime.timedelta(1))
-        concert2 = self.create_concert(artists=[artist1], date=timezone_today())
-        concert3 = self.create_concert(artists=[artist1], date=timezone_today() + datetime.timedelta(1))
-
-        response = self.client.get(reverse("findshows:my_concert_list"))
-        self.assertEqual(response.context['concerts'], [concert2, concert3])
-
-
-    def test_create_link_shows_for_local_artists(self):
-        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        response = self.client.get(reverse("findshows:my_concert_list"))
-        self.assertIn(reverse('findshows:create_concert'), str(response.content))
-
-
-    def test_create_link_doesnt_show_for_nonlocal_artist(self):
-        self.login_static_user(self.StaticUsers.NONLOCAL_ARTIST)
-        response = self.client.get(reverse("findshows:my_concert_list"))
-        self.assertNotIn(reverse('findshows:create_concert'), str(response.content))
-
-
 class RecordsCreatedTodayTests(ConcertViewTestHelpers):
     def test_venues_created_today(self):
         user_profile_1 = self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)
@@ -214,7 +168,7 @@ class CreateConcertTests(ConcertViewTestHelpers):
         user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         self.assert_records_created(Concert, 0)
         response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request(artist))
-        self.assertRedirects(response, reverse('findshows:my_concert_list'))
+        self.assertRedirects(response, reverse('findshows:artist_dashboard'))
         concerts = Concert.objects.all()
         self.assertEqual(len(concerts), 1)
         self.assertEqual(concerts[0].created_by, user_profile)
@@ -275,7 +229,7 @@ class EditConcertTests(ConcertViewTestHelpers):
         concert_before = self.create_concert(created_by=user, artists=[artist])
 
         response = self.client.post(reverse("findshows:edit_concert", args=(concert_before.pk,)), data=self.concert_post_request(artist))
-        self.assertRedirects(response, reverse('findshows:my_concert_list'))
+        self.assertRedirects(response, reverse('findshows:artist_dashboard'))
 
         concert_after = Concert.objects.get(pk=concert_before.pk)
         self.assertEqual(concert_after.ticket_link, 'https://www.thisisthevalueforconcertpostrequests.com')

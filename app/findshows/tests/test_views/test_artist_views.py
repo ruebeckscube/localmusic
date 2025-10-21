@@ -58,34 +58,77 @@ class IsLocalArtistAccountTests(TestCaseHelpers):
 
 
 
-class ManagedArtistListTests(TestCaseHelpers):
-    def test_not_logged_in_managed_artist_list_redirects(self):
-        self.assert_redirects_to_login(reverse("findshows:managed_artist_list"))
+class ArtistDashboardTests(TestCaseHelpers):
+    
+    def test_not_logged_in_redirects(self):
+        self.assert_redirects_to_login(reverse("findshows:artist_dashboard"))
 
 
-    def test_not_artist_user_managed_artist_list_redirects(self):
+    def test_not_artist_user_redirects(self):
         self.login_static_user(self.StaticUsers.NON_ARTIST)
-        self.assert_redirects_to_login(reverse("findshows:managed_artist_list"))
-
-
-    def test_one_artist_redirects_to_artist_page(self):
-        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        response = self.client.get(reverse("findshows:managed_artist_list"))
-        self.assertRedirects(response, reverse("findshows:view_artist", args=(self.StaticArtists.LOCAL_ARTIST.value,)))
+        self.assert_redirects_to_login(reverse("findshows:artist_dashboard"))
 
 
     def test_multiple_artists_gives_list(self):
         user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         user_profile.managed_artists.add(self.get_static_instance(self.StaticArtists.TEMP_ARTIST))
-        response = self.client.get(reverse("findshows:managed_artist_list"))
+        response = self.client.get(reverse("findshows:artist_dashboard"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'findshows/pages/managed_artist_list.html')
+        self.assertTemplateUsed(response, 'findshows/pages/artist_dashboard.html')
         self.assert_equal_as_sets((a.pk for a in response.context['artists']),
                                   (self.StaticArtists.LOCAL_ARTIST.value, self.StaticArtists.TEMP_ARTIST.value))
 
+        
+    def test_local_artist_user_can_invite(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        response = self.client.get(reverse("findshows:artist_dashboard"))
+        self.assertIn('Invite Artist', str(response.content))
 
-class ViewArtistTests(TestCaseHelpers):
-    def test_anonymous_view(self):
+
+    def test_nonlocal_artist_user_cant_invite(self):
+        self.login_static_user(self.StaticUsers.NONLOCAL_ARTIST)
+        response = self.client.get(reverse("findshows:artist_dashboard"))
+        self.assertNotIn('Invite Artist', str(response.content))
+
+
+    def test_only_shows_users_concerts(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        artist2 = self.get_static_instance(self.StaticArtists.NONLOCAL_ARTIST)
+        concert1 = self.create_concert(artists=[self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)])
+        concert2 = self.create_concert(artists=[artist2])
+
+        response = self.client.get(reverse("findshows:artist_dashboard"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'findshows/pages/artist_dashboard.html')
+        self.assertEqual(response.context['concerts'], [concert1])
+
+
+    def test_date_filtering_and_sorting(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        artist1 = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        concert1 = self.create_concert(artists=[artist1], date=timezone_today() - datetime.timedelta(1))
+        concert2 = self.create_concert(artists=[artist1], date=timezone_today())
+        concert3 = self.create_concert(artists=[artist1], date=timezone_today() + datetime.timedelta(1))
+
+        response = self.client.get(reverse("findshows:artist_dashboard"))
+        self.assertEqual(response.context['concerts'], [concert2, concert3])
+
+
+    def test_create_link_shows_for_local_artists(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        response = self.client.get(reverse("findshows:artist_dashboard"))
+        self.assertIn(reverse('findshows:create_concert'), str(response.content))
+
+
+    def test_create_link_doesnt_show_for_nonlocal_artist(self):
+        self.login_static_user(self.StaticUsers.NONLOCAL_ARTIST)
+        response = self.client.get(reverse("findshows:artist_dashboard"))
+        self.assertNotIn(reverse('findshows:create_concert'), str(response.content))
+
+        
+        
+class ViewArtistTests(TestCaseHelpers): 
+    def test_anonymous_view(self):  
         artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
         response = self.client.get(reverse("findshows:view_artist", args=(artist.pk,)))
         self.assertEqual(response.status_code, 200)

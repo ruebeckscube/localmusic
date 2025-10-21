@@ -22,22 +22,22 @@
         {% endaccordion_element %}
 
         {% accordion_element title="&hellip;post a show?" %}
-        Log in; from the menu, go to <a class="link" href="{% url 'findshows:my_concert_list' %}">My Shows</a>
+        Log in; from the menu, go to your
+        <a class="link" href="{% url 'findshows:artist_dashboard' %}">artist dashboard</a>
         and click <em>Create new show listing</em>.
         {% endaccordion_element %}
 
         {% accordion_element title="&hellip;edit a show I'm a part of?" %}
-        Only the user who initially created a show can edit it. Log in; from the menu, go to
-        <a class="link" href="{% url 'findshows:my_concert_list' %}">My Shows</a>.
+        Only the user who initially created a show can edit it. Log in; from the menu, go to your
+        <a class="link" href="{% url 'findshows:artist_dashboard' %}">artist dashboard</a>.
         If you created a show, it should have an <em>Edit</em> button next to it. If
         you just want to edit your artist info it appears on the concert listing,
-        you can do that by editing your
-        <a class="link" href="{% url 'findshows:managed_artist_list' %}">artist profile</a>.
+        you can do that by editing your artist profile (also from the dashboard).
         {% endaccordion_element %}
 
         {% accordion_element title="&hellip;delete/cancel a show I'm a part of?" %}
-        Only the user who initially created a show can cancel it. Log in; from the menu, go to
-        <a class="link" href="{% url 'findshows:my_concert_list' %}">My Shows</a>.
+        Only the user who initially created a show can cancel it. Log in; from the menu, go to your
+        <a class="link" href="{% url 'findshows:artist_dashboard' %}">artist dashboard</a>.
         If you created a show, it should have a <em>Cancel</em> button next to it. The concert's
         detail page will now display prominently the fact that it is cancelled, and it will no
         longer show up anywhere else (search, artist pages, emails). You cannot delete a show.

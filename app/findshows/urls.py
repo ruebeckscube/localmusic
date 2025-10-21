@@ -13,12 +13,11 @@ urlpatterns = [
     path('artist_faq/', TemplateView.as_view(template_name='findshows/pages/artist_faq.html'), name="artist_faq"),
     path('contact/', views.contact, name="contact"),
 
-    path("my_artists", views.managed_artist_list, name="managed_artist_list"),
     path("artist/<int:pk>", views.view_artist, name="view_artist"),
     path("artist/<int:pk>/edit", views.edit_artist, name="edit_artist"),
+    path("artist_dashboard", views.artist_dashboard, name="artist_dashboard"),
     path("link_artist", views.link_artist, name="link_artist"),
 
-    path("my_concerts", views.my_concert_list, name="my_concert_list"),
     path("concert/<int:pk>", views.view_concert, name="view_concert"),
     path("concert/<int:pk>/edit", views.edit_concert, name="edit_concert"),
     path("concert/create", views.edit_concert, name="create_concert"),

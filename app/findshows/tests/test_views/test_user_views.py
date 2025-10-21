@@ -113,24 +113,6 @@ class UserSettingsTests(TestCaseHelpers):
         self.assertEqual(userProfile.preferred_concert_tags, data['preferred_concert_tags'])
 
 
-    def test_artist_user_can_invite(self):
-        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        response = self.client.get(reverse("findshows:user_settings"))
-        self.assertIn('Invite Artist', str(response.content))
-
-
-    def test_non_artist_user_cant_invite(self):
-        self.login_static_user(self.StaticUsers.NON_ARTIST)
-        response = self.client.get(reverse("findshows:user_settings"))
-        self.assertNotIn('Invite Artist', str(response.content))
-
-
-    def test_nonlocal_artist_user_cant_invite(self):
-        self.login_static_user(self.StaticUsers.NONLOCAL_ARTIST)
-        response = self.client.get(reverse("findshows:user_settings"))
-        self.assertNotIn('Invite Artist', str(response.content))
-
-
     def test_artist_user_cant_request(self):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         response = self.client.get(reverse("findshows:user_settings"))

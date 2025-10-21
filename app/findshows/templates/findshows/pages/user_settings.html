@@ -11,11 +11,7 @@
             {% include "findshows/partials/user_settings_form.html" with wfull=True%}
             <input class="btn" type="submit" value="Save">
             <div class="w-80 mx-auto py-8">
-                {% if is_local_artist_account %}
-                    {% with title_text="Invite Artist" success_text="Invite sent successfully!" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
-                        {% include "findshows/partials/modal_form.html" %}
-                    {% endwith %}
-                {% else %}
+                {% if not is_local_artist_account %}
                     {% with title_text="Request local artist access" success_text="Request submitted!" form_html="findshows/htmx/request_artist_form.html" htmx_url="findshows:request_artist_access" %}
                         {% include "findshows/partials/modal_form.html" %}
                     {% endwith %}
