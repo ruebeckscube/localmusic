@@ -200,7 +200,7 @@ def view_artist(request, pk):
 @login_required
 def edit_artist(request, pk):
     artist = get_object_or_404(Artist, pk=pk)
-    if artist not in request.user.userprofile.managed_artists.all():
+    if artist not in request.user.userprofile.managed_artists.all() and not request.user.is_staff:
         raise PermissionDenied
 
     if request.method != 'POST':
@@ -455,7 +455,7 @@ def edit_concert(request, pk=None):
         concert.created_by = request.user.userprofile
     else:
         concert = get_object_or_404(Concert, pk=pk)
-        if not concert.created_by == request.user.userprofile:
+        if not concert.created_by == request.user.userprofile and not request.user.is_staff:
             raise PermissionDenied
 
     if request.method != 'POST':
