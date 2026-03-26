@@ -9,17 +9,18 @@ from findshows.models import CustomText
 
 register = template.Library()
 
+
 @register.inclusion_tag("findshows/partials/preview_player.html")
 def preview_player(artist, mini=False):
-    if mini and len(artist.listen_ids) > 0:
-        listen_ids = [artist.listen_ids[0]]
-    else:
-        listen_ids = artist.listen_ids
-    return {
-        'artist': artist,
-        'listen_ids': listen_ids,
-        'mini': mini,
-    }
+    links = artist.listenlink_set.order_by('order')
+    if mini and len(links) > 0:
+        links = [links[0]]
+    return {'urls_and_heights': ((l.get_url_for_display(mini), l.get_height(mini)) for l in links)}
+
+
+@register.inclusion_tag("findshows/partials/youtube_embeds.html")
+def youtube_embeds(artist):
+    return {'urls': (l.get_url_for_display() for l in artist.youtubelink_set.order_by('order'))}
 
 
 @register.filter

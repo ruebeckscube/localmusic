@@ -1,15 +1,14 @@
 from datetime import timedelta
 import hashlib
-from urllib.parse import urlparse, parse_qs
-import urllib.request
-import re
+from html.parser import HTMLParser
+from urllib.parse import urlencode, urlsplit, parse_qs
 from statistics import mean
 import secrets
 from PIL import Image
 import io
 
 from django.db import models
-from django.db.models import Q, ImageField
+from django.db.models import Q
 from django.db.models.fields.files import ImageFieldFile
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.validators import URLValidator
@@ -22,6 +21,7 @@ from django.utils.timezone import now
 from django.contrib.postgres.indexes import GinIndex
 
 from multiselectfield import MultiSelectField
+import requests
 
 from findshows import musicbrainz
 
@@ -75,7 +75,7 @@ class JPEGImageFieldFile(ImageFieldFile):
         return super(JPEGImageFieldFile, self).save(name, content, save)
 
 
-class JPEGImageField(ImageField):
+class JPEGImageField(models.ImageField):
     """
     ImageField that converts all images to JPEG on save.
     """
@@ -95,46 +95,6 @@ class LabeledURLsValidator(URLValidator):
             if "://" not in tup[1]:
                 raise ValidationError("URL must include protocol (https://)")
             super().__call__(tup[1])
-
-
-class MultiURLValidator(URLValidator):
-
-    YOUTUBE = "YT"
-    LISTEN = "LSN"
-
-    def __init__(self, listen_or_youtube, max_links, **kwargs):
-        super().__init__(**kwargs)
-        self.listen_or_youtube = listen_or_youtube
-        self.max_links = max_links
-
-
-    def __call__(self, value):
-        urls = [url.strip() for url in str.split(value.strip(),"\n")]
-        if len(urls) > self.max_links:
-            raise ValidationError("Please enter at most " + str(self.max_links) + " links.", code=self.code, params={"value": value})
-        for url in urls:
-            super().__call__(url)
-        parsed_urls = [urlparse(url) for url in urls]
-
-        match self.listen_or_youtube:
-            case self.YOUTUBE:
-                if any(_parse_youtube_id(pu) == "" for pu in parsed_urls):
-                    raise ValidationError("Invalid Youtube URLs.", code=self.code, params={"value": value})
-            case self.LISTEN:
-                listen_platforms = [_parse_listen_platform(pu) for pu in parsed_urls]
-                if any(lp == Artist.NOLISTEN for lp in listen_platforms):
-                    raise ValidationError("Links must be from one of the supported sites.", code=self.code, params={"value": value})
-                if any(lp != listen_platforms[0] for lp in listen_platforms):
-                    raise ValidationError("Links must be from the same site.", code=self.code, params={"value": value})
-
-                listen_types = [_parse_listen_type(pu, listen_platforms[0]) for pu in parsed_urls]
-                if any(lt == Artist.NOLISTEN for lt in listen_types):
-                    raise ValidationError("Link not formatted correctly. Make sure you're linking directly to the album or track.", code=self.code, params={"value": value})
-                if len(urls) > 1 and any(lt == Artist.ALBUM for lt in listen_types):
-                    raise ValidationError("If multiple links are provided, they must all be song links.", code=self.code, params={"value": value})
-
-                # don't need to parse IDs, everything that's checkable has been checked. Actual
-                # player may fail if IDs don't exist, but we'll let that error trickle up
 
 
 class MusicBrainzArtist(models.Model):
@@ -181,24 +141,6 @@ class MusicBrainzArtist(models.Model):
 
 
 class Artist(CreationTrackingMixin):
-    DSP = "SP"
-    BANDCAMP = "BC"
-    SOUNDCLOUD = "SC"
-    NOLISTEN = "NL"
-    LISTEN_PLATFORMS = {
-        DSP: "DSP",
-        BANDCAMP: "Bandcamp",
-        SOUNDCLOUD: "Soundcloud",
-        NOLISTEN: "Not configured"
-    }
-    ALBUM = "AL"
-    TRACK = "TR"
-    LISTEN_TYPES = {
-        ALBUM: "Album",
-        TRACK: "Track",
-        NOLISTEN: "Not configured"
-    }
-
     name=models.CharField(verbose_name="Artist Name", max_length=60)
     profile_picture=JPEGImageField(null=True, help_text=f"{IMAGE_HELP_TEXT}")
     bio=models.TextField(null=True, max_length=800)
@@ -206,30 +148,6 @@ class Artist(CreationTrackingMixin):
 
     is_active_request=models.BooleanField(default=False)
     is_temp_artist=models.BooleanField()
-
-    # Here we store the artist's raw input for listening links. Either an album
-    # link or a line-separated list of track links (up to 3). ALSO includes Youtube Links.
-    # See below for test values
-    LISTEN_LINK_HELP="""
-        Supports Spotify, Bandcamp, and SoundCloud links. Please provide either one
-        album link or up to three song links on separate lines.
-
-        A preview player for all songs will be displayed on your artist page,
-        and the first track from the album or the first song link will be
-        displayed on concerts. """
-
-    listen_links=models.TextField(null=True, validators=[MultiURLValidator(MultiURLValidator.LISTEN, 3),],
-                                  help_text=LISTEN_LINK_HELP, max_length=400)
-    listen_platform=models.CharField(editable=False, max_length=2,
-                                     choices=LISTEN_PLATFORMS, default=NOLISTEN)
-    listen_type=models.CharField(editable=False, max_length=2,
-                                 choices=LISTEN_TYPES, default=NOLISTEN)
-    listen_ids=models.JSONField(editable=False, default=list)
-
-    youtube_links=models.TextField(blank=True, null=True, validators=[MultiURLValidator(MultiURLValidator.YOUTUBE, 2),],
-                                   help_text="(Optional) Enter up to two youtube links on separate lines.",
-                                   max_length=300)
-    youtube_ids=models.JSONField(editable=False, default=list, blank=True)
 
     # List of tuples [ (display_name, url), ... ]
     socials_links=models.JSONField(default=list, blank=True,
@@ -248,97 +166,239 @@ class Artist(CreationTrackingMixin):
                    for mbid in searched_mbids)
 
 
-    def _update_listen_links(self):
-        urls = [url.strip() for url in str.split(str(self.listen_links).strip(),"\n")]
-
-        parsed_urls = [urlparse(url) for url in urls]
-        self.listen_platform = _parse_listen_platform(parsed_urls[0])
-        self.listen_type = _parse_listen_type(parsed_urls[0], self.listen_platform)
-        self.listen_ids = _parse_listen_ids(parsed_urls, urls, self.listen_platform, self.listen_type)
-
-
-    def _update_youtube_links(self):
-        urls = [url.strip() for url in str.split(str(self.youtube_links).strip(),"\n")]
-        parsed_ids = (_parse_youtube_id(urlparse(url)) for url in urls)
-        self.youtube_ids = [id for id in parsed_ids if id != ""]
-
-
-    def save(self, *args, **kwargs):
-        self._update_listen_links()
-        self._update_youtube_links()
-        return super().save(*args, **kwargs)
-
     def __str__(self):
         return self.name
 
 
-def _id_from_bandcamp_url(url, listen_type):
-    match listen_type:
-        case Artist.ALBUM:
-            re_string = r'album id \d+'
-        case Artist.TRACK:
-            re_string = r'track id \d+'
-    try:
-        with urllib.request.urlopen(url) as response:
-            html = str(response.read())
-            return re.findall(re_string, html)[-1][9:]  # 9 is length of both "album id" and "track id"
-    except Exception: # includes any list indexing errors
+class AttrParser(HTMLParser):
+    @classmethod
+    def get_prop(cls, html, prop, req_tag=None, req_attr=None):
+        p = cls(prop, req_tag, req_attr)
+        p.feed(html)
+        return p.val
+
+    def __init__(self, prop, req_tag=None, req_attr=None):
+        self.prop, self.req_tag, self.req_attr = prop, req_tag, req_attr
+        self.val = None
+        super().__init__()
+
+
+    def handle_starttag(self, tag, attrs):
+        if self.req_tag and tag != self.req_tag:
+            return
+        if self.req_attr and self.req_attr not in attrs:
+            return
+        for attr in attrs:
+            match attr:
+                case [self.prop, val]:
+                    self.val = val
+
+
+def update_url_params(url, params={}, remove_params=[], update_path=False):
+    su = urlsplit(url)
+    if update_path:
+        # e.g. [[''], ['EmbeddedPlayer'], ['v', '2'], ['track', '749608091'], ['size', 'large'], ['tracklist', 'false'], ['artwork', 'small'], ['']]
+        path_args = [el.split('=', 1) for el in su.path.strip('/').split('/')]
+        path_args = [[l[0], params.pop(l[0])] if l[0] in params else l
+                     for l in path_args
+                     if l[0] not in remove_params]
+        path_args.extend([key, val] for key, val in params.items()) # remaining
+        su = su._replace(path=f"/{'/'.join('='.join(l) for l in path_args)}/")
+    else:
+        qs = parse_qs(su.query)
+        qs.update({key: [val] for key, val in params.items()})
+        for p in remove_params:
+            qs.pop(p, None)
+        su = su._replace(query=urlencode(qs, doseq=True))
+
+    return su.geturl()
+
+
+class EmbedLink(models.Model):
+    BANDCAMP = "BC"
+    SPOTIFY = "SP"
+    SOUNDCLOUD = "SC"
+    YOUTUBE = "YT"
+    allowed_platforms = ()
+
+    class Meta:
+        abstract=True
+
+    resource_url=models.URLField()
+    iframe_url=models.URLField(editable=False)
+
+
+    def __setattr__(self, attrname, val):
+        if attrname == 'resource_url':
+            val = self._strip_tracking(val)
+            self.platform = self._parse_platform(val)
+        super().__setattr__(attrname, val)
+
+
+    def _strip_tracking(self, url):
+        su = urlsplit(url)
+        allowed = ('v',) # currently only youtube needs any params (v for video id)
+        qs = {k: v for k, v in parse_qs(su.query).items() if k in allowed}
+        su = su._replace(query=urlencode(qs, doseq=True))
+        return su.geturl()
+    
+
+    def _parse_platform(self, url):
+        if 'bandcamp' in url:
+            return self.BANDCAMP
+        if 'spotify' in url:
+            return self.SPOTIFY
+        if 'soundcloud' in url:
+            return self.SOUNDCLOUD
+        if 'youtu' in url:
+            return self.YOUTUBE
         return ""
 
 
-def _parse_listen_platform(parsed_url):
-    match parsed_url.netloc:
-        case "open.spotify.com":
-            return Artist.DSP
-        case "soundcloud.com":
-            return Artist.SOUNDCLOUD
-        case pu if pu[-12:] == "bandcamp.com":
-            return Artist.BANDCAMP
-        case _:
-            return Artist.NOLISTEN
+    def get_platform(self):
+        return self.platform
 
 
-def _parse_listen_type(parsed_url, listen_platform):
-    match listen_platform:
-        case Artist.DSP | Artist.BANDCAMP: # Weird coincidence they're the same
-            if len(parsed_url.path.split('/')) != 3:
-                return Artist.NOLISTEN
-            match parsed_url.path.split('/')[1]:
-                case 'album':
-                    return Artist.ALBUM
-                case 'track':
-                    return Artist.TRACK
-        case Artist.SOUNDCLOUD:
-            path_list = parsed_url.path.split('/')
-            if len(path_list) == 4 and path_list[2] == "sets":
-                return Artist.ALBUM
-            if len(path_list) == 3:
-                return Artist.TRACK
-    return Artist.NOLISTEN
+    def _base_oembed_url(self):
+        match self.get_platform():
+            case self.SOUNDCLOUD:
+                return "https://soundcloud.com/oembed"
+            case self.SPOTIFY:
+                return "https://open.spotify.com/oembed"
+            case self.YOUTUBE:
+                return "https://www.youtube.com/oembed"
+            case _:
+                return ""
 
 
-def _parse_listen_ids(parsed_urls, urls, listen_platform, listen_type):
-    match listen_platform:
-        case Artist.DSP:
-            return [p.path.split('/')[-1] for p in parsed_urls]
-        case Artist.BANDCAMP:
-            return [_id_from_bandcamp_url(url, listen_type) for url in urls]
-        case Artist.SOUNDCLOUD:
-            return [p.path for p in parsed_urls]
-    return []
+    def _get_oembed_iframe_url(self):
+        r = requests.get(self._base_oembed_url(), params={
+            "url": self.resource_url,
+            "format": "json",
+        })
+
+        match r.status_code:
+            case 200:
+                pass
+            case 404:
+                raise ValidationError("Invalid link. Make sure you're linking directly to an album, track, or video.")
+            case 401 | 403:
+                raise ValidationError("Invalid link. The album, track, or video you're linking to appears to be private or otherwise hidden; please make it publically visible or enter a different link.")
+            case code:
+                raise ValidationError(f"Unexpected error (HTTP response {code}); please report to site admins.")
+
+        html = r.json().get("html", "")
+        iframe_url = AttrParser.get_prop(html, "src", "iframe")
+        if not iframe_url:
+            raise ValidationError("Error parsing good HTTP response; please report to site admins.")
+        return iframe_url
 
 
-def _parse_youtube_id(parsed_url):
-    match parsed_url.netloc:
-        case "www.youtube.com":
-            qs = parse_qs(parsed_url.query)
-            if 'v' in qs and len(qs['v']) == 1:
-                return qs['v'][0]
-        case "youtu.be":
-            path_list = parsed_url.path.split('/')
-            if len(path_list) == 2:
-                return path_list[1]
-    return ""
+    def _get_bandcamp_iframe_url(self):
+        r = requests.get(self.resource_url)
+        if r.status_code != 200:
+            raise ValidationError("Invalid link. Resource doesn't exist, is private, or is otherwise unreachable.")
+        embed_url = AttrParser.get_prop(r.text, "content", "meta", ("property", "og:video"))
+        if not embed_url:
+            raise ValidationError("Invalid link. Make sure you're linking directly to an album or track.")
+        return embed_url
+
+
+    def _transform_url_for_storage(self):
+        pass
+
+
+    def update_iframe_url(self):
+        if self.get_platform() not in self.allowed_platforms:
+            raise ValidationError("Incorrect link type; are you mixing up audio links with youtube links?")
+        if self.get_platform() == self.BANDCAMP:
+            self.iframe_url = self._get_bandcamp_iframe_url()
+        else:
+            self.iframe_url = self._get_oembed_iframe_url()
+        self._transform_url_for_storage()
+
+
+    def get_url_for_display(self, mini=False):
+        return self.iframe_url
+
+
+    def save(self, *args, **kwargs):
+        return super().save(*args, **kwargs)
+
+
+class ListenLink(EmbedLink):
+    ALBUM = "A"
+    TRACK = "T"
+
+    allowed_platforms = (EmbedLink.BANDCAMP, EmbedLink.SPOTIFY, EmbedLink.SOUNDCLOUD)
+
+    order=models.PositiveSmallIntegerField()
+    artist=models.ForeignKey(Artist, on_delete=models.CASCADE)
+
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.type = None
+
+
+    def _calculate_type(self):
+        if "/track/" in self.resource_url: # bandcamp and spotify
+            return self.TRACK
+        if self.get_platform() == self.SOUNDCLOUD and len(urlsplit(self.resource_url).path.strip('/').split('/')) == 2:
+            return self.TRACK
+        # This includes collections like artist summaries and playlists; if they work they work ¯\_(ツ)_/¯
+        return self.ALBUM
+
+
+    def get_type(self):
+        if self.type:
+            return self.type
+        else:
+            return self._calculate_type()
+
+
+    def update_iframe_url(self):
+        super().update_iframe_url()
+        self.type = self._calculate_type()
+
+
+    def get_height(self, mini=False):
+        if not mini and self.get_type() == self.ALBUM:
+            return "400px"
+        match self.get_platform():
+            case self.BANDCAMP:
+                return "40px" if mini else "130px"
+            case self.SPOTIFY:
+                return "80px"
+            case self.SOUNDCLOUD:
+                return "60px" if mini else "130px"
+
+
+    def _transform_url_for_storage(self):
+        super()._transform_url_for_storage()
+        match self.get_platform():
+            case self.SOUNDCLOUD:
+                self.iframe_url = update_url_params(self.iframe_url, {'visual': 'false'})
+            case self.BANDCAMP:
+                url_params= {'artwork': 'small'}
+                url_params['size'] = 'medium' if self.get_type() == self.TRACK else 'large'
+                if self.get_type()==self.ALBUM:
+                    url_params['tracklist'] = 'true'
+
+                self.iframe_url = update_url_params(self.iframe_url, url_params, update_path=True)
+
+
+    def get_url_for_display(self, mini=False):
+        if mini and self.get_platform() == self.BANDCAMP:
+            return update_url_params(self.iframe_url, {'size': 'small'}, remove_params=['artwork', 'tracklist'], update_path=True)
+        return super().get_url_for_display(mini)
+
+
+class YoutubeLink(EmbedLink):
+    allowed_platforms = (EmbedLink.YOUTUBE, )
+
+    order=models.PositiveSmallIntegerField()
+    artist=models.ForeignKey(Artist, on_delete=models.CASCADE)
 
 
 class InviteDelayError(Exception):

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 
-from .models import Artist, ArtistLinkingInfo, CustomText, MusicBrainzArtist, UserProfile, Venue, Concert, SetOrder
+from .models import Artist, ArtistLinkingInfo, CustomText, ListenLink, MusicBrainzArtist, UserProfile, Venue, Concert, SetOrder, YoutubeLink
 
 class SetOrderInline(admin.TabularInline):
     model = SetOrder
@@ -19,7 +19,16 @@ class UserProfileAdmin(admin.ModelAdmin):
     readonly_fields = ('favorite_musicbrainz_artists',)
     autocomplete_fields = ('followed_artists', 'managed_artists')
 
+class ListenLinkInline(admin.TabularInline):
+    model=ListenLink
+    extra=0
+
+class YoutubeLinkInline(admin.TabularInline):
+    model=YoutubeLink
+    extra=0
+
 class ArtistAdmin(admin.ModelAdmin):
+    inlines = (ListenLinkInline, YoutubeLinkInline)
     readonly_fields=('similar_musicbrainz_artists',)
     search_fields=('name',)
 

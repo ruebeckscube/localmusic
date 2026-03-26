@@ -59,7 +59,7 @@ class IsLocalArtistAccountTests(TestCaseHelpers):
 
 
 class ArtistDashboardTests(TestCaseHelpers):
-    
+
     def test_not_logged_in_redirects(self):
         self.assert_redirects_to_login(reverse("findshows:artist_dashboard"))
 
@@ -78,7 +78,7 @@ class ArtistDashboardTests(TestCaseHelpers):
         self.assert_equal_as_sets((a.pk for a in response.context['artists']),
                                   (self.StaticArtists.LOCAL_ARTIST.value, self.StaticArtists.TEMP_ARTIST.value))
 
-        
+
     def test_local_artist_user_can_invite(self):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         response = self.client.get(reverse("findshows:artist_dashboard"))
@@ -125,10 +125,10 @@ class ArtistDashboardTests(TestCaseHelpers):
         response = self.client.get(reverse("findshows:artist_dashboard"))
         self.assertNotIn(reverse('findshows:create_concert'), str(response.content))
 
-        
-        
-class ViewArtistTests(TestCaseHelpers): 
-    def test_anonymous_view(self):  
+
+
+class ViewArtistTests(TestCaseHelpers):
+    def test_anonymous_view(self):
         artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
         response = self.client.get(reverse("findshows:view_artist", args=(artist.pk,)))
         self.assertEqual(response.status_code, 200)
@@ -186,7 +186,9 @@ class ArtistViewTestHelpers(TestCaseHelpers):
             'name': 'This is a test with lots of extra text',
             'bio': ['I sing folk songs and stuff'],
             'profile_picture': self.image_file(),
-            'listen_links': ['https://soundcloud.com/measuringmarigolds/was-it-worth-the-kiss-demo\r\nhttps://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo\r\nhttps://soundcloud.com/measuringmarigolds/wax-wane-demo'],
+            'listen_links': ['https://soundcloud.com/measuringmarigolds/was-it-worth-the-kiss-demo',
+                             'https://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo',
+                             'https://soundcloud.com/measuringmarigolds/wax-wane-demo'],
             'similar_musicbrainz_artists': ['1', '2', '3'],
             'socials_links_display_name': ['', '', ''],
             'socials_links_url': ['', '', ''],
@@ -249,11 +251,12 @@ class EditArtistTests(ArtistViewTestHelpers):
         self.assertNotIn('This artist listing has not been filled out', str(response.content))
 
 
-    @patch("findshows.forms.MusicBrainzArtist.get_similar_artists")
-    def test_edit_artist_successful_POST(self, mock_similar_artists):
+    @patch('findshows.models.EmbedLink._get_bandcamp_iframe_url', return_value="'https://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo'")
+    @patch('findshows.models.EmbedLink._get_oembed_iframe_url', return_value="'https://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo'")
+    @patch("findshows.forms.MusicBrainzArtist.get_similar_artists", return_value={"abc"})
+    def test_edit_artist_successful_POST(self, *args):
         self.login_static_user(self.StaticUsers.TEMP_ARTIST)
         post_request = self.artist_post_request()
-        mock_similar_artists.return_value = {"abc"}
 
         response = self.client.post(reverse("findshows:edit_artist", args=(self.StaticArtists.TEMP_ARTIST.value,)), data=post_request)
         self.assertRedirects(response, reverse('findshows:view_artist', args=(self.StaticArtists.TEMP_ARTIST.value,)))
@@ -340,7 +343,7 @@ class CreateTempArtistTests(TestCaseHelpers):
         self.assertTemplateUsed(response, 'findshows/htmx/cant_create_artist.html')
         self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
         self.assertIn("Users newly given artist access", str(response.content))
-    
+
 
     def test_successful_create(self):
         user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)

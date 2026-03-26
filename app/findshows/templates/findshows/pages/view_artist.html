@@ -52,14 +52,7 @@
 
     {# Youtube #}
     <div class="flex max-md:flex-col justify-center items-center ">
-        {% for youtube_id in artist.youtube_ids %}
-            <iframe type="text/html" width="640" height="360"
-                    class="w-full md:max-w-1/2 m-2 bg-sub-background p-2"
-                    src="https://www.youtube.com/embed/{{ youtube_id }}?autoplay=0&origin=http://example.com"
-                    allowfullscreen
-                    referrerpolicy="strict-origin-when-cross-origin"
-                    frameborder="0"></iframe>
-        {% endfor %}
+        {% youtube_embeds artist %}
     </div>
 
     {# Upcoming shows #}

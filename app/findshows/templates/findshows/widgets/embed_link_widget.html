@@ -1,0 +1,7 @@
+<div>
+{% for link in widget.link_list %}
+    <input type="url" class="textinput w-full" name="{{ widget.name }}" type="text" value="{{ link }}"
+           {% if forloop.first %} placeholder="{{ widget.placeholder }}" {% endif %}
+    >
+{% endfor %}
+</div>

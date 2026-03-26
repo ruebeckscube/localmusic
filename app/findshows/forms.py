@@ -1,4 +1,6 @@
 from datetime import timedelta
+from itertools import zip_longest
+
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import BaseUserCreationForm
@@ -10,8 +12,8 @@ from django.conf import settings
 from multiselectfield.forms.fields import MultiSelectFormField
 from captcha.fields import CaptchaField
 
-from findshows.models import MAX_UPLOADED_IMAGE_SIZE_IN_MB, Artist, Concert, ConcertTags, LabeledURLsValidator, MusicBrainzArtist, UserProfile, Venue
-from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, ImageInput, SocialsLinksWidget, MusicBrainzArtistSearchWidget, StyledSelect, TimePickerField, VenuePickerWidget
+from findshows.models import MAX_UPLOADED_IMAGE_SIZE_IN_MB, Artist, Concert, ConcertTags, LabeledURLsValidator, ListenLink, MusicBrainzArtist, UserProfile, Venue, YoutubeLink
+from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, EmbedLinkField, ImageInput, SocialsLinksWidget, MusicBrainzArtistSearchWidget, StyledSelect, TimePickerField, VenuePickerWidget
 
 User = get_user_model()
 
@@ -75,17 +77,40 @@ def validate_image(image):
     return image
 
 
+LISTEN_LINK_HELP="""A preview player for all songs will be displayed on your
+artist page, and the first track will be displayed on concerts. Please
+provide either one album link or up to three song links on separate lines.
+Supports Spotify, Bandcamp, and SoundCloud links. For Spotify and SoundCloud,
+artist/playlist links work as well. """
+
+
 class ArtistEditForm(DefaultStylingModelForm):
+    listen_links=EmbedLinkField(num_links=3, help_text=LISTEN_LINK_HELP,
+                                placeholder="https://cool-artist.bandcamp.com/track/cool-track-title")
+    youtube_links=EmbedLinkField(num_links=2, required=False,
+                                 help_text="Youtube videos will be embedded on your artist page.",
+                                 placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+
     class Meta:
         model=Artist
-        fields=("name", "profile_picture", "bio", "youtube_links", "socials_links", "listen_links", "similar_musicbrainz_artists")
+        fields=("name", "profile_picture", "bio", "socials_links", "similar_musicbrainz_artists")
         widgets={
             "similar_musicbrainz_artists": MusicBrainzArtistSearchWidget,
             "socials_links": SocialsLinksWidget,
-            "youtube_links": forms.Textarea(attrs={'rows': 5}),
-            "listen_links": forms.Textarea(attrs={'rows': 7}),
             "profile_picture": ImageInput(),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.id:
+            self.fields['listen_links'].initial = [link.resource_url
+                                                   for link in self.instance.listenlink_set.order_by('order')]
+            self.fields['youtube_links'].initial = [link.resource_url
+                                                    for link in self.instance.youtubelink_set.order_by('order')]
+        else:
+            self.fields['listen_links'].initial = []
+            self.fields['youtube_links'].initial = []
+
 
     def clean_socials_links(self):
         socials_links = self.cleaned_data['socials_links']
@@ -95,6 +120,26 @@ class ArtistEditForm(DefaultStylingModelForm):
 
     def clean_profile_picture(self):
         return validate_image(self.cleaned_data['profile_picture'])
+
+
+    def _embed_cleaner(self, embedClass, clean_links):
+        cache = []
+        for idx, resource_url in enumerate(clean_links):
+            link = embedClass(resource_url=resource_url, order=idx+1)
+            link.update_iframe_url() # This raises various ValidationErrors if any piece of API calls fail
+            cache.append(link)
+        return cache
+
+
+    def clean_listen_links(self):
+        self.cleaned_data['listen_links_cache'] = self._embed_cleaner(ListenLink, self.cleaned_data['listen_links'])
+        if (len(self.cleaned_data['listen_links_cache']) > 1
+            and any(l.get_type()==ListenLink.ALBUM for l in self.cleaned_data['listen_links_cache'])):
+            raise ValidationError("Please enter links to either (a) one album or (b) one or more individual tracks.")
+
+
+    def clean_youtube_links(self):
+        self.cleaned_data['youtube_links_cache'] = self._embed_cleaner(YoutubeLink, self.cleaned_data['youtube_links'])
 
 
     def clean_similar_musicbrainz_artists(self):
@@ -107,12 +152,30 @@ class ArtistEditForm(DefaultStylingModelForm):
         return mb_artists
 
 
+    def save_embed_links(self, artist, new_links, old_links):
+        # Must be called after artist save
+        for new_link, old_link in zip_longest(new_links, old_links):
+            # Just a partially optimized way of making current state exactly reflect form input
+            if old_link is not None:
+                if new_link is None:
+                    old_link.delete()
+                    continue
+                if new_link.iframe_url == old_link.iframe_url:
+                    continue
+                old_link.delete()
+            if new_link is not None:
+                new_link.artist = artist
+                new_link.save()
+
+
     def save(self, commit = True):
         artist = super().save(commit=False)
         artist.is_temp_artist = False
         if commit:
             artist.save()
             self.save_m2m()
+            self.save_embed_links(artist, self.cleaned_data['listen_links_cache'], artist.listenlink_set.order_by('order'))
+            self.save_embed_links(artist, self.cleaned_data['youtube_links_cache'], artist.youtubelink_set.order_by('order'))
         return artist
 
 

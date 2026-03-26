@@ -11,12 +11,6 @@
         "local": true,
         "is_active_request": false,
         "is_temp_artist": false,
-        "listen_links": "",
-        "listen_platform": "NL",
-        "listen_type": "NL",
-        "listen_ids": [],
-        "youtube_links": "",
-        "youtube_ids": [],
         "socials_links": [],
         "similar_musicbrainz_artists": []
     }
@@ -33,12 +27,6 @@
         "local": false,
         "is_active_request": false,
         "is_temp_artist": false,
-        "listen_links": "",
-        "listen_platform": "NL",
-        "listen_type": "NL",
-        "listen_ids": [],
-        "youtube_links": "",
-        "youtube_ids": [],
         "socials_links": [],
         "similar_musicbrainz_artists": []
     }
@@ -55,12 +43,6 @@
         "local": true,
         "is_active_request": false,
         "is_temp_artist": true,
-        "listen_links": "",
-        "listen_platform": "NL",
-        "listen_type": "NL",
-        "listen_ids": [],
-        "youtube_links": "",
-        "youtube_ids": [],
         "socials_links": [],
         "similar_musicbrainz_artists": []
     }

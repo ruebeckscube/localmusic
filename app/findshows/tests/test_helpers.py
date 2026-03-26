@@ -13,7 +13,7 @@ from django.utils.datastructures import MultiValueDict
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 
-from findshows.models import Ages, Artist, ArtistLinkingInfo, Concert, ConcertTags, EmailVerification, MusicBrainzArtist, SetOrder, UserProfile, Venue
+from findshows.models import Ages, Artist, ArtistLinkingInfo, Concert, ConcertTags, EmailVerification, ListenLink, MusicBrainzArtist, SetOrder, UserProfile, Venue, YoutubeLink
 
 User = get_user_model()
 
@@ -163,16 +163,14 @@ class TestCaseHelpers(TestCase):
                       name="Test Artist",
                       local=True,
                       similar_musicbrainz_artists=None,
-                      listen_links="",
-                      youtube_links="",
+                      listen_links=["https://measuringmarigolds.bandcamp.com/track/was-it-worth-the-kiss"],
+                      youtube_links=[],
                       is_temp_artist=False,
                       is_active_request=False,
                       created_by=None,
                       created_at=None):
         artist = Artist(name=name,
                         local=local,
-                        listen_links=listen_links,
-                        youtube_links=youtube_links,
                         is_temp_artist=is_temp_artist,
                         is_active_request=is_active_request,
                         )
@@ -187,7 +185,14 @@ class TestCaseHelpers(TestCase):
             artist.created_at=created_at # Can't assign in creation because default-to-now behavior takes precedence
             artist.save()
 
+        for idx, url in enumerate(listen_links):
+            link = ListenLink(artist=artist, resource_url=url, iframe_url=url, order=idx)
+            link.save()
 
+        for idx, url in enumerate(youtube_links):
+            link = YoutubeLink(artist=artist, resource_url=url, iframe_url=url, order=idx)
+            link.save()
+            
         if similar_musicbrainz_artists is not None:
             artist.similar_musicbrainz_artists.set(similar_musicbrainz_artists)
 

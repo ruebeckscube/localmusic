@@ -34,26 +34,22 @@ class GetSimilarArtistsTests(TestCase):
 
 
 class SimilarityScoreTests(TestCase):
-    @patch('findshows.musicbrainz.get_similar_artists')
+    @patch('findshows.musicbrainz.get_similar_artists', return_value = {'456': .3, '789': .8})
     def test_self_score_is_1(self, mock: MagicMock):
         mb_artist = MusicBrainzArtist.objects.create(mbid='123', name='Test Artist')
-        mock.return_value = {'456': .3, '789': .8}
         self.assertEqual(mb_artist.similarity_score('123'), 1)
 
-    @patch('findshows.musicbrainz.get_similar_artists')
+    @patch('findshows.musicbrainz.get_similar_artists', return_value = {'456': .3, '789': .8})
     def test_mbid_in_similar_artists(self, mock: MagicMock):
         mb_artist = MusicBrainzArtist.objects.create(mbid='123', name='Test Artist')
-        mock.return_value = {'456': .3, '789': .8}
         self.assertEqual(mb_artist.similarity_score('789'), .8)
 
-    @patch('findshows.musicbrainz.get_similar_artists')
+    @patch('findshows.musicbrainz.get_similar_artists', return_value = {'456': .3, '789': .8})
     def test_mbid_not_in_similar_artists(self, mock: MagicMock):
         mb_artist = MusicBrainzArtist.objects.create(mbid='123', name='Test Artist')
-        mock.return_value = {'456': .3, '789': .8}
         self.assertEqual(mb_artist.similarity_score('2468'), 0)
 
-    @patch('findshows.musicbrainz.get_similar_artists')
+    @patch('findshows.musicbrainz.get_similar_artists', return_value = None)
     def test_API_failed(self, mock: MagicMock):
         mb_artist = MusicBrainzArtist.objects.create(mbid='123', name='Test Artist')
-        mock.return_value = None
         self.assertEqual(mb_artist.similarity_score('2468'), 0)

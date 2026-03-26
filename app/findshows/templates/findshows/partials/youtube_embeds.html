@@ -1,0 +1,12 @@
+{% for url in urls %}
+<iframe
+    class="w-full md:max-w-1/2 m-2 bg-sub-background p-2"
+    type="text/html"
+    width="640"
+    height="360"
+    src="{{ url }}"
+    allowfullscreen
+    referrerpolicy="strict-origin-when-cross-origin"
+    frameborder="0"
+></iframe>
+{% endfor %}

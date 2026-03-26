@@ -1,6 +1,7 @@
 from enum import Enum
 import json
-from django.forms import ClearableFileInput, FileInput
+from django.core.validators import URLValidator
+from django.forms import ClearableFileInput, Field, ValidationError
 from django.forms.fields import DateField, TimeField
 
 from django.forms.widgets import Input, Select
@@ -138,3 +139,35 @@ class ImageInput(ClearableFileInput):
 
 class StyledSelect(Select):
     template_name="findshows/widgets/styled_select.html"
+
+
+class EmbedLinkWidget(Input):
+    template_name="findshows/widgets/embed_link_widget.html"
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['widget']['link_list'] = value + ['']*(self.num_links-len(value))
+        context['widget']['placeholder'] = self.placeholder
+        return context
+
+    def value_from_datadict(self, data, files, name):
+        return [url for url in data.getlist(name) if url]
+
+
+class EmbedLinkField(Field):
+    widget=EmbedLinkWidget
+
+    def __init__(self, num_links, *args, placeholder="", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.num_links = num_links
+        self.widget.num_links = num_links
+        self.widget.placeholder = placeholder
+
+    def validate(self, value):
+        # just some basic validation before the form does more
+        if len(value) > self.num_links:
+            raise ValidationError("Please enter at most " + str(self.num_links) + " links.", params={"value": value})
+        for url in value:
+            URLValidator(url)
+        if self.required and len(value) < 1:
+            raise ValidationError("Please enter at least one link.", params={"value": value})
