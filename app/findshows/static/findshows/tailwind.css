@@ -373,6 +373,9 @@
   .mb-2 {
     margin-bottom: calc(var(--spacing) * 2);
   }
+  .mb-4 {
+    margin-bottom: calc(var(--spacing) * 4);
+  }
   .ml-1 {
     margin-left: calc(var(--spacing) * 1);
   }
@@ -1127,11 +1130,6 @@
       @media (width < 48rem) {
         flex-direction: row;
       }
-    }
-  }
-  .md\:my-8 {
-    @media (width >= 48rem) {
-      margin-block: calc(var(--spacing) * 8);
     }
   }
   .md\:my-auto {

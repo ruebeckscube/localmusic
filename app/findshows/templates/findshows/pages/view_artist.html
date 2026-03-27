@@ -15,9 +15,12 @@
                     {{artist.name}}
                 </h1>
 
-                <div class="flex flex-row w-fit mx-auto self-end">
+                <div class="flex flex-row w-fit mx-auto mb-4 self-end flex-wrap justify-around">
                     {% for link in artist.socials_links %}
-                        <a class="link text-lg mx-4 my-3 md:my-8" href="{{link.1}}" target="_blank">{{link.0}}</a>
+                        <div class="flex items-center p-1 min-h-12 relative">
+                            <svg class="rough-bg-social-link h-full w-full absolute -z-0" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio='none'></svg>
+                            <a class="link text-lg text-center m-3 z-10" href="{{link.1}}" target="_blank">{{link.0}}</a>
+                        </div>
                     {% endfor %}
                 </div>
         </div>

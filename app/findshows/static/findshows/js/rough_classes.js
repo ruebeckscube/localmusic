@@ -16,6 +16,11 @@ function rough_rect_helper(svg, p, options) {
   svg.appendChild(rough_svg.rectangle(p, p, d.width, d.height, options));
 }
 
+function rough_ellipse_helper(svg, p, options) {
+  let [rough_svg, d] = setup_svg(svg, p)
+    svg.appendChild(rough_svg.ellipse(p + d.width/2, p + d.height/2, d.width * .9, d.height * .9, options));  
+}
+
 function rough_bg_rect(svg) {
   rough_rect_helper(svg, 10, {
     roughness: 10,
@@ -34,11 +39,21 @@ function rough_bg_musicbrainz_card(svg) {
   });
 }
 
+function rough_bg_social_link(svg) {
+  rough_ellipse_helper(svg, 2, {
+    roughness: 2,
+    fill: "var(--color-highlight-item-light)",
+    fillStyle: 'hatchure',
+    stroke: "none",
+    fillWeight: 3,
+  });
+}
 
 // Dict that maps class names to shape functions
 const rough_cls_2_fnc = {
   'rough-bg-rect': rough_bg_rect,
   'rough-bg-musicbrainz-card': rough_bg_musicbrainz_card,
+  'rough-bg-social-link': rough_bg_social_link,
 }
 
 // Process a node
