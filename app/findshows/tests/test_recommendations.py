@@ -76,6 +76,8 @@ class RecommendationTests(TestCaseHelpers):
                 case ['user1@em.ail']: # Gets the two recs
                     self.assert_concert_link_in_message_html(self.concert1, message)
                     self.assert_concert_link_in_message_html(self.concert2, message)
+                    self.assert_concert_link_in_message_html(self.concert3, message)
+                    self.assert_concert_link_in_message_html(self.concert4, message, assert_not=True)
                 case ['user2@em.ail'] | ['user3@em.ail']: # Gets randomized recs
                     self.assert_concert_link_in_message_html(self.concert1, message)
                     self.assert_concert_link_in_message_html(self.concert2, message)
@@ -85,7 +87,7 @@ class RecommendationTests(TestCaseHelpers):
                     self.assertFalse("User 4 should not receive an email")
 
 
-    def test_number_database_hits(self):
+    def test_number_database_hits_in_send_rec_email(self):
         # Main point is that it's constant with number of users :)
         self.create_user_profile(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user1@em.ail", preferred_concert_tags=[ConcertTags.ORIGINALS])
         self.create_user_profile(favorite_musicbrainz_artists=['4-0', '4-1', '4-2'], email="user2@em.ail")

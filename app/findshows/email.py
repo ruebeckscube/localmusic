@@ -189,14 +189,15 @@ def rec_email_generator():
         return
 
     for user_profile in user_profiles.iterator(chunk_size=1000):
-        search_params['musicbrainz_artists'] = user_profile.favorite_musicbrainz_artists.all()
+        search_params['musicbrainz_artists'] = [mb_artist.mbid
+                                                for mb_artist in user_profile.favorite_musicbrainz_artists.all()]
         search_params['concert_tags'] = set(user_profile.preferred_concert_tags)
         search_url = local_url_to_email(reverse('findshows:home', query=search_params))
 
         tag_filtered_concerts = [
             c for c in next_week_concerts
             if search_params['concert_tags'].intersection(c.tags)
-        ] if search_params['concert_tags'] else []
+        ] if search_params['concert_tags'] else list(next_week_concerts)
         scored_concerts = ((c.relevance_score(search_params['musicbrainz_artists']), c) for c in tag_filtered_concerts)
         top_scored_concerts = sorted((s_c for s_c in scored_concerts if s_c[0] != 0), reverse=True)
 
