@@ -172,36 +172,39 @@ def send_mass_html_mail(datatuples):
 
 
 def rec_email_generator():
-    user_profiles = UserProfile.objects.filter(weekly_email=True, email_is_verified=True)
+    user_profiles = UserProfile.objects.filter(
+        weekly_email=True, email_is_verified=True).select_related(
+            'user').prefetch_related('favorite_musicbrainz_artists').only(
+                'preferred_concert_tags', 'user', 'user__email', 'favorite_musicbrainz_artists', 'favorite_musicbrainz_artists__mbid')
     today = datetime.date.today()
     week_later = today + datetime.timedelta(6)
     search_params = {'date': today,
                       'end_date': week_later,
                       'is_date_range': True}
+    email_header = CustomText.get_text(CustomText.WEEKLY_EMAIL_HEADER)
+    site_title = CustomText.get_text(CustomText.SITE_TITLE)
+    next_week_concerts = tuple(Concert.publically_visible().select_related('venue').prefetch_related('artists__similar_musicbrainz_artists').filter(date__gte=today, date__lte=week_later))
 
-    next_week_concerts = Concert.publically_visible().filter(date__gte=today, date__lte=week_later)
-    for user_profile in user_profiles:
-        search_params['musicbrainz_artists'] = [mb_artist.mbid
-                                                for mb_artist in user_profile.favorite_musicbrainz_artists.all()]
-        search_params['concert_tags'] = user_profile.preferred_concert_tags
+    if not next_week_concerts:
+        return
+
+    for user_profile in user_profiles.iterator(chunk_size=1000):
+        search_params['musicbrainz_artists'] = user_profile.favorite_musicbrainz_artists.all()
+        search_params['concert_tags'] = set(user_profile.preferred_concert_tags)
         search_url = local_url_to_email(reverse('findshows:home', query=search_params))
 
-        tag_filtered_concerts = next_week_concerts.all()
-        if search_params['concert_tags']:
-            tag_filtered_concerts = next_week_concerts.filter(reduce(or_, (Q(tags__icontains=t) for t in search_params['concert_tags'])))
-
+        tag_filtered_concerts = [
+            c for c in next_week_concerts
+            if search_params['concert_tags'].intersection(c.tags)
+        ] if search_params['concert_tags'] else []
         scored_concerts = ((c.relevance_score(search_params['musicbrainz_artists']), c) for c in tag_filtered_concerts)
-
         top_scored_concerts = sorted((s_c for s_c in scored_concerts if s_c[0] != 0), reverse=True)
 
         has_recs = len(top_scored_concerts) > 0
         if has_recs:
             rec_concerts = [s_c[1] for s_c in top_scored_concerts]
         else:
-            if len(tag_filtered_concerts) == 0:
-                rec_concerts = list(next_week_concerts)
-            else:
-                rec_concerts = list(tag_filtered_concerts)
+            rec_concerts = tag_filtered_concerts if tag_filtered_concerts else list(next_week_concerts)
             shuffle(rec_concerts)
         rec_concerts = rec_concerts[:settings.CONCERT_RECS_PER_EMAIL]
 
@@ -209,15 +212,18 @@ def rec_email_generator():
                                         context={'user_profile': user_profile,
                                                  'concerts': rec_concerts,
                                                  'search_url': search_url,
+                                                 'email_header': email_header,
+                                                 'site_title': site_title,
                                                  'has_recs': has_recs})
-        text_message = f'{CustomText.get_text(CustomText.WEEKLY_EMAIL_HEADER)}\n\nGo to {search_url} to see your weekly concert recommendations.'
+        text_message = f'{email_header}\n\nGo to {search_url} to see your weekly concert recommendations.'
 
         yield text_message, html_message, user_profile.user.email
 
 
 
 def send_rec_email():
-    datatuple = ( (CustomText.get_text(CustomText.WEEKLY_EMAIL_SUBJECT), text_message, html_message, None, [email])
+    subject = CustomText.get_text(CustomText.WEEKLY_EMAIL_SUBJECT)
+    datatuple = ( (subject, text_message, html_message, None, [email])
                   for text_message, html_message, email in rec_email_generator() )
     sent = send_mass_html_mail(datatuple)
     logger.info(f"Sent {sent} recommendation emails")

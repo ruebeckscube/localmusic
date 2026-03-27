@@ -3,7 +3,7 @@ from django.core import mail
 from django.urls import reverse
 from django.utils.timezone import now
 from findshows.email import send_rec_email
-from findshows.models import MusicBrainzArtist
+from findshows.models import ConcertTags, MusicBrainzArtist
 from findshows.tests.test_helpers import TestCaseHelpers, concert_GET_params
 
 
@@ -83,3 +83,20 @@ class RecommendationTests(TestCaseHelpers):
                     self.assert_concert_link_in_message_html(self.concert4, message)
                 case ['user4@em.ail']:
                     self.assertFalse("User 4 should not receive an email")
+
+
+    def test_number_database_hits(self):
+        # Main point is that it's constant with number of users :)
+        self.create_user_profile(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user1@em.ail", preferred_concert_tags=[ConcertTags.ORIGINALS])
+        self.create_user_profile(favorite_musicbrainz_artists=['4-0', '4-1', '4-2'], email="user2@em.ail")
+
+        with self.assertNumQueries(8):
+            send_rec_email()
+        self.assert_emails_sent(2)
+
+        self.create_user_profile(favorite_musicbrainz_artists=[], email="user3@em.ail")
+        self.create_user_profile(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user4@em.ail")
+
+        with self.assertNumQueries(8):
+            send_rec_email()
+        self.assert_emails_sent(6)

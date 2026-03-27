@@ -4,8 +4,8 @@
 {% mjml %}
 <mjml>
     <mj-head>
-        <mj-title>{% custom_text 'ST' %}</mj-title>
-        <mj-preview>{% custom_text 'EH' %}</mj-preview>
+        <mj-title>{{ site_title }}</mj-title>
+        <mj-preview>{{ email_header }}</mj-preview>
         <mj-attributes>
             <mj-text align="center" font-family="Courier New" font-size="17px"/>
         </mj-attributes>
@@ -21,8 +21,8 @@
     <mj-body width="1000px" background-color="#F9F9ED">
         <mj-section>
             <mj-column>
-                <mj-text font-size="26px">{% custom_text 'ST' %}</mj-text>
-                <mj-text>{% custom_text 'EH' %}</mj-text>
+                <mj-text font-size="26px">{{ site_title }}</mj-text>
+                <mj-text>{{ email_header }}</mj-text>
             </mj-column>
         </mj-section>
 

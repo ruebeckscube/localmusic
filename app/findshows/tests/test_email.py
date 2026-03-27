@@ -110,3 +110,9 @@ class SendRecEmailTests(TestCaseHelpers):
         self.assert_concert_link_in_message_html(verified_concert, mail.outbox[0])
         self.assert_concert_link_in_message_html(unverified_concert, mail.outbox[0], True)
         self.assert_concert_link_in_message_html(declined_concert, mail.outbox[0], True)
+
+
+    def test_no_concerts_no_email(self):
+        self.create_user_profile(email="user1@em.ail")
+        send_rec_email()
+        self.assert_emails_sent(0)
