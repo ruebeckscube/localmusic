@@ -168,11 +168,11 @@ class CreateConcertTests(ConcertViewTestHelpers):
         user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         self.assert_records_created(Concert, 0)
         response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request(artist))
-        self.assertRedirects(response, reverse('findshows:artist_dashboard'))
         concerts = Concert.objects.all()
         self.assertEqual(len(concerts), 1)
         self.assertEqual(concerts[0].created_by, user_profile)
         self.assertEqual(concerts[0].created_at, timezone_today())
+        self.assertRedirects(response, reverse('findshows:view_concert', args=(concerts[0].pk,)))
 
 
 class EditConcertTests(ConcertViewTestHelpers):
@@ -229,7 +229,7 @@ class EditConcertTests(ConcertViewTestHelpers):
         concert_before = self.create_concert(created_by=user, artists=[artist])
 
         response = self.client.post(reverse("findshows:edit_concert", args=(concert_before.pk,)), data=self.concert_post_request(artist))
-        self.assertRedirects(response, reverse('findshows:artist_dashboard'))
+        self.assertRedirects(response, reverse('findshows:view_concert', args=(concert_before.pk,)))
 
         concert_after = Concert.objects.get(pk=concert_before.pk)
         self.assertEqual(concert_after.ticket_link, 'https://www.thisisthevalueforconcertpostrequests.com')

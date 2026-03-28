@@ -8,7 +8,7 @@
             <div class="bg-highlight-item-light/40 p-3 m-3 min-w-80 flex-grow">
                 <h2> Actions </h2>
                 <div class="mx-auto w-72">
-                    <a class="btn block w-full" href="{% url 'findshows:create_concert' %}">
+                    <a class="btn block w-full" href="{% url 'findshows:create_concert' %}?from=artist_dashboard">
                         Create new show listing
                     </a>
                 </div>
@@ -53,7 +53,7 @@
                 </div>
                 <div class="flex justify-center flex-wrap">
                     <a class="btn block" href="{% url 'findshows:view_artist' artist.pk %}">View</a>
-                    <a class="btn block" href="{% url 'findshows:edit_artist' artist.pk %}">Edit</a>
+                    <a class="btn block" href="{% url 'findshows:edit_artist' artist.pk %}?from=artist_dashboard">Edit</a>
                     <form class="mx-auto">
                         {% csrf_token %}
                         {% with title_text="Manage access" success_text="Artist access saved!" form_html="findshows/htmx/artist_access_form.html" htmx_url="findshows:manage_artist_access" htmx_param=artist.pk %}
@@ -77,7 +77,7 @@
                 </div>
                 {% if concert.created_by == user.userprofile %}
                 <div class="w-60 flex sm:flex-col justify-center items-center mx-auto my-2">
-                    <a class="btn" href="{% url 'findshows:edit_concert' concert.pk %}"> Edit </a>
+                    <a class="btn" href="{% url 'findshows:edit_concert' concert.pk %}?from=artist_dashboard"> Edit </a>
                     {% include "findshows/htmx/cancel_concert_button.html" %}
                 </div>
                 {% endif %}

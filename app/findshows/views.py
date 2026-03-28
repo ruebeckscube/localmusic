@@ -197,6 +197,26 @@ def view_artist(request, pk):
     })
 
 
+def from_link(request, pk=None):
+    # Very defensive. If there's a pk in the url we use that, otherwise
+    # the pk of the current object (passed in by the calling view). If anything
+    # isn't hunky dory, we just default to the Artist Dashboard.
+    #
+    # The upshot: when linking to an edit page, provide a "from". If you are
+    # linking from a different type of object (i.e. View Artist page -> Edit
+    # Concert), provide a "from_pk" If you are linking to e.g. the view page of
+    # the object being edited, you don't need to provide "from_pk".
+    view_name = request.GET.get('from')
+    pk = request.GET.get('from_pk') or pk
+    if view_name in ('view_artist', 'view_concert'):
+        if pk:
+            return reverse(f'findshows:{view_name}', args=[pk])
+    elif view_name in ('artist_dashboard', ):
+        return reverse(f'findshows:{view_name}')
+    else:
+        return reverse('findshows:artist_dashboard')
+
+
 @login_required
 def edit_artist(request, pk):
     artist = get_object_or_404(Artist, pk=pk)
@@ -216,6 +236,7 @@ def edit_artist(request, pk):
 
     context = {'form': form,
                'pk': pk,
+               'cancel_link': from_link(request, pk),
                'is_temp_artist': artist.is_temp_artist}
 
     return render(request, 'findshows/pages/edit_artist.html', context)
@@ -465,12 +486,13 @@ def edit_concert(request, pk=None):
         form.set_editing_user(request.user)
         if form.is_valid():
             try:
-                form.save()
-                return redirect(reverse('findshows:artist_dashboard'))
+                concert = form.save()
+                return redirect(reverse('findshows:view_concert', args=[concert.pk]))
             except JPEGImageException as e:
                 form.add_error('poster', e.message)
 
     context = {'form': form,
+               'cancel_link': from_link(request, pk),
                'pk': pk}
 
     return render(request, 'findshows/pages/edit_concert.html', context)

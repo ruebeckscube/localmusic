@@ -4,8 +4,8 @@
 {% block content %}
     {% if can_edit %}
         <div class="flex justify-center mx-auto w-fit">
-            <a class="block btn w-30 m-2" href={% url "findshows:edit_artist" artist.pk %}> Edit </a>
-            <a class="block btn w-60 m-2" href={% url "findshows:artist_dashboard" %}> Artist dashboard </a>
+            <a class="block btn w-30 m-2" href="{% url 'findshows:edit_artist' artist.pk %}?from=view_artist"> Edit </a>
+            <a class="block btn w-60 m-2" href="{% url 'findshows:artist_dashboard' %}"> Artist dashboard </a>
         </div>
     {% endif %}
     <div class="flex max-md:flex-col w-full">
@@ -61,6 +61,11 @@
     {# Upcoming shows #}
     <div class="w-full">
         <h2 class="text-center w-2/3 min-w-30 my-4 p-2 mx-auto bg-sub-background"> Upcoming shows</h2>
+        {% if can_edit %}
+        <div class="flex justify-center mx-auto w-fit">
+            <a class="block btn w-40 m-2" href="{% url 'findshows:create_concert' %}?from=view_artist&from_pk={{ artist.pk }}"> List a show </a>
+        </div>
+        {% endif %}
         {% for concert in upcoming_concerts %}
             {% include "../partials/concert_card.html" %}
         {% empty %}

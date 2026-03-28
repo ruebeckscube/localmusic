@@ -72,7 +72,7 @@ modal based on https://alpinetoolbox.com/examples/modal
 
             <!--Footer-->
             <div class="flex justify-end pt-2">
-                <button type="button" class="btn" @click="close_modal()">Close</button>
+                <button type="button" class="btn" @click="close_modal()">Cancel</button>
                 <button type="button" class="btn"
                         {% if htmx_param %}
                             hx-post="{% url htmx_url htmx_param %}"

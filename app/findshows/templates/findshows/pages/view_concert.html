@@ -3,9 +3,15 @@
 
 {% block content %}
 
-    {% if concert.cancelled %}
-        <div class="banner text-2xl my-4"> This concert is cancelled! </div>
-    {% endif %}
+{% include "findshows/partials/concert_status.html" %}
+
+{% if concert.created_by == user.userprofile %}
+    <div class="flex justify-center mx-auto w-fit flex-wrap">
+        <a class="block btn w-30 m-2" href="{% url 'findshows:edit_concert' concert.pk %}?from=view_concert"> Edit </a>
+        <a class="block btn w-60 m-2" href="{% url 'findshows:artist_dashboard' %}"> Artist dashboard </a>
+        {% include "findshows/htmx/cancel_concert_button.html" with additional_classes="block w-50 m-2"%}
+    </div>
+{% endif %}
 
     <!-- Page -->
     <div class="flex max-md:flex-col h-full">
@@ -49,19 +55,11 @@
                             </div>
                         </div>
                         <div class="flex flex-col justify-center items-center w-full @md:w-1/2">
-                            {% if artist.is_temp_artist %}
-                                <div class="errorlist">
-                                    This artist has not yet filled out their
-                                    profile; the concert will not be publically
-                                    visible until they do.
-                                </div>
-                            {% else %}
                                 {% preview_player artist False %}
-                            {% endif %}
                         </div>
                     </div>
                     <div class="text-xs @md:text-sm m-2">
-                        {{ artist.bio }}
+                        {{ artist.bio|default:"" }}
                     </div>
                 </div>
             {% endfor %}

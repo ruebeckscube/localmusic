@@ -5,11 +5,9 @@
         <svg class="rough-bg-rect absolute w-full h-full @max-4xl:max-w-[670px] -z-10" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio='none'></svg>
 
         <div class="flex flex-col relative z-10 p-2 @max-4xl:max-w-[670px]">
-            {% if concert.cancelled %}
-                <div class="text-center text-2xl mt-2">
-                    This concert is cancelled!
-                </div>
-            {% endif %}
+
+            {% include "findshows/partials/concert_status.html" %}
+
             <div class="flex flex-wrap justify-between w-full
                         @max-md:flex-col">
                 <!-- Concert poster -->
@@ -39,17 +37,9 @@
                                 {% endfor %}
                             </div>
                         </div>
-                        {% if artist.is_temp_artist %}
-                            <div class="errorlist">
-                                This artist has not yet filled out their
-                                profile; the concert will not be publically
-                                visible until they do.
-                            </div>
-                        {% else %}
                             <div class="@max-md:mx-5 px-1 pb-2">
                                 {% preview_player artist True %}
                             </div>
-                        {% endif %}
                     {% endfor %}
                 </div>
 
