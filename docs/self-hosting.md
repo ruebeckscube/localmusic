@@ -91,3 +91,9 @@ to access the django management system. For other helpers, see the last few line
 5. Create the initial user for the website. (Note this is NOT the default Django
    createsuperuser)
    ```./develop.sh manage add_superuser```
+
+6. If you're editing any of the template (.html) files, install
+   [Tailwind CSS](https://tailwindcss.com/docs/installation/tailwind-cli)
+   following the instructions in the link. Then you should be able to run
+   ```./develop.sh tailwind```
+   to start the tailwind process which will watch for file updates.
