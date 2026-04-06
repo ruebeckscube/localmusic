@@ -3,6 +3,9 @@ services:
     extends:
       file: base.yml
       service: web
+    build:
+      args:
+        PIP_REQUIREMENTS: requirements/prod.txt
     volumes:
       - static:/app/staticfiles
       - media:/app/media

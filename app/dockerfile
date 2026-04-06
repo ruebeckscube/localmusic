@@ -15,12 +15,11 @@ ENV PYTHONUNBUFFERED=1
  
 # Upgrade pip
 RUN pip install --upgrade pip 
- 
-# Ensure this line matches the actual location of requirements.txt
-COPY requirements.txt /app/
- 
+
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+ARG PIP_REQUIREMENTS
+COPY requirements/ ./requirements/
+RUN pip install --no-cache-dir -r $PIP_REQUIREMENTS
 
 ####################
 # 2: Production stage

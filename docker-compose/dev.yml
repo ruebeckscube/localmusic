@@ -4,6 +4,9 @@ services:
       file: base.yml
       service: web
     command: python manage.py runserver 0.0.0.0:8000
+    build:
+      args:
+        PIP_REQUIREMENTS: requirements/dev.txt
     volumes:
       - ../app:/app
     ports:

@@ -7,7 +7,4 @@ django-simple-captcha
 requests
 pymemcache
 Pillow
-tblib
-coverage
-gunicorn
 zstandard
