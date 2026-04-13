@@ -48,14 +48,14 @@ class UpdateIframeUrlTests(TestCase):
 
     def test_oembed_bad_http_response(self, requests_mock):
         link = ListenLink(resource_url = EXAMPLE_SPOTIFY_RESOURCE_URL)
-        for code in (401, 403, 404, 500):
+        for code in (401, 403, 404, 500, 504):
             self.set_mock_props(requests_mock, code)
             with self.assertRaises(ValidationError):
                 link.update_iframe_url()
 
     def test_bandcamp_bad_http_response(self, requests_mock):
         link = ListenLink(resource_url = EXAMPLE_BANDCAMP_RESOURCE_URL)
-        for code in (401, 403, 404, 500):
+        for code in (401, 403, 404, 500, 504):
             self.set_mock_props(requests_mock, code)
             with self.assertRaises(ValidationError):
                 link.update_iframe_url()

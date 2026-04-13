@@ -9,66 +9,12 @@ from django.utils import timezone
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.forms import ArtistAccessForm, RequestArtistForm, TempArtistForm
-from findshows.models import Artist, ArtistLinkingInfo
+from findshows.forms import ArtistAccessForm, ArtistEditForm, TempArtistForm
+from findshows.models import Artist, ArtistLinkingInfo, ArtistVerificationStatus
 from findshows.tests.test_helpers import TestCaseHelpers
-from findshows.views import is_artist_account, is_local_artist_account
 from findshows.widgets import ArtistAccessWidget
 
-
-class IsArtistAccountTests(TestCaseHelpers):
-    def test_is_artist_account(self):
-        user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        self.assertTrue(is_artist_account(user_profile.user))
-
-
-    def test_is_not_artist_account(self):
-        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
-        self.assertFalse(is_artist_account(user_profile.user))
-
-
-    def test_not_logged_in(self):
-        response = self.client.get(reverse("findshows:home"))
-        user = response.wsgi_request.user
-        self.assertFalse(is_artist_account(user))
-
-
-class IsLocalArtistAccountTests(TestCaseHelpers):
-    def test_is_local_artist_account(self):
-        user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        self.assertTrue(is_local_artist_account(user_profile.user))
-
-
-    def test_is_not_local_artist_account(self):
-        user_profile = self.login_static_user(self.StaticUsers.NONLOCAL_ARTIST)
-        self.assertFalse(is_local_artist_account(user_profile.user))
-
-
-    def test_is_local_artist_account_multi_mixed_artists(self):
-        artist = self.get_static_instance(self.StaticArtists.NONLOCAL_ARTIST)
-        user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        user_profile.managed_artists.add(artist)
-        self.assertTrue(is_local_artist_account(user_profile.user))
-
-
-    def test_not_logged_in(self):
-        response = self.client.get(reverse("findshows:home"))
-        user = response.wsgi_request.user
-        self.assertFalse(is_local_artist_account(user))
-
-
-
 class ArtistDashboardTests(TestCaseHelpers):
-
-    def test_not_logged_in_redirects(self):
-        self.assert_redirects_to_login(reverse("findshows:artist_dashboard"))
-
-
-    def test_not_artist_user_redirects(self):
-        self.login_static_user(self.StaticUsers.NON_ARTIST)
-        self.assert_redirects_to_login(reverse("findshows:artist_dashboard"))
-
-
     def test_multiple_artists_gives_list(self):
         user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         user_profile.managed_artists.add(self.get_static_instance(self.StaticArtists.TEMP_ARTIST))
@@ -161,6 +107,7 @@ class ViewArtistTests(TestCaseHelpers):
         concert12future = self.create_concert(artists=[artist1, artist2], date=timezone_today() + datetime.timedelta(1))
         concert23future = self.create_concert(artists=[artist2, artist3], date=timezone_today() + datetime.timedelta(1))
         concert_with_temp = self.create_concert(artists=[artist1, temp_artist], date=timezone_today())
+        concert_from_unverified_user = self.create_concert(created_by=self.create_user_profile(artist_verification_status=ArtistVerificationStatus.UNVERIFIED))
 
         response = self.client.get(reverse("findshows:view_artist", args=(artist1.pk,)))
 
@@ -175,8 +122,39 @@ class ViewArtistTests(TestCaseHelpers):
         self.assertEqual(response.status_code, 200)
 
 
+    def test_unverified_artist_can_only_be_viewed_by_artist(self):
+        unverified_up = self.create_user_profile(
+            email="unverified@artist.net",
+            password="12345",
+            artist_verification_status=ArtistVerificationStatus.UNVERIFIED)
+        artist = self.create_artist(created_by=unverified_up, pk=100)
+        unverified_up.managed_artists.add(artist)
+
+        response = self.client.get(reverse("findshows:view_artist", args=(100,)))
+        self.assertEqual(response.status_code, 403)
+        self.client.login(email="unverified@artist.net", password="12345")
+        response = self.client.get(reverse("findshows:view_artist", args=(100,)))
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_visible_if_and_only_if_created_by_verified(self):
+        visible_artists = (self.create_artist(created_by=self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)),
+                            self.create_artist(created_by=self.create_user_profile(artist_verification_status=ArtistVerificationStatus.INVITED)))
+        hidden_artists = (self.create_artist(created_by=self.get_static_instance(self.StaticUsers.NON_ARTIST)),
+                           self.create_artist(created_by=self.create_user_profile(artist_verification_status=ArtistVerificationStatus.UNVERIFIED)),
+                           self.create_artist(created_by=self.create_user_profile(artist_verification_status=ArtistVerificationStatus.DEVERIFIED)),
+                           self.create_artist(created_by=self.get_static_instance(self.StaticUsers.NONLOCAL_ARTIST)))
+
+        for concert in visible_artists:
+            response = self.client.get(reverse("findshows:view_artist", args=(concert.pk,)))
+            self.assertEqual(response.status_code, 200)
+        for concert in hidden_artists:
+            response = self.client.get(reverse("findshows:view_artist", args=(concert.pk,)))
+            self.assertEqual(response.status_code, 403)
+
+
 class ArtistViewTestHelpers(TestCaseHelpers):
-    def artist_post_request(self):
+    def artist_post_request(self, youtube_links=['']):
         # Creating MB artists here so we know it's a legitimate request.
         # This should only be called once per test, or you'll get duplicate ID issues.
         self.create_musicbrainz_artist('1')
@@ -193,56 +171,116 @@ class ArtistViewTestHelpers(TestCaseHelpers):
             'socials_links_display_name': ['', '', ''],
             'socials_links_url': ['', '', ''],
             'initial-socials_links': ['[]'],
-            'youtube_links': ['']
+            'youtube_links': youtube_links,
         }
 
 
+# prevent all API calls
+@patch('findshows.models.EmbedLink._get_bandcamp_iframe_url', return_value="'https://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo'")
+@patch('findshows.models.EmbedLink._get_oembed_iframe_url', return_value="'https://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo'")
+@patch("findshows.forms.MusicBrainzArtist.get_similar_artists", return_value={"abc"})
+class CreateArtistTests(ArtistViewTestHelpers):
+    def test_unverified_email_can_GET_but_not_POST(self, *args):
+        user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        user_profile.email_is_verified = False
+        user_profile.save()
+
+        response = self.client.get(reverse("findshows:create_artist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'findshows/pages/edit_artist.html')
+        self.assert_blank_form(response.context['form'], ArtistEditForm)
+
+        response = self.client.post(reverse("findshows:create_artist"), data=self.artist_post_request())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'findshows/pages/edit_artist.html')
+        self.assertIn("Please verify your email before submitting.", response.context['form'].errors['__all__'][0])
+
+
+    def test_successful_new_user(self, *args):
+        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        response = self.client.post(reverse("findshows:create_artist"), data=self.artist_post_request())
+        user_profile.refresh_from_db()
+        self.assertEqual(user_profile.artist_verification_status, ArtistVerificationStatus.UNVERIFIED)
+        artists = user_profile.managed_artists.all()
+        self.assertEqual(len(artists), 1)
+        self.assertRedirects(response, reverse("findshows:view_artist", args=(artists[0].pk,)))
+        self.assertFalse(user_profile.given_artist_access_by)
+
+
+    def test_successful_existing_user(self, *args):
+        user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        existing_num_artists = user_profile.managed_artists.count()
+        response = self.client.post(reverse("findshows:create_artist"), data=self.artist_post_request())
+        self.assertEqual(response.status_code, 302)
+        user_profile.refresh_from_db()
+        self.assertEqual(user_profile.artist_verification_status, ArtistVerificationStatus.VERIFIED)
+        artists = user_profile.managed_artists.all()
+        self.assertEqual(len(artists), existing_num_artists + 1)
+
+
+    def test_unsuccessful(self, *args):
+        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        data = self.artist_post_request(youtube_links=['notaurl'])
+        response = self.client.post(reverse("findshows:create_artist"), data=data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'findshows/pages/edit_artist.html')
+        self.assertIn("valid URL", response.context['form'].errors['youtube_links'][0])
+        user_profile.refresh_from_db()
+        self.assertEqual(user_profile.artist_verification_status, "")
+        self.assertEqual(user_profile.managed_artists.count(), 0)
+        self.assertFalse(user_profile.given_artist_access_by)
+
+
+    def test_successful_existing_invite(self, *args):
+        name = "this tests existing invites"
+        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        artist = self.create_artist(name=name, is_temp_artist=True)
+        ali = self.create_artist_linking_info(email=user_profile.user.email,
+                                              artist=artist)
+        response = self.client.get(reverse("findshows:create_artist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'findshows/pages/edit_artist.html')
+        self.assertEqual(response.context['form'].initial['name'], name)
+
+        response = self.client.post(reverse("findshows:create_artist"), data=self.artist_post_request())
+        user_profile.refresh_from_db()
+        artist.refresh_from_db()
+        self.assertEqual(user_profile.artist_verification_status, ArtistVerificationStatus.INVITED)
+        self.assertEqual(user_profile.managed_artists.all()[0].pk, artist.pk)
+        self.assertRedirects(response, reverse("findshows:view_artist", args=(artist.pk,)))
+        self.assertFalse(artist.is_temp_artist)
+        self.assertEqual(artist.created_by, user_profile)
+        self.assertEqual(user_profile.given_artist_access_by, self.get_static_instance(self.StaticUsers.DEFAULT_CREATOR))
+
+
+    def test_unsuccessful_existing_invite(self, *args):
+        name = "this tests existing invites"
+        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        artist = self.create_artist(name=name, is_temp_artist=True)
+        ali = self.create_artist_linking_info(email=user_profile.user.email,
+                                              artist=artist)
+
+        response = self.client.post(reverse("findshows:create_artist"), data=self.artist_post_request(youtube_links=['notaurl']))
+        user_profile.refresh_from_db()
+        artist.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'findshows/pages/edit_artist.html')
+        self.assertIn("valid URL", response.context['form'].errors['youtube_links'][0])
+        user_profile.refresh_from_db()
+        self.assertEqual(user_profile.artist_verification_status, "")
+        self.assertEqual(user_profile.managed_artists.count(), 0)
+        self.assertTrue(artist.is_temp_artist)
+        self.assertNotEqual(artist.created_by, user_profile)
+        self.assertFalse(user_profile.given_artist_access_by)
+
+
+# prevent all API calls
+@patch('findshows.models.EmbedLink._get_bandcamp_iframe_url', return_value="'https://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo'")
+@patch('findshows.models.EmbedLink._get_oembed_iframe_url', return_value="'https://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo'")
+@patch("findshows.forms.MusicBrainzArtist.get_similar_artists", return_value={"abc"})
 class EditArtistTests(ArtistViewTestHelpers):
-    def test_edit_artist_doesnt_exist_GET(self):
-        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        response = self.client.get(reverse("findshows:edit_artist", args=(100,)))
-        self.assertEqual(response.status_code, 404)
-
-
-    def test_edit_artist_doesnt_exist_POST(self):
-        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        response = self.client.post(reverse("findshows:edit_artist", args=(100,)), data=self.artist_post_request())
-        self.assertEqual(response.status_code, 404)
-
-
-    def test_user_doesnt_own_artist_GET(self):
-        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        response = self.client.get(reverse("findshows:edit_artist", args=(self.StaticArtists.NONLOCAL_ARTIST.value,)))
-        self.assertEqual(response.status_code, 403)
-
-
-    def test_user_doesnt_own_artist_POST(self):
-        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        artist_before = self.get_static_instance(self.StaticArtists.NONLOCAL_ARTIST)
-        response = self.client.post(reverse("findshows:edit_artist", args=(artist_before.pk,)), data=self.artist_post_request())
-        self.assertEqual(response.status_code, 403)
-
-        artist_after = Artist.objects.get(pk=artist_before.pk)
-        self.assertEqual(artist_before.name, artist_after.name)
-
-
-    def test_non_artist_user_GET(self):
-        self.login_static_user(self.StaticUsers.NON_ARTIST)
-        response = self.client.get(reverse("findshows:edit_artist", args=(self.StaticArtists.LOCAL_ARTIST.value,)))
-        self.assertEqual(response.status_code, 403)
-
-
-    def test_non_artist_user_POST(self):
-        self.login_static_user(self.StaticUsers.NON_ARTIST)
-        artist_before = self.get_static_instance(self.StaticArtists.NONLOCAL_ARTIST)
-        response = self.client.post(reverse("findshows:edit_artist", args=(artist_before.pk,)), data=self.artist_post_request())
-        self.assertEqual(response.status_code, 403)
-
-        artist_after = Artist.objects.get(pk=artist_before.pk)
-        self.assertEqual(artist_before.name, artist_after.name)
-
-
-    def test_edit_artist_successful_GET(self):
+    def test_edit_artist_successful_GET(self, *args):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         response = self.client.get(reverse("findshows:edit_artist", args=(self.StaticArtists.LOCAL_ARTIST.value,)))
         self.assertEqual(response.status_code, 200)
@@ -251,28 +289,29 @@ class EditArtistTests(ArtistViewTestHelpers):
         self.assertNotIn('This artist listing has not been filled out', str(response.content))
 
 
-    @patch('findshows.models.EmbedLink._get_bandcamp_iframe_url', return_value="'https://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo'")
-    @patch('findshows.models.EmbedLink._get_oembed_iframe_url', return_value="'https://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo'")
-    @patch("findshows.forms.MusicBrainzArtist.get_similar_artists", return_value={"abc"})
     def test_edit_artist_successful_POST(self, *args):
-        self.login_static_user(self.StaticUsers.TEMP_ARTIST)
+        user_profile = self.login_static_user(self.StaticUsers.TEMP_ARTIST)
         post_request = self.artist_post_request()
+        managed_artists_before = user_profile.managed_artists.all()
 
         response = self.client.post(reverse("findshows:edit_artist", args=(self.StaticArtists.TEMP_ARTIST.value,)), data=post_request)
         self.assertRedirects(response, reverse('findshows:view_artist', args=(self.StaticArtists.TEMP_ARTIST.value,)))
 
+        user_profile.refresh_from_db()
         artist_after = Artist.objects.get(pk=self.StaticArtists.TEMP_ARTIST.value)
         self.assertEqual(artist_after.name, post_request['name'])
         self.assertFalse(artist_after.is_temp_artist)
+        managed_artists_after = user_profile.managed_artists.all()
+        self.assert_equal_as_sets(managed_artists_before, managed_artists_after)
 
 
-    def test_temp_artist_shows_banner(self):
+    def test_temp_artist_shows_banner(self, *args):
         self.login_static_user(self.StaticUsers.TEMP_ARTIST)
         response = self.client.get(reverse("findshows:edit_artist", args=(self.StaticArtists.TEMP_ARTIST.value,)))
         self.assertIn('This artist listing has not been filled out', str(response.content))
 
 
-class ArtistSearchTests(TestCaseHelpers):
+class ArtistSearchResultsTests(TestCaseHelpers):
     def test_handles_missing_params(self):
         response = self.client.get(reverse("findshows:artist_search_results"))
         self.assertEqual(response.content, b'')
@@ -292,6 +331,17 @@ class ArtistSearchTests(TestCaseHelpers):
                                    data={'artist-search': query,'idx': 1})
         self.assert_equal_as_sets(response.context['artists'], [pete, bob])
 
+    def test_excludes_deverified(self):
+        pete = self.create_artist(name="Pete Seeger")
+        seekers = self.create_artist(
+            name="The Seekers",
+            created_by=self.create_user_profile(artist_verification_status=ArtistVerificationStatus.DEVERIFIED))
+
+        query = 'see'
+        response = self.client.get(reverse("findshows:artist_search_results"),
+                                   data={'artist-search': query,'idx': 1})
+        self.assert_equal_as_sets(response.context['artists'], [pete])
+
 
 def temp_artist_post_data():
     return {
@@ -301,48 +351,35 @@ def temp_artist_post_data():
     }
 
 class CreateTempArtistTests(TestCaseHelpers):
-    def test_get_doesnt_create(self):
-        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        self.client.get(reverse("findshows:create_temp_artist"))
-        self.assert_records_created(Artist, 0)
-
-
-    def test_not_logged_in_doesnt_create(self):
-        self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
-        self.assert_records_created(Artist, 0)
-
-
-    def test_not_artist_user_doesnt_create(self):
-        self.login_static_user(self.StaticUsers.NON_ARTIST)
-        self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
-        self.assert_records_created(Artist, 0)
-
-
-    def test_not_local_artist_user_doesnt_create(self):
-        self.login_static_user(self.StaticUsers.NONLOCAL_ARTIST)
-        self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
-        self.assert_records_created(Artist, 0)
-
-
     def test_unverified_email_doesnt_create(self):
         user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         user_profile.email_is_verified = False
         user_profile.save()
 
-        self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
+        response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
         self.assert_records_created(Artist, 0)
+        self.assertIn("Please verify your email before inviting artists.", str(response.content))
+        self.assertTemplateUsed("findshows/htmx/modal_error_msg.html")
 
 
-    def test_new_user_cant_create(self):
+    def test_unverified_user_can_create_but_no_email(self):
         user_profile = self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)
-        user_profile.given_artist_access_datetime = timezone.now()
+        user_profile.artist_verification_status = ArtistVerificationStatus.UNVERIFIED
         user_profile.save()
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
-        self.assert_records_created(Artist, 0)
-        self.assertTemplateUsed(response, 'findshows/htmx/cant_create_artist.html')
-        self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
-        self.assertIn("Users newly given artist access", str(response.content))
+        self.assert_records_created(Artist, 1)
+        self.assert_records_created(ArtistLinkingInfo, 1)
+        artist = ArtistLinkingInfo.objects.all()[0].artist
+        self.assertEqual(artist.created_by, user_profile)
+        self.assertEqual(artist.created_at, timezone_today())
+        self.assertTrue(artist.is_temp_artist)
+
+        self.assertTrue('HX-Trigger' in response.headers)
+        hx_trigger = json.loads(response.headers['HX-Trigger'])
+        self.assertTrue('modal-form-success' in hx_trigger)
+
+        self.assert_emails_sent(0)
 
 
     def test_successful_create(self):
@@ -400,23 +437,23 @@ class CreateTempArtistTests(TestCaseHelpers):
 
         # Initial GET should return form
         response = self.client.post(reverse("findshows:create_temp_artist"))
-        self.assertTemplateNotUsed(response, 'findshows/htmx/cant_create_artist.html')
+        self.assertTemplateNotUsed(response, 'findshows/htmx/modal_error_msg.html')
         self.assertTemplateUsed(response, 'findshows/htmx/temp_artist_form.html')
 
         # Making the max number should work, but should tell the user they've hit the max
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
-        self.assertTemplateUsed(response, 'findshows/htmx/cant_create_artist.html')
+        self.assertTemplateUsed(response, 'findshows/htmx/modal_error_msg.html')
         self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
         self.assert_records_created(ArtistLinkingInfo, settings.MAX_DAILY_INVITES)
 
         # Simulates inital page load when max is already hit
         response = self.client.post(reverse("findshows:create_temp_artist"))
-        self.assertTemplateUsed(response, 'findshows/htmx/cant_create_artist.html')
+        self.assertTemplateUsed(response, 'findshows/htmx/modal_error_msg.html')
         self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
 
         # Simulates if they managed a POST request with the correct data anyway
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
-        self.assertTemplateUsed(response, 'findshows/htmx/cant_create_artist.html')
+        self.assertTemplateUsed(response, 'findshows/htmx/modal_error_msg.html')
         self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
         self.assert_records_created(ArtistLinkingInfo, settings.MAX_DAILY_INVITES)
 
@@ -427,11 +464,11 @@ class CreateTempArtistTests(TestCaseHelpers):
             self.create_artist_linking_info(created_by=user)
 
         response = self.client.post(reverse("findshows:create_temp_artist"))
-        self.assertTemplateNotUsed(response, 'findshows/htmx/cant_create_artist.html')
+        self.assertTemplateNotUsed(response, 'findshows/htmx/modal_error_msg.html')
         self.assertTemplateUsed(response, 'findshows/htmx/temp_artist_form.html')
 
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
-        self.assertTemplateNotUsed(response, 'findshows/htmx/cant_create_artist.html')
+        self.assertTemplateNotUsed(response, 'findshows/htmx/modal_error_msg.html')
         self.assertTemplateUsed(response, 'findshows/htmx/temp_artist_form.html')
         self.assert_records_created(ArtistLinkingInfo, settings.MAX_DAILY_INVITES + 2)
 
@@ -444,113 +481,54 @@ def request_artist_post_data():
     }
 
 
-class RequestArtistTests(TestCaseHelpers):
-    def test_get_doesnt_create(self):
-        self.login_static_user(self.StaticUsers.NON_ARTIST)
-        self.client.get(reverse("findshows:request_artist_access"))
-        self.assert_records_created(Artist, 0)
-
-
-    def test_not_logged_in_doesnt_create(self):
-        self.client.post(reverse("findshows:request_artist_access"), data=request_artist_post_data())
-        self.assert_records_created(Artist, 0)
-
-
-    def test_local_artist_user_doesnt_create(self):
-        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        self.client.post(reverse("findshows:request_artist_access"), data=request_artist_post_data())
-        self.assert_records_created(Artist, 0)
-
-
-    def test_nonlocal_artist_user_creates(self):
-        self.login_static_user(self.StaticUsers.NONLOCAL_ARTIST)
-        self.client.post(reverse("findshows:request_artist_access"), data=request_artist_post_data())
-        self.assert_records_created(Artist, 1)
-
-
-    def test_unverified_email_doesnt_create(self):
-        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
-        user_profile.email_is_verified = False
-        user_profile.save()
-
-        self.client.post(reverse("findshows:request_artist_access"), data=request_artist_post_data())
-        self.assert_records_created(Artist, 0)
-
-
-    def test_successful_create(self):
-        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
-        response = self.client.post(reverse("findshows:request_artist_access"), data=request_artist_post_data())
-        self.assertTemplateUsed(response, "findshows/htmx/cant_request_artist.html")
-        self.assert_records_created(Artist, 1)
-        artists = Artist.objects.filter(created_by=user_profile)
-        self.assertEqual(1, len(artists))
-        self.assertEqual(artists[0].created_at, timezone_today())
-        self.assertTrue(artists[0].is_temp_artist)
-        self.assertTrue(artists[0].is_active_request)
-
-        self.assertTrue('HX-Trigger' in response.headers)
-        hx_trigger = json.loads(response.headers['HX-Trigger'])
-        self.assertTrue('modal-form-success' in hx_trigger)
-
-
-    def test_invalid_form(self):
-        self.login_static_user(self.StaticUsers.NON_ARTIST)
-        data=request_artist_post_data()
-        data['request_artist-name'] = ''
-        response = self.client.post(reverse("findshows:request_artist_access"), data)
-        self.assert_not_blank_form(response.context['request_artist_form'], RequestArtistForm)
-        self.assert_records_created(Artist, 0)
-
-        self.assertFalse('HX-Trigger' in response.headers)
-
-
-    def test_artist_request_limit(self):
-        """Make sure we can request artist access at most once"""
-        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
-
-        response = self.client.post(reverse("findshows:request_artist_access"))
-        self.assertTemplateNotUsed(response, 'findshows/htmx/cant_request_artist.html')
-        self.assertTemplateUsed(response, 'findshows/htmx/request_artist_form.html')
-
-        self.create_artist(created_by=user_profile)
-
-        # Simulates inital page load
-        response = self.client.post(reverse("findshows:request_artist_access"))
-        self.assertTemplateUsed(response, 'findshows/htmx/cant_request_artist.html')
-        self.assertTemplateNotUsed(response, 'findshows/htmx/request_artist_form.html')
-
-        # Simulates if they managed a POST request with the correct data anyway
-        response = self.client.post(reverse("findshows:request_artist_access"), data=request_artist_post_data())
-        self.assertTemplateUsed(response, 'findshows/htmx/cant_request_artist.html')
-        self.assertTemplateNotUsed(response, 'findshows/htmx/request_artist_form.html')
-        self.assert_records_created(Artist, 1)
-
-
 class LinkArtistTests(TestCaseHelpers):
     def test_successful_link_temp_artist(self):
         artist = self.create_artist(is_temp_artist=True)
         user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
-        ali, invite_code = self.create_artist_linking_info(user_profile.user.email, artist)
+        ali, invite_code = self.create_artist_linking_info(user_profile.user.email, artist,
+                                                           created_by=self.get_static_instance(self.StaticUsers.LOCAL_ARTIST))
+
         response = self.client.get(ali.get_url(invite_code))
-        self.assertRedirects(response, reverse('findshows:edit_artist', args=(artist.pk,)))
+
         user_profile.refresh_from_db()
+        artist.refresh_from_db()
+        self.assertRedirects(response, reverse('findshows:edit_artist', args=(artist.pk,)))
         self.assertIn(artist, user_profile.managed_artists.all())
         self.assertEqual(0, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())
-        self.assertEqual(user_profile.given_artist_access_by, self.get_static_instance(self.StaticUsers.DEFAULT_CREATOR))
+        self.assertEqual(user_profile.given_artist_access_by, self.get_static_instance(self.StaticUsers.LOCAL_ARTIST))
         self.assertTrue(user_profile.given_artist_access_datetime)
+        self.assertEqual(user_profile.artist_verification_status, ArtistVerificationStatus.INVITED)
+        self.assertEqual(artist.created_by, user_profile)
 
 
     def test_successful_link_existing_artist(self):
         artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        local_user = self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)
         user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
-        ali, invite_code = self.create_artist_linking_info(user_profile.user.email, artist)
+        ali, invite_code = self.create_artist_linking_info(user_profile.user.email, artist,
+                                                           created_by=local_user)
+
         response = self.client.get(ali.get_url(invite_code))
-        self.assertRedirects(response, reverse('findshows:view_artist', args=(artist.pk,)))
+
         user_profile.refresh_from_db()
+        artist.refresh_from_db()
+        self.assertRedirects(response, reverse('findshows:view_artist', args=(artist.pk,)))
         self.assertIn(artist, user_profile.managed_artists.all())
         self.assertEqual(0, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())
-        self.assertEqual(user_profile.given_artist_access_by, self.get_static_instance(self.StaticUsers.DEFAULT_CREATOR))
+        self.assertEqual(user_profile.given_artist_access_by, self.get_static_instance(self.StaticUsers.LOCAL_ARTIST))
         self.assertTrue(user_profile.given_artist_access_datetime)
+        self.assertEqual(user_profile.artist_verification_status, ArtistVerificationStatus.INVITED)
+        self.assertEqual(artist.created_by, local_user)
+
+
+    def test_mod_inviter_sets_verified(self):
+        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        ali, invite_code = self.create_artist_linking_info(user_profile.user.email,
+                                                           self.create_artist(is_temp_artist=True),
+                                                           created_by=self.get_static_instance(self.StaticUsers.MOD_USER))
+        self.client.get(ali.get_url(invite_code))
+        user_profile.refresh_from_db()
+        self.assertEqual(user_profile.artist_verification_status, ArtistVerificationStatus.VERIFIED)
 
 
     def test_missing_params(self):
@@ -560,12 +538,6 @@ class LinkArtistTests(TestCaseHelpers):
         self.assertTemplateUsed(response, 'findshows/pages/artist_link_failure.html')
         self.assertIn('error', response.context)
         self.assertIn('Invalid link.', response.context['error'])
-
-
-    def test_redirects_to_login(self):
-        url = reverse('findshows:link_artist')
-        response = self.client.get(url)
-        self.assertRedirects(response, f"{reverse('login')}?next={url}")
 
 
     def test_invite_id_doesnt_exist(self):
@@ -641,25 +613,6 @@ def user_json(email, type):
 
 class ManageArtistAccessTests(TestCaseHelpers):
     """Also tests ArtistAccessForm methods"""
-    def test_artist_doesnt_exist(self):
-        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        response = self.client.post(reverse("findshows:manage_artist_access", args=(100,)),
-                                    data=artist_access_post_request([user_json('temp@em.ail', ArtistAccessWidget.Types.NEW.value)]))
-        self.assertEqual(response.status_code, 404)
-
-
-    def test_user_doesnt_own_artist(self):
-        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        artist = self.get_static_instance(self.StaticArtists.NONLOCAL_ARTIST)
-        managers_before = artist.managing_users.all()
-        response = self.client.post(reverse("findshows:manage_artist_access", args=(artist.pk,)),
-                                    data=artist_access_post_request([user_json('temp@em.ail', ArtistAccessWidget.Types.NEW.value)]))
-        self.assertEqual(response.status_code, 403)
-
-        artist.refresh_from_db()
-        self.assert_equal_as_sets(managers_before, artist.managing_users.all())
-
-
     def test_populate_initial(self):
         local_artist_up = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         nonlocal_artist_up = self.get_static_instance(self.StaticUsers.NONLOCAL_ARTIST)
@@ -727,9 +680,9 @@ class ManageArtistAccessTests(TestCaseHelpers):
         self.assertFalse('HX-Trigger' in response.headers)
 
 
-    def test_new_user_cant_create(self):
+    def test_unverified_user_can_create_but_no_email(self):
         user_profile = self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)
-        user_profile.given_artist_access_datetime = timezone.now()
+        user_profile.artist_verification_status = ArtistVerificationStatus.UNVERIFIED
         user_profile.save()
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
 
@@ -738,12 +691,9 @@ class ManageArtistAccessTests(TestCaseHelpers):
                          data=artist_access_post_request([
                              user_json('temp@em.ail', ArtistAccessWidget.Types.NEW.value),
                          ]))
-        self.assert_records_created(ArtistLinkingInfo, 0)
-        partial_errors = response.context['partial_errors']()
-        self.assertEqual(len(partial_errors), 1)
-        self.assertIn("Users newly given artist access must wait",
-                      partial_errors[0])
-        self.assertFalse('HX-Trigger' in response.headers)
+        self.assert_records_created(ArtistLinkingInfo, 1)
+        self.assertTrue('HX-Trigger' in response.headers)
+        self.assert_emails_sent(0)
 
 
     def test_add_email_already_has_access(self):
@@ -840,17 +790,37 @@ class ManageArtistAccessTests(TestCaseHelpers):
         other_user_profile = self.get_static_instance(self.StaticUsers.NONLOCAL_ARTIST)
         self.create_artist_linking_info(other_user_profile.user.email, artist)
 
-        response = self.client.post(reverse("findshows:manage_artist_access",
-                                 args=(self.StaticArtists.LOCAL_ARTIST.value,)),
-                         data=artist_access_post_request([
-                             user_json(other_user_profile.user.email, ArtistAccessWidget.Types.RESEND.value),
-                         ]))
+        response = self.client.post(
+            reverse("findshows:manage_artist_access", args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+            data=artist_access_post_request([user_json(other_user_profile.user.email,
+                                                       ArtistAccessWidget.Types.RESEND.value),]))
 
         self.assert_records_created(ArtistLinkingInfo, 1)
         self.assert_emails_sent(1)
         self.assertTrue('HX-Trigger' in response.headers)
         hx_trigger = json.loads(response.headers['HX-Trigger'])
         self.assertTrue('modal-form-success' in hx_trigger)
+
+
+    def test_resend_doesnt_send_when_unverified(self):
+        user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        user_profile.artist_verification_status = ArtistVerificationStatus.UNVERIFIED
+        user_profile.save()
+        artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        other_user_profile = self.get_static_instance(self.StaticUsers.NONLOCAL_ARTIST)
+        self.create_artist_linking_info(other_user_profile.user.email, artist)
+
+        response = self.client.post(
+            reverse("findshows:manage_artist_access", args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+            data=artist_access_post_request([user_json(other_user_profile.user.email,
+                                                       ArtistAccessWidget.Types.RESEND.value),]))
+
+        self.assert_records_created(ArtistLinkingInfo, 1)
+        self.assert_emails_sent(0)
+        self.assertTrue('HX-Trigger' in response.headers)
+        hx_trigger = json.loads(response.headers['HX-Trigger'])
+        self.assertEqual("Artist access saved! Invite emails will be sent once your artist profile is verified by mods.",
+                         hx_trigger['modal-form-success']['success_text'])
 
 
     @patch('findshows.email.logger')

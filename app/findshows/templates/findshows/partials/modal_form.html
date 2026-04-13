@@ -1,12 +1,12 @@
 {% comment %}
 A re-usable button + modal for creating records with forms.
 On successful create, it raises the event modal-form-success, with the properties:
-  created_record_name
-  created_record_id
+  sucecss_text: text to display next to the button when the window closes
+  created_record_name (optional): the name of the created record
+  created_record_id (optional): the ID of the created record
 
 Parameters:
   title_text: the text displayed on the button, and as the title of the modal
-  success_text: the text displayed below the button on success
   form_html: path to the html for the form
   htmx_url: name of the URL (from urls.py)
   htmx_param: any parameters to send the URL
@@ -14,7 +14,7 @@ Parameters:
 EXAMPLE:
 To consume:
     <div @modal-form-success="on_temp_artist_create">
-        {% with title_text="Invite Artist" success_text="Invite sent successfully!" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
+        {% with title_text="Invite Artist" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
             {% include "findshows/partials/modal_form.html" %}
         {% endwith %}
     </div>
@@ -40,8 +40,7 @@ modal based on https://alpinetoolbox.com/examples/modal
     <button type="button" class="btn w-full" @click="open_modal()">
         {{ title_text }}
     </button>
-    <div x-show="show_success">
-        {{ success_text }}
+    <div x-text="success_text">
     </div>
 
     <!--Overlay-->

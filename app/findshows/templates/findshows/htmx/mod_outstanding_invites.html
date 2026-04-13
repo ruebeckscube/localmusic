@@ -4,11 +4,11 @@
     {% if artist_linking_infos %}
         <table class="w-full text-center max-w-5xl fieldgroup p-5">
             <tr class="bg-highlight-item-light text-lg">
-                <th> Artist name </th>
-                <th> Website </th>
                 <th> Email </th>
+                <th> Artist name </th>
+                <th> Invited by </th>
                 <th> Actions </th>
-                {% if is_admin %}
+                {% if user.is_staff %}
                     <th> Admin </th>
                 {% endif %}
             </tr>
@@ -16,22 +16,21 @@
             {% for ali in artist_linking_infos %}
                 <tr class="odd:bg-white">
                     <td>
+                        <a class="link" href="mailto:{{ ali.invited_email }}">{{ ali.invited_email }}</a>
+                    </td>
+                    <td>
                         {{ ali.artist }}
                     </td>
                     <td>
-                        {% if ali.artist.socials_links %}
-                            {% for link in ali.artist.socials_links %}
-                                <a class="link" href="{{link.1}}" target="_blank">{{link.0}}</a>
-                            {% endfor %}
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a class="link" href="mailto:{{ ali.invited_email }}">{{ ali.invited_email }}</a>
+                        <div>{{ ali.created_by.user.email }}</div>
+                        <div class="text-xs text-gray-600">
+                            ({{ ali.created_by.get_artist_verification_status_display }})
+                        </div>
                     </td>
                     <td>
                         {% include "findshows/htmx/mod_resend_invite_button.html" %}
                     </td>
-                    {% if is_admin %}
+                    {% if user.is_staff %}
                         <td>
                             <a class="link" href="{% url 'admin:findshows_artistlinkinginfo_change' ali.pk %}">Admin edit</a>
                         </td>

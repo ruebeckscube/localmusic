@@ -1,6 +1,4 @@
 import datetime
-from functools import reduce
-from operator import or_
 from random import shuffle
 import logging
 from smtplib import SMTPException
@@ -10,10 +8,9 @@ from django.core.mail import EmailMessage, EmailMultiAlternatives, get_connectio
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.db.models import Q
 
 from findshows.forms import ContactForm
-from findshows.models import Artist, ArtistLinkingInfo, Concert, CustomText, EmailVerification, UserProfile, Venue
+from findshows.models import Artist, ArtistLinkingInfo, ArtistVerificationStatus, Concert, CustomText, EmailVerification, UserProfile, Venue
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -82,23 +79,6 @@ def invite_user_to_artist(link_info: ArtistLinkingInfo, invite_code, form):
     return send_mail_helper(subject, message, [link_info.invited_email], form)
 
 
-def send_artist_setup_info(user_email: str):
-    return send_mail_helper(
-        f"Make an Artist page on {settings.HOST_NAME}",
-        "There are two ways to get artist access! If you know somebody who "
-        "already has artist access, they can invite you via their Settings page "
-        "(or via the concert creation page if you have a show coming up "
-        "together). If not, go to your user settings page "
-        f"({local_url_to_email(reverse('findshows:user_settings'))}) and click "
-        "'Request local artist access.' You will need to provide your artist "
-        "name, as well as a website or social media account where we can contact "
-        "you to verify your identity. A mod will review the request and reach out "
-        "as soon as possible. For other questions, refer to the Artist FAQ: "
-        f"{local_url_to_email(reverse('findshows:artist_faq'))}",
-        [user_email]
-    )
-
-
 def contact_email(cf: ContactForm):
     try:
         type = cf.Types(cf.cleaned_data['type'])
@@ -122,10 +102,10 @@ def contact_email(cf: ContactForm):
                             )
 
 def daily_mod_email(date):
-    query_labels = ("NEW ARTISTS", "ACTIONABLE ARTISTS", "NEW VENUES", "ACTIONABLE VENUES", "NEW CONCERTS")
+    query_labels = ("NEW ARTISTS", "ACTIONABLE ARTIST ACCOUNTS", "NEW VENUES", "ACTIONABLE VENUES", "NEW CONCERTS")
     queries = (
         Artist.objects.filter(created_at=date),
-        Artist.objects.filter(is_active_request=True),
+        UserProfile.objects.filter(artist_verification_status=ArtistVerificationStatus.UNVERIFIED),
         Venue.objects.filter(created_at=date),
         Venue.objects.filter(is_verified=False),
         Concert.objects.filter(created_at=date),

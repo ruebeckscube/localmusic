@@ -1,10 +1,49 @@
 <div>
     <div class="text-lg">
-        Review outstanding requests for artist access and new venue listings.
+        Review artist profiles & venues in need of verification.
     </div>
 
-    <h2 class="my-4"> Artists </h2>
-    {% include "findshows/partials/mod_artist_table.html" with empty_message="No artists need approval." %}
+    <h2 class="my-4"> Artist profiles </h2>
+    {% if unverified_user_profiles %}
+    <table class="w-full text-center max-w-5xl fieldgroup p-5">
+        <tr class="bg-highlight-item-light text-lg">
+            <th> User email </th>
+            <th> Artist page(s) </th>
+            <th> Verification </th>
+            {% if user.is_staff %}
+            <th> Admin </th>
+            {% endif %}
+        </tr>
+
+        {% for userprofile in unverified_user_profiles %}
+        <tr class="odd:bg-white">
+            <td>
+                <a class="link" href="mailto:{{ userprofile.user.email }}">{{ userprofile.user.email }}</a>
+            </td>
+            <td>
+                {% for artist in userprofile.managed_artists.all %}
+                <a class="link block w-fit" href="{% url 'findshows:view_artist' artist.pk %}" target="_blank">{{ artist.name }}</a>
+                {% empty %}
+                No artist pages linked
+                {% endfor %}
+            </td>
+            <td>
+                {% include "findshows/htmx/artist_verification_buttons.html" %}
+            </td>
+            {% if user.is_staff %}
+            <td>
+                <a class="link" href="{% url 'admin:findshows_userprofile_change' userprofile.pk %}" target="_blank">Admin edit</a>
+            </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <div class="ml-3">
+        No users need verification for artist profiles.
+    </div>
+    {% endif %}
+
 
     <h2 class="my-4"> Venues </h2>
     {% include "findshows/partials/mod_venue_table.html" with empty_message="No venues need verification." %}

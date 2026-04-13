@@ -22,7 +22,7 @@
     {% for concert in concerts %}
         <div class="flex items-center">
             {% include "findshows/partials/concert_card.html" %}
-            {% if is_admin %}
+            {% if user.is_staff %}
                 <a class="link w-30" href="{% url 'admin:findshows_concert_change' concert.pk %}">Admin edit</a>
             {% endif %}
         </div>

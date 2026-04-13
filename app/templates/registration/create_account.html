@@ -18,8 +18,14 @@
                 <div class="flex flex-col md:w-1/2">
                     {% include "findshows/partials/user_settings_form.html" with form=profile_form %}
                     <div class="fieldgroup">
-                        <input type="checkbox" name="sendartistinfo" class="accent-clickable">
-                        Send info about making an artist page and listing shows?
+                        <label>
+                            <input type="checkbox" name="create_artist" class="accent-clickable">
+                            Create an artist page
+                        </label>
+                        <p class="helptext">
+                            Check this box to create an artist account for posting shows. If you don't
+                            do it now, it'll be available later on your Settings page.
+                        </p>
                     </div>
                 </div>
             </div>

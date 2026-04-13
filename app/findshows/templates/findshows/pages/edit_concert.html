@@ -2,6 +2,15 @@
 
 {% block content %}
     <h1 class="pl-3 mb-1"> Edit Concert </h1>
+
+    {% if not user.userprofile.email_is_verified %}
+    <div class="banner my-0">
+        Please check your email and click the verification link  before
+        submitting the form. This this is to help prevent spam, thanks
+        for understanding!
+    </div>
+    {% endif %}
+
     <form method="post"
           enctype="multipart/form-data"
           {% if pk %}

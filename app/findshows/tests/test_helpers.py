@@ -56,7 +56,7 @@ class TestCaseHelpers(TestCase):
         model = static.model()
         return model.objects.get(pk=static.value)
 
-    def login_static_user(self, static_user: StaticUsers):
+    def login_static_user(self, static_user: StaticUsers) -> UserProfile:
         # must match order of users in fixture
         emails_list = (
             "default@creator.net",
@@ -136,6 +136,9 @@ class TestCaseHelpers(TestCase):
                             given_artist_access_by=None,
                             given_artist_access_datetime=None,
                             email_is_verified=True,
+                            artist_verification_status=None,
+                            pk=None,
+                            is_staff=False,
                             ):
         while email is None:
             email = f"{str(uuid4())}@test.com"
@@ -144,12 +147,16 @@ class TestCaseHelpers(TestCase):
         user = User.objects.create_user(email=email,
                                         password=password,
                                         is_mod=is_mod,
-                                        create_profile=False
+                                        create_profile=False,
+                                        pk=pk,
+                                        is_staff=is_staff,
                                         )
         user_profile = UserProfile.objects.create(user=user,
                                                   preferred_concert_tags=preferred_concert_tags,
                                                   weekly_email=weekly_email,
                                                   email_is_verified=email_is_verified,
+                                                  artist_verification_status=artist_verification_status,
+                                                  pk=pk
                                                   )
         if given_artist_access_by:
             user_profile.given_artist_access_by = given_artist_access_by
@@ -166,13 +173,13 @@ class TestCaseHelpers(TestCase):
                       listen_links=["https://measuringmarigolds.bandcamp.com/track/was-it-worth-the-kiss"],
                       youtube_links=[],
                       is_temp_artist=False,
-                      is_active_request=False,
                       created_by=None,
+                      pk=None,
                       created_at=None):
         artist = Artist(name=name,
+                        pk=pk,
                         local=local,
                         is_temp_artist=is_temp_artist,
-                        is_active_request=is_active_request,
                         )
         if created_by is None:
             artist.created_by_id = cls.StaticUsers.DEFAULT_CREATOR.value
@@ -192,7 +199,7 @@ class TestCaseHelpers(TestCase):
         for idx, url in enumerate(youtube_links):
             link = YoutubeLink(artist=artist, resource_url=url, iframe_url=url, order=idx)
             link.save()
-            
+
         if similar_musicbrainz_artists is not None:
             artist.similar_musicbrainz_artists.set(similar_musicbrainz_artists)
 
@@ -207,6 +214,7 @@ class TestCaseHelpers(TestCase):
                      created_by=None,
                      created_at=None,
                      is_verified=True,
+                     pk=None,
                      declined_listing=False):
 
         while name is None:
@@ -214,6 +222,7 @@ class TestCaseHelpers(TestCase):
             if Venue.objects.filter(name=name).exists():
                 name = None
         venue=Venue(
+            pk=pk,
             name=name,
             ages=ages,
             website=website,
@@ -242,12 +251,14 @@ class TestCaseHelpers(TestCase):
                        created_at=None,
                        tags=[ConcertTags.ORIGINALS],
                        cancelled=False,
+                       pk=None,
                        ) -> Concert:
         date = date or timezone_today()
         start_time = start_time or datetime.time(19,0)
         artists = artists or [cls.create_artist(f"Test Artist")]
 
         concert = Concert(
+            pk=pk,
             poster=cls.image_file(),
             date=date,
             start_time=start_time,
@@ -295,19 +306,20 @@ class TestCaseHelpers(TestCase):
                                                 similar_artists_cache_datetime=tomorrow)
 
     @classmethod
-    def create_artist_linking_info(cls, email=None, artist=None, created_by=None, generated_datetime=None):
+    def create_artist_linking_info(cls, email=None, artist=None, created_by=None, generated_datetime=None, pk=None):
         while email is None:
             email = str(uuid4())
             if ArtistLinkingInfo.objects.filter(invited_email=email).exists():
                 email = None
         artist = artist or cls.get_static_instance(cls.StaticArtists.LOCAL_ARTIST)
         created_by = created_by or cls.get_static_instance(cls.StaticUsers.DEFAULT_CREATOR)
-        ali, invite_code = ArtistLinkingInfo.create_and_get_invite_code(email=email,
-                                                                        artist=artist,
-                                                                        created_by=created_by)
+
+        ali = ArtistLinkingInfo(pk=pk, artist=artist, invited_email=email)
+        invite_code = ali._generate_invite_code()
+        ali.created_by = created_by
         if generated_datetime is not None:
             ali.generated_datetime = generated_datetime
-            ali.save()
+        ali.save()
 
         return ali, invite_code
 

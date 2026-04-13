@@ -5,7 +5,7 @@
             <th> Website </th>
             <th> Ages </th>
             <th> Verification </th>
-            {% if is_admin %}
+            {% if user.is_staff %}
                 <th> Admin </th>
             {% endif %}
         </tr>
@@ -24,7 +24,7 @@
                 <td>
                     {% include "findshows/htmx/venue_verification.html" %}
                 </td>
-                {% if is_admin %}
+                {% if user.is_staff %}
                     <td>
                         <a class="link" href="{% url 'admin:findshows_venue_change' venue.pk %}">Admin edit</a>
                     </td>

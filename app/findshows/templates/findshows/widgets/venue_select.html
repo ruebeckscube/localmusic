@@ -41,7 +41,7 @@
     </div>
 
     <div class="w-32" @modal-form-success="on_venue_create">
-        {% with title_text="New Venue" success_text="Venue created successfully!" form_html="findshows/htmx/venue_form.html" htmx_url="findshows:create_venue" %}
+        {% with title_text="New Venue" form_html="findshows/htmx/venue_form.html" htmx_url="findshows:create_venue" %}
             {% include "findshows/partials/modal_form.html" %}
         {% endwith %}
     </div>

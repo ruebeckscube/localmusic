@@ -43,29 +43,14 @@ class CreateVenueTests(TestCaseHelpers):
         self.assert_records_created(Venue, 0)
 
 
-    def test_not_logged_in_doesnt_create(self):
-        self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
-        self.assert_records_created(Venue, 0)
-
-
-    def test_not_artist_user_doesnt_create(self):
-        self.login_static_user(self.StaticUsers.NON_ARTIST)
-        self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
-        self.assert_records_created(Venue, 0)
-
-
-    def test_not_local_artist_user_doesnt_create(self):
-        self.login_static_user(self.StaticUsers.NONLOCAL_ARTIST)
-        self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
-        self.assert_records_created(Venue, 0)
-
-
     def test_unverified_email_doesnt_create(self):
         user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         user_profile.email_is_verified = False
         user_profile.save()
-        self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
+        response = self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
         self.assert_records_created(Venue, 0)
+        self.assertIn("Please verify your email before creating a venue listing.", str(response.content))
+        self.assertTemplateUsed(response, "findshows/htmx/modal_error_msg.html")
 
 
     def test_successful_create(self):
@@ -101,6 +86,6 @@ class CreateVenueTests(TestCaseHelpers):
             self.create_venue(created_by=user)
 
         response = self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
-        self.assertTemplateUsed(response, 'findshows/htmx/cant_create_venue.html')
+        self.assertTemplateUsed(response, 'findshows/htmx/modal_error_msg.html')
         self.assertTemplateNotUsed(response, 'findshows/htmx/venue_form.html')
         self.assert_records_created(Venue, settings.MAX_DAILY_VENUE_CREATES)

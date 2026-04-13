@@ -1,7 +1,7 @@
 {% extends "localmusic/base.html" %}
 
 {% block content %}
-    <h1 class="pl-3 mb-1"> Edit Artist </h1>
+    <h1 class="pl-3 mb-1"> {{ pk | yesno:"Edit,Create"}} Artist </h1>
     {% if is_temp_artist %}
         <div class="banner my-0">
             NOTE: This artist listing has not been filled out; Any concerts
@@ -9,9 +9,21 @@
             until this form is completed.
         </div>
     {% endif %}
-    <form method="post" enctype="multipart/form-data" action="{% url 'findshows:edit_artist' pk %}">
+    {% if not user.userprofile.email_is_verified %}
+        <div class="banner my-0">
+            NOTE: Please verify your email before submitting the form; this
+            this is to help prevent spam, thanks for understanding!
+        </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data"
+          {% if pk %}
+          action="{% url 'findshows:edit_artist' pk %}"
+          {% else %}
+          action="{% url 'findshows:create_artist' %}"
+          {% endif %}>
         {% csrf_token %}
-        <div>
+        <div class="p-4">
             {{ form.non_field_errors }}
         </div>
         <div class="flex max-md:flex-col flex-none w-full h-full">

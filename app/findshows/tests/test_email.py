@@ -6,7 +6,7 @@ from django.core import mail
 from django.views.generic.dates import timezone_today
 
 from findshows.email import daily_mod_email, send_mail_helper, send_mass_html_mail, send_rec_email
-from findshows.models import ConcertTags
+from findshows.models import ArtistVerificationStatus, ConcertTags
 from findshows.tests.test_helpers import TestCaseHelpers
 
 
@@ -82,6 +82,26 @@ class SendRecEmailTests(TestCaseHelpers):
         self.assert_emails_sent(1)
         self.assert_concert_link_in_message_html(concert2, mail.outbox[0])
         self.assert_concert_link_in_message_html(concert1, mail.outbox[0], True)
+
+
+    def test_artist_verification_status_filtering(self):
+        user_profiles = [ # First two should be able to post visible shows
+            self.get_static_instance(self.StaticUsers.LOCAL_ARTIST), # Verified
+            self.create_user_profile(artist_verification_status=ArtistVerificationStatus.INVITED, weekly_email=False),
+            self.get_static_instance(self.StaticUsers.NONLOCAL_ARTIST), # Notlocal
+            self.get_static_instance(self.StaticUsers.NON_ARTIST), # Not an artist (blank)
+            self.create_user_profile(artist_verification_status=ArtistVerificationStatus.UNVERIFIED, weekly_email=False),
+            self.create_user_profile(artist_verification_status=ArtistVerificationStatus.DEVERIFIED, weekly_email=False),
+        ]
+        concerts = [self.create_concert(created_by=up) for up in user_profiles]
+
+        self.create_user_profile(email="user1@em.ail")
+        send_rec_email()
+        self.assert_emails_sent(1)
+        for concert in concerts[:2]:
+            self.assert_concert_link_in_message_html(concert, mail.outbox[0])
+        for concert in concerts[2:]:
+            self.assert_concert_link_in_message_html(concert, mail.outbox[0], True)
 
 
     def test_concert_tags_filtering_no_recs(self):

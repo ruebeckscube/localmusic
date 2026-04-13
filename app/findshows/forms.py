@@ -340,34 +340,6 @@ class TempArtistForm(DefaultStylingModelForm):
         return artist
 
 
-class RequestArtistForm(DefaultStylingModelForm):
-    prefix = "request_artist"
-    use_required_attribute = False
-
-    class Meta:
-        model=Artist
-        fields=("name", "socials_links")
-        widgets={"socials_links": SocialsLinksWidget(num_links=1)}
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['socials_links'].required = True
-
-    def clean_socials_links(self):
-        socials_links = self.cleaned_data['socials_links']
-        LabeledURLsValidator()(socials_links)
-        return socials_links
-
-    def save(self, commit = True):
-        artist = super().save(commit=False)
-        artist.is_temp_artist = True
-        artist.is_active_request = True
-        artist.local = True
-        if commit:
-            artist.save()
-        return artist
-
-
 class ShowFinderForm(forms.Form):
     date = DatePickerField(required=False)
     end_date = DatePickerField(required=False)

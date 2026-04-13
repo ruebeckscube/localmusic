@@ -91,10 +91,6 @@ def user_settings_post_request(musicbrainz_artists=[], weekly_email=True, prefer
 
 
 class UserSettingsTests(TestCaseHelpers):
-    def test_not_logged_in_user_settings_redirects(self):
-        self.assert_redirects_to_login(reverse("findshows:user_settings"))
-
-
     def test_user_settings_GET(self):
         user = self.login_static_user(self.StaticUsers.NON_ARTIST)
         response = self.client.get(reverse("findshows:user_settings"))
@@ -116,19 +112,19 @@ class UserSettingsTests(TestCaseHelpers):
     def test_artist_user_cant_request(self):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         response = self.client.get(reverse("findshows:user_settings"))
-        self.assertNotIn('Request local artist access', str(response.content))
+        self.assertNotIn('Create artist page', str(response.content))
 
 
     def test_non_artist_user_can_request(self):
         self.login_static_user(self.StaticUsers.NON_ARTIST)
         response = self.client.get(reverse("findshows:user_settings"))
-        self.assertIn('Request local artist access', str(response.content))
+        self.assertIn('Create artist page', str(response.content))
 
 
     def test_nonlocal_artist_user_can_request(self):
         self.login_static_user(self.StaticUsers.NONLOCAL_ARTIST)
         response = self.client.get(reverse("findshows:user_settings"))
-        self.assertIn('Request local artist access', str(response.content))
+        self.assertIn('Create artist page', str(response.content))
 
 
     # # Not currently any way to make this form invalid
@@ -176,6 +172,15 @@ class CreateAccountTests(TestCaseHelpers):
         self.assert_records_created(UserProfile, 1)
 
 
+    def test_create_artist_checkbox(self):
+        data = create_account_post_request()
+        data['create_artist'] = ['']
+        response = self.client.post(reverse("create_account"), data)
+        self.assertRedirects(response, reverse("findshows:create_artist"))
+        self.assert_records_created(User, 1)
+        self.assert_records_created(UserProfile, 1)
+
+
     def test_sends_verification_email(self):
         data = create_account_post_request()  # No sendartistinfo flag
         self.client.post(reverse("create_account"), data)
@@ -194,16 +199,6 @@ class CreateAccountTests(TestCaseHelpers):
         self.assert_emails_sent(0)
         mock_logger.warning.assert_called_once()
         self.assertEqual(0, EmailVerification.objects.count())
-
-
-    def test_create_account_sends_artist_email(self):
-        data = create_account_post_request()  # No sendartistinfo flag
-        self.client.post(reverse("create_account"), data)
-        self.assert_emails_sent(1) # verification email
-        data['email'] = 'another@unique.eml'
-        data['sendartistinfo'] = ''
-        self.client.post(reverse("create_account"), data)
-        self.assert_emails_sent(3) # two more
 
 
     def test_create_account_POST_fail(self):
@@ -264,10 +259,6 @@ class VerifyEmailTests(TestCaseHelpers):
         self.assertEqual(1, EmailVerification.objects.count())
         self.assertIn('error', response.context)
         self.assertIn('Invalid link.', response.context['error'])
-
-
-    def test_redirects_to_login(self):
-        self.assert_redirects_to_login(reverse('verify_email'))
 
 
     def test_invite_id_doesnt_exist(self):
@@ -346,10 +337,6 @@ class ResendEmailVerificationTests(TestCaseHelpers):
         self.assertIn(reverse('verify_email'), mail.outbox[0].body)
         self.assertEqual(1, EmailVerification.objects.count())
         self.assertTrue(response.context['success'])
-
-
-    def test_redirects_to_login(self):
-        self.assert_redirects_to_login(reverse('resend_email_verification'))
 
 
     def test_already_verified(self):

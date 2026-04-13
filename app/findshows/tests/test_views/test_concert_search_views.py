@@ -2,7 +2,7 @@ from datetime import timedelta
 from django.urls import reverse
 from django.views.generic.dates import timezone_today
 from findshows.forms import ShowFinderForm
-from findshows.models import ConcertTags, MusicBrainzArtist
+from findshows.models import ArtistVerificationStatus, ConcertTags, MusicBrainzArtist
 from findshows.tests.test_helpers import TestCaseHelpers, concert_GET_params
 
 
@@ -138,6 +138,18 @@ class ConcertSearchResultsTests(TestCaseHelpers):
         concert2 = self.create_concert(cancelled=True)
         response = self.client.get(reverse('findshows:concert_search'), concert_GET_params())
         self.assert_equal_as_sets(response.context['concerts'], [concert1])
+
+
+    def test_unverified_artist_concert_filtering(self):
+        concert1 = self.create_concert(created_by=self.get_static_instance(self.StaticUsers.LOCAL_ARTIST))
+        concert2 = self.create_concert(created_by=self.get_static_instance(self.StaticUsers.NONLOCAL_ARTIST))
+        concert3 = self.create_concert(created_by=self.get_static_instance(self.StaticUsers.NON_ARTIST))
+        concert4 = self.create_concert(created_by=self.create_user_profile(artist_verification_status=ArtistVerificationStatus.UNVERIFIED))
+        concert5 = self.create_concert(created_by=self.create_user_profile(artist_verification_status=ArtistVerificationStatus.DEVERIFIED))
+        concert6 = self.create_concert(created_by=self.create_user_profile(artist_verification_status=ArtistVerificationStatus.INVITED))
+
+        response = self.client.get(reverse('findshows:concert_search'), concert_GET_params())
+        self.assert_equal_as_sets(response.context['concerts'], [concert1, concert6])
 
 
     # Similarity sorting is tested in ../test_recommendations.py

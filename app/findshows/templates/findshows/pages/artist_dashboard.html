@@ -3,8 +3,15 @@
 {% block content %}
 <div class="p-3">
     <h1>Artist Dashboard</h1>
+    {% if user.is_unverified_artist %}
+    <div class="banner">
+        Your account is currently being verified by mods;  until you are verified,
+        (a) artist and show listings will not be publically visible, (b) any invites
+        you send will be held and sent upon verification.
+    </div>
+    {% endif %}
     <div class="flex flex-wrap">
-        {% if is_local_artist %}
+        {% if user.is_local_artist_account %}
             <div class="bg-highlight-item-light/40 p-3 m-3 min-w-80 flex-grow">
                 <h2> Actions </h2>
                 <div class="mx-auto w-72">
@@ -12,14 +19,19 @@
                         Create new show listing
                     </a>
                 </div>
-                
+
                 <div class="mx-auto w-72">
                     <form>
                         {% csrf_token %}
-                        {% with title_text="Invite Artist" success_text="Invite sent successfully!" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
+                        {% with title_text="Invite Artist" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
                             {% include "findshows/partials/modal_form.html" %}
                         {% endwith %}
                     </form>
+                </div>
+                <div class="mx-auto w-72">
+                    <a class="btn block w-full" href="{% url 'findshows:create_artist' %}">
+                        Create new artist page
+                    </a>
                 </div>
             </div>
         {% endif %}
@@ -32,10 +44,10 @@
         </div>
     </div>
 
-    
+
     <div class="bg-highlight-item-light/40 p-3 m-3">
         <h2>Artist pages</h2>
-        
+
         <div class="flex flex-wrap align-middle items-center justify-center">
             {% for artist in artists %}
             <div class="flex flex-col items-center m-5 bg-sub-background p-4">
@@ -56,7 +68,7 @@
                     <a class="btn block" href="{% url 'findshows:edit_artist' artist.pk %}?from=artist_dashboard">Edit</a>
                     <form class="mx-auto">
                         {% csrf_token %}
-                        {% with title_text="Manage access" success_text="Artist access saved!" form_html="findshows/htmx/artist_access_form.html" htmx_url="findshows:manage_artist_access" htmx_param=artist.pk %}
+                        {% with title_text="Manage access" form_html="findshows/htmx/artist_access_form.html" htmx_url="findshows:manage_artist_access" htmx_param=artist.pk %}
                             {% include "findshows/partials/modal_form.html"%}
                         {% endwith %}
                     </form>
@@ -65,10 +77,10 @@
             {% endfor %}
         </div>
     </div>
-    
+
     <div class="bg-highlight-item-light/40 p-3 m-3">
         <h2> My Shows </h2>
-        
+
         <div class="flex flex-col w-full align-middle">
             {% for concert in concerts %}
             <div class="flex max-sm:flex-col m-2">

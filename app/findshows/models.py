@@ -1,6 +1,7 @@
 from datetime import timedelta
 import hashlib
 from html.parser import HTMLParser
+import logging
 from urllib.parse import urlencode, urlsplit, parse_qs
 from statistics import mean
 import secrets
@@ -18,12 +19,16 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.timezone import now
+from django.views.generic.dates import timezone_today
 from django.contrib.postgres.indexes import GinIndex
 
 from multiselectfield import MultiSelectField
 import requests
 
 from findshows import musicbrainz
+
+
+logger = logging.getLogger(__name__)
 
 
 MAX_UPLOADED_IMAGE_SIZE_IN_MB = 30
@@ -146,7 +151,6 @@ class Artist(CreationTrackingMixin):
     bio=models.TextField(null=True, max_length=800)
     local=models.BooleanField(help_text="Check if this is a local artist. It will give them permission to list shows and invite other artists.")
 
-    is_active_request=models.BooleanField(default=False)
     is_temp_artist=models.BooleanField()
 
     # List of tuples [ (display_name, url), ... ]
@@ -241,7 +245,7 @@ class EmbedLink(models.Model):
         qs = {k: v for k, v in parse_qs(su.query).items() if k in allowed}
         su = su._replace(query=urlencode(qs, doseq=True))
         return su.geturl()
-    
+
 
     def _parse_platform(self, url):
         if 'bandcamp' in url:
@@ -284,8 +288,11 @@ class EmbedLink(models.Model):
                 raise ValidationError("Invalid link. Make sure you're linking directly to an album, track, or video.")
             case 401 | 403:
                 raise ValidationError("Invalid link. The album, track, or video you're linking to appears to be private or otherwise hidden; please make it publically visible or enter a different link.")
+            case 504:
+                raise ValidationError(f"Timeout from {self._base_oembed_url()}; please try a different source or try again in a few minutes.")
             case code:
-                raise ValidationError(f"Unexpected error (HTTP response {code}); please report to site admins.")
+                logger.error(f"Unexpected error (HTTP response {code}) from {self._base_oembed_url()} for {self.resource_url}. Content: {r.text}")
+                raise ValidationError(f"Unexpected error (HTTP response {code}); please report to site admins and try a different link or try again later.")
 
         html = r.json().get("html", "")
         iframe_url = AttrParser.get_prop(html, "src", "iframe")
@@ -296,6 +303,8 @@ class EmbedLink(models.Model):
 
     def _get_bandcamp_iframe_url(self):
         r = requests.get(self.resource_url)
+        if r.status_code == 504:
+            raise ValidationError(f"Timeout from {self._base_oembed_url()}; please try a different source or try again in a few minutes.")
         if r.status_code != 200:
             raise ValidationError("Invalid link. Resource doesn't exist, is private, or is otherwise unreachable.")
         embed_url = AttrParser.get_prop(r.text, "content", "meta", ("property", "og:video"))
@@ -309,6 +318,7 @@ class EmbedLink(models.Model):
 
 
     def update_iframe_url(self):
+        URLValidator()(self.resource_url)
         if self.get_platform() not in self.allowed_platforms:
             raise ValidationError("Incorrect link type; are you mixing up audio links with youtube links?")
         if self.get_platform() == self.BANDCAMP:
@@ -399,12 +409,6 @@ class YoutubeLink(EmbedLink):
 
     order=models.PositiveSmallIntegerField()
     artist=models.ForeignKey(Artist, on_delete=models.CASCADE)
-
-
-class InviteDelayError(Exception):
-    def __init__(self, message):
-        self.message = message
-        super().__init__(self.message)
 
 
 class EmailCodeError(Exception):
@@ -502,9 +506,6 @@ class ArtistLinkingInfo(CreationTrackingMixin, EmailCodeMixin):
 
     @classmethod
     def create_and_get_invite_code(cls, artist, email, created_by):
-        if (not created_by.user.is_mod) and (not created_by.given_artist_access_datetime or
-            created_by.given_artist_access_datetime > now() - timedelta(settings.INVITE_BUFFER_DAYS)):
-            raise InviteDelayError(f"Users newly given artist access must wait {settings.INVITE_BUFFER_DAYS} days before inviting other users.")
         link_info = cls(artist=artist, invited_email=email)
         invite_code = link_info._generate_invite_code()
         link_info.created_by = created_by
@@ -549,15 +550,63 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    is_mod=models.BooleanField(default=False, help_text="Gives the user access to the mod dashboard and associated permissions.")
+    is_mod = models.BooleanField(default=False, help_text="Gives the user access to the mod dashboard and associated permissions.")
     date_joined = models.DateTimeField(default=timezone.now)
 
     objects = UserManager()
 
     USERNAME_FIELD = "email"
 
+    # Permissions functions, mostly for @user_passes_test kind of things
+    def can_see_artist_dashboard(self):
+        return (not self.is_anonymous
+            and self.userprofile.artist_verification_status in (ArtistVerificationStatus.UNVERIFIED,
+                                                                ArtistVerificationStatus.VERIFIED,
+                                                                ArtistVerificationStatus.INVITED,
+                                                                ArtistVerificationStatus.NOT_LOCAL))
+
+    def is_local_artist_account(self):
+        return (not self.is_anonymous
+            and self.userprofile.artist_verification_status in (ArtistVerificationStatus.UNVERIFIED,
+                                                                ArtistVerificationStatus.INVITED,
+                                                                ArtistVerificationStatus.VERIFIED))
+
+
+    def is_unverified_artist(self):
+        return (not self.is_anonymous
+                and self.userprofile.artist_verification_status == ArtistVerificationStatus.UNVERIFIED)
+
+
+    def listings_are_public(self):
+        return (not self.is_anonymous
+                and self.userprofile.artist_verification_status in (ArtistVerificationStatus.VERIFIED,
+                                                                    ArtistVerificationStatus.INVITED,
+                                                                    ))
+
+
+    def is_mod_or_admin(self):
+        return ((not self.is_anonymous) and (self.is_mod or self.is_staff))
+
+
+    def is_local_artist_or_admin(self):
+        return (not self.is_anonymous) and (self.is_local_artist_account() or self.is_staff)
+
+
+    def has_exceeded_daily_invites(self):
+        return (not self.is_mod_or_admin() and
+                self.userprofile.records_created_today(ArtistLinkingInfo) >= settings.MAX_DAILY_INVITES)
+
+
     def __str__(self):
         return self.email
+
+
+class ArtistVerificationStatus(models.TextChoices):
+    UNVERIFIED = "UN", "Unverified" # Created profile, not yet verified or deverified
+    VERIFIED = "VE", "Verified" # Has been verified by mods
+    INVITED = "IN", "Invited" # Invited by another artist user; for now this doesn't require verification by mods to get same permissions
+    DEVERIFIED = "DE", "Deverified" # Has been marked explicitly not verified by mods
+    NOT_LOCAL = "NL", "Not local" # Non-local artists don't need to have a verification status, but need some artist permissions
 
 
 class UserProfile(models.Model):
@@ -584,12 +633,21 @@ class UserProfile(models.Model):
     followed_artists=models.ManyToManyField(Artist, related_name="followers", blank=True)
     managed_artists=models.ManyToManyField(Artist, related_name="managing_users", blank=True,
                                            help_text="Artists that this user manages.")
+    artist_verification_status = models.CharField(max_length=2, choices=ArtistVerificationStatus, null=True)
+
     weekly_email=models.BooleanField(default=True, help_text="Subscribe to an email with concert recommendations for the upcoming week")
 
     given_artist_access_by=models.ForeignKey('UserProfile', related_name="gave_artist_access_to", on_delete=models.CASCADE, null=True, blank=True)
     given_artist_access_datetime=models.DateTimeField(null=True, blank=True)
 
     email_is_verified=models.BooleanField(default=False)
+
+
+    def records_created_today(self, model):
+        # model should subclass CreationTrackingMixin
+        records = model.objects.filter(created_by=self, created_at=timezone_today())
+        return records.count()
+
 
     def __str__(self):
         return str(self.user)
@@ -643,12 +701,17 @@ class Concert(CreationTrackingMixin):
 
     @classmethod
     def publically_visible(cls):
-        return cls.objects.exclude(
+        query = cls.objects.exclude(
             Q(artists__is_temp_artist=True) |
             Q(venue__is_verified=False) |
             Q(venue__declined_listing=True) |
             Q(cancelled=True)
         )
+        query = query.filter(created_by__artist_verification_status__in=(
+            ArtistVerificationStatus.VERIFIED,
+            ArtistVerificationStatus.INVITED
+        ))
+        return query
 
 
     def relevance_score(self, searched_mbids):

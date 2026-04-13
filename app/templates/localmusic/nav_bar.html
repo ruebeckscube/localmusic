@@ -24,7 +24,7 @@
                     @click.away="show_menu = false"
                     @keydown.escape.window="show_menu = false"
                 >
-                    {% if user.userprofile.managed_artists.all|length > 0 %}
+                    {% if user.can_see_artist_dashboard %}
                         <li class="even:bg-sub-background">
                             <a class="block link py-1 px-2" href="{% url 'findshows:artist_dashboard' %}">Artist dashboard</a>
                         </li>

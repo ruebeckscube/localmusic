@@ -2,10 +2,8 @@
     <table class="w-full text-center max-w-5xl fieldgroup p-5">
         <tr class="bg-highlight-item-light text-lg">
             <th> Artist name </th>
-            <th> Website </th>
             <th> Email </th>
-            <th> Actions </th>
-            {% if is_admin %}
+            {% if user.is_staff %}
                 <th> Admin </th>
             {% endif %}
         </tr>
@@ -20,16 +18,7 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% if artist.socials_links %}
-                        {% for link in artist.socials_links %}
-                            <a class="link" href="{{link.1}}" target="_blank">{{  link.0 }}</a>
-                        {% endfor %}
-                    {% endif %}
-                </td>
-                <td>
-                    {% if artist.is_active_request %}
-                        <a class="link" href="mailto:{{ artist.created_by.user.email }}">{{ artist.created_by.user.email }}</a>
-                    {% elif artist.artistlinkinginfo_set.all %}
+                    {% if artist.artistlinkinginfo_set.all %}
                         {% for ali in artist.artistlinkinginfo_set.all %}
                             <a class="link" href="mailto:{{ ali.invited_email }}">{{ ali.invited_email }}</a>
                         {% endfor %}
@@ -39,10 +28,7 @@
                         {% endfor %}                        
                     {% endif %}
                 </td>
-                <td>
-                    {% include "findshows/htmx/mod_artist_buttons.html" %}
-                </td>
-                {% if is_admin %}
+                {% if user.is_staff %}
                     <td>
                         <a class="link" href="{% url 'admin:findshows_artist_change' artist.pk %}">Admin edit</a>
                     </td>

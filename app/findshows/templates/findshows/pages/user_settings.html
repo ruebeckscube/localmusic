@@ -8,15 +8,17 @@
         <div class="max-w-2xl mx-auto">
         <div class="flex flex-col items-center w-full">
             <h1> User Settings </h1>
+            <div class="fieldgroup px-6">
+                {{ user.email }}
+            </div>
             {% include "findshows/partials/user_settings_form.html" with wfull=True%}
             <input class="btn" type="submit" value="Save">
-            <div class="w-80 mx-auto py-8">
-                {% if not is_local_artist_account %}
-                    {% with title_text="Request local artist access" success_text="Request submitted!" form_html="findshows/htmx/request_artist_form.html" htmx_url="findshows:request_artist_access" %}
-                        {% include "findshows/partials/modal_form.html" %}
-                    {% endwith %}
-                {% endif %}
-            </div>
+
+            {% if not user.is_local_artist_account %}
+            <a class="btn block w-80 mx-auto my-8" href="{% url 'findshows:create_artist' %}">
+                Create artist page
+            </a>
+            {% endif %}
         </div>
         </div>
     </form>

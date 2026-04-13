@@ -1,0 +1,46 @@
+<div class="artist-verification-buttons flex flex-col">
+    {% if userprofile.artist_verification_status == "UN" %}
+        <form type="post">
+            {% csrf_token %}
+            <input class="btn"
+                   type="button"
+                   name="verify-artist-acct"
+                   hx-post="{% url 'findshows:artist_verification_buttons' userprofile.pk %}"
+                   hx-trigger="click"
+                   value="Verify"
+                   hx-target="closest .artist-verification-buttons"
+                   hx-swap="outerHTML"
+                   hx-vals='{"action": "verify"}'
+            >
+            <input class="btn"
+                   type="button"
+                   name="deverify-artist-acct"
+                   hx-post="{% url 'findshows:artist_verification_buttons' userprofile.pk %}"
+                   hx-trigger="click"
+                   value="Deverify"
+                   hx-target="closest .artist-verification-buttons"
+                   hx-swap="outerHTML"
+                   hx-vals='{"action": "deverify"}'
+            >
+            <input class="btn"
+                   type="button"
+                   name="notlocal-artist-acct"
+                   hx-post="{% url 'findshows:artist_verification_buttons' userprofile.pk %}"
+                   hx-trigger="click"
+                   value="Not local"
+                   hx-target="closest .artist-verification-buttons"
+                   hx-swap="outerHTML"
+                   hx-vals='{"action": "notlocal"}'
+            >
+        </form>
+    {% elif userprofile.artist_verification_status %}
+        {{ userprofile.get_artist_verification_status_display }}
+    {% else %}
+        Not artist account
+    {% endif %}
+
+    {% if invite_errors %}
+        Some errors occurred sending out this user's artist invites:
+        {{ invite_errors }}
+    {% endif %}
+</div>

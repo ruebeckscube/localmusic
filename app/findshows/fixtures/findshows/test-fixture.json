@@ -4,12 +4,11 @@
     "pk": 1,
     "fields": {
         "created_at": "2025-04-23",
-        "created_by": 1,
+        "created_by": 2,
         "name": "STATIC LOCAL ARTIST",
         "profile_picture": "",
         "bio": "",
         "local": true,
-        "is_active_request": false,
         "is_temp_artist": false,
         "socials_links": [],
         "similar_musicbrainz_artists": []
@@ -25,7 +24,6 @@
         "profile_picture": "",
         "bio": "",
         "local": false,
-        "is_active_request": false,
         "is_temp_artist": false,
         "socials_links": [],
         "similar_musicbrainz_artists": []
@@ -41,7 +39,6 @@
         "profile_picture": "",
         "bio": "",
         "local": true,
-        "is_active_request": false,
         "is_temp_artist": true,
         "socials_links": [],
         "similar_musicbrainz_artists": []
@@ -164,6 +161,7 @@
         "favorite_musicbrainz_artists": [],
         "followed_artists": [],
         "managed_artists": [],
+        "artist_verification_status": "VE",
         "email_is_verified": true
     }
 },
@@ -183,6 +181,7 @@
         "managed_artists": [
             1
         ],
+        "artist_verification_status": "VE",
         "email_is_verified": true
     }
 },
@@ -202,6 +201,7 @@
         "managed_artists": [
             2
         ],
+        "artist_verification_status": "NL",
         "email_is_verified": true
     }
 },
@@ -219,6 +219,7 @@
         "favorite_musicbrainz_artists": [],
         "followed_artists": [],
         "managed_artists": [],
+        "artist_verification_status": "",
         "email_is_verified": true
     }
 },
@@ -238,6 +239,7 @@
         "managed_artists": [
             3
         ],
+        "artist_verification_status": null,
         "email_is_verified": true
     }
 },
