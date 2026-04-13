@@ -165,13 +165,17 @@ def artist_dashboard(request):
 
 def view_artist(request, pk):
     artist = get_object_or_404(Artist, pk=pk)
-    can_edit = (not request.user.is_anonymous
-                and artist in request.user.userprofile.managed_artists.all())
+    is_public = artist.created_by.user.listings_are_public() and (not artist.is_temp_artist)
+    if request.user.is_anonymous:
+        can_edit = False
+        if not is_public:
+            raise PermissionDenied
+    else:
+        can_edit = artist in request.user.userprofile.managed_artists.all()
+        if not (is_public or can_edit or request.user.is_mod_or_admin()):
+            raise PermissionDenied
 
-    if ((not artist.created_by.user.listings_are_public()) or artist.is_temp_artist) and not can_edit:
-        raise PermissionDenied
-
-    upcoming_concerts = Concert.objects.all() if can_edit else Concert.publically_visible()
+    upcoming_concerts = Concert.objects.all() if (can_edit or User.is_mod_or_admin(request.user)) else Concert.publically_visible()
     upcoming_concerts = upcoming_concerts.filter(date__gte=timezone.now(), artists=artist)
 
     return render(request, "findshows/pages/view_artist.html", context={
@@ -439,7 +443,9 @@ def view_concert(request, pk=None):
     if (not concert.created_by.user.listings_are_public()) or any(a.is_temp_artist for a in artists):
         if request.user.is_anonymous:
             raise PermissionDenied
-        if not set(artists) & set(request.user.userprofile.managed_artists.all()):
+        elif request.user.is_mod_or_admin():
+            pass
+        elif not set(artists) & set(request.user.userprofile.managed_artists.all()):
             raise PermissionDenied
 
     return render(request, 'findshows/pages/view_concert.html', {'concert': concert})

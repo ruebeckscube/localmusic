@@ -122,21 +122,6 @@ class ViewArtistTests(TestCaseHelpers):
         self.assertEqual(response.status_code, 200)
 
 
-    def test_unverified_artist_can_only_be_viewed_by_artist(self):
-        unverified_up = self.create_user_profile(
-            email="unverified@artist.net",
-            password="12345",
-            artist_verification_status=ArtistVerificationStatus.UNVERIFIED)
-        artist = self.create_artist(created_by=unverified_up, pk=100)
-        unverified_up.managed_artists.add(artist)
-
-        response = self.client.get(reverse("findshows:view_artist", args=(100,)))
-        self.assertEqual(response.status_code, 403)
-        self.client.login(email="unverified@artist.net", password="12345")
-        response = self.client.get(reverse("findshows:view_artist", args=(100,)))
-        self.assertEqual(response.status_code, 200)
-
-
     def test_visible_if_and_only_if_created_by_verified(self):
         visible_artists = (self.create_artist(created_by=self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)),
                             self.create_artist(created_by=self.create_user_profile(artist_verification_status=ArtistVerificationStatus.INVITED)))

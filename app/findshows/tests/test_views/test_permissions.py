@@ -4,8 +4,6 @@ from django.urls import reverse
 from findshows.models import ArtistVerificationStatus
 from findshows.tests.test_helpers import TestCaseHelpers
 
-#################
-## View tests
 
 PUBLIC_URLS_NO_PK = (
     "home",
@@ -51,7 +49,7 @@ MOD_URLS_WITH_PK = (
     "resend_invite",
 )
 
-class PermissionsTestHelpers(TestCaseHelpers):
+class PermissionsTests(TestCaseHelpers):
     def assert_view_permissions(self, url_set, expected_to_have_permission, pk=None):
         for url_name in url_set:
             url = reverse(f"findshows:{url_name}", args=[pk] if pk else [])
@@ -78,6 +76,9 @@ class PermissionsTestHelpers(TestCaseHelpers):
         self.assert_view_permissions(disallowed_no_pk, False)
         self.assert_view_permissions(disallowed_pk, False, pk=self.pk)
 
+    def assert_permissions_for_hidden_records(self, allowed, disallowed):
+        self.assert_view_permissions(allowed, True, pk=self.other_pk)
+        self.assert_view_permissions(disallowed, False, pk=self.other_pk)
 
     def login_with_status(self, status: ArtistVerificationStatus):
         self.userprofile.artist_verification_status = status
@@ -97,6 +98,14 @@ class PermissionsTestHelpers(TestCaseHelpers):
         self.concert = self.create_concert(pk=self.pk, venue = self.venue, artists = [self.artist], created_by=self.userprofile)
         self.ali = self.create_artist_linking_info(pk=self.pk)
 
+        self.other_pk = 1001
+        self.other_email = "has@hidden.rec"
+        self.other_password = "12345"
+        self.other_user_profile = self.create_user_profile(pk=self.other_pk, email=self.other_email, password=self.other_password, artist_verification_status=ArtistVerificationStatus.UNVERIFIED)
+        self.other_artist = self.create_artist(pk=self.other_pk, created_by=self.other_user_profile)
+        self.other_user_profile.managed_artists.add(self.other_artist)
+        self.other_concert = self.create_concert(pk=self.other_pk, created_by=self.other_user_profile, artists=[self.other_artist])
+
         return super().setUp()
 
 
@@ -106,6 +115,7 @@ class PermissionsTestHelpers(TestCaseHelpers):
             PUBLIC_URLS_WITH_PK,
             chain(LOGGED_IN_URLS, ARTIST_URLS_NO_PK, MOD_URLS_NO_PK),
             chain(ARTIST_URLS_WITH_PK, MOD_URLS_WITH_PK))
+        self.assert_permissions_for_hidden_records((), PUBLIC_URLS_WITH_PK)
 
 
     def test_non_artist(self):
@@ -115,7 +125,7 @@ class PermissionsTestHelpers(TestCaseHelpers):
             PUBLIC_URLS_WITH_PK,
             chain(ARTIST_URLS_NO_PK, MOD_URLS_NO_PK),
             chain(ARTIST_URLS_WITH_PK, MOD_URLS_WITH_PK))
-
+        self.assert_permissions_for_hidden_records((), PUBLIC_URLS_WITH_PK)
 
     def test_deverified_artist(self):
         self.login_with_status(ArtistVerificationStatus.DEVERIFIED)
@@ -128,7 +138,7 @@ class PermissionsTestHelpers(TestCaseHelpers):
             PUBLIC_URLS_WITH_PK,
             chain(ARTIST_URLS_NO_PK, MOD_URLS_NO_PK, deverified_exceptions),
             chain(ARTIST_URLS_WITH_PK, MOD_URLS_WITH_PK))
-
+        self.assert_permissions_for_hidden_records((), PUBLIC_URLS_WITH_PK)
 
     def assert_verified_equiv_permissions(self):
         self.assert_generic_permissions(
@@ -136,10 +146,11 @@ class PermissionsTestHelpers(TestCaseHelpers):
             chain(PUBLIC_URLS_WITH_PK, ARTIST_URLS_WITH_PK),
             chain(MOD_URLS_NO_PK),
             chain(MOD_URLS_WITH_PK))
+        self.assert_permissions_for_hidden_records((), PUBLIC_URLS_WITH_PK)
 
-        self.create_artist(pk=self.pk + 1)
-        self.create_concert(pk=self.pk + 1)
-        self.assert_view_permissions(ARTIST_URLS_WITH_PK, False, pk=self.pk + 1)
+        self.create_artist(pk=9999)
+        self.create_concert(pk=9999)
+        self.assert_view_permissions(ARTIST_URLS_WITH_PK, False, pk=9999)
 
 
     def test_unverified_local_artist(self):
@@ -156,6 +167,10 @@ class PermissionsTestHelpers(TestCaseHelpers):
         self.login_with_status(ArtistVerificationStatus.INVITED)
         self.assert_verified_equiv_permissions()
 
+    def test_owner_of_hidden_records(self):
+        self.client.login(email=self.other_email, password=self.other_password)
+        self.assert_permissions_for_hidden_records(PUBLIC_URLS_WITH_PK, ())
+
 
     def test_non_local_artist(self):
         self.login_with_status(ArtistVerificationStatus.NOT_LOCAL)
@@ -168,7 +183,7 @@ class PermissionsTestHelpers(TestCaseHelpers):
             chain(PUBLIC_URLS_WITH_PK, allowed_artist_with_pk),
             chain(MOD_URLS_NO_PK, disallowed_artist_no_pk),
             chain(MOD_URLS_WITH_PK, disallowed_artist_with_pk))
-
+        self.assert_permissions_for_hidden_records((), PUBLIC_URLS_WITH_PK)
 
     def test_mod(self):
         self.login_static_user(self.StaticUsers.MOD_USER)
@@ -178,7 +193,7 @@ class PermissionsTestHelpers(TestCaseHelpers):
             chain(PUBLIC_URLS_WITH_PK, MOD_URLS_WITH_PK),
             ARTIST_URLS_NO_PK,
             ARTIST_URLS_WITH_PK)
-
+        self.assert_permissions_for_hidden_records(PUBLIC_URLS_WITH_PK, ())
 
     def test_admin(self):
         self.create_user_profile(email="admin@admin.net", password='12345', is_staff=True)
@@ -191,6 +206,7 @@ class PermissionsTestHelpers(TestCaseHelpers):
             chain(PUBLIC_URLS_WITH_PK, ARTIST_URLS_WITH_PK, MOD_URLS_WITH_PK),
             ("artist_dashboard",),
             ())
+        self.assert_permissions_for_hidden_records(PUBLIC_URLS_WITH_PK, ())
 
 
     def assert_404s(self, url_set, pk):
