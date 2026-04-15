@@ -1,6 +1,9 @@
 services:
   web:
-    build: ../app
+    build:
+      context: ../app
+      args:
+        PYTHON_VERSION: 3.14
     init: true
     env_file:
       - ../.env
@@ -16,7 +19,7 @@ services:
       - memcached
 
   memcached:
-    image: memcached
+    image: memcached:1.6
     command:
       - --conn-limit=1024
       - --memory-limit=64

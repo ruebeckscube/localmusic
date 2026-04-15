@@ -1,38 +1,37 @@
 #####################
 # 1: Base build stage
+ARG PYTHON_VERSION
 
-FROM python:3.13-slim AS builder
- 
-# Create the app directory
-RUN mkdir /app
- 
-# Set the working directory inside the container
-WORKDIR /app
- 
+FROM python:${PYTHON_VERSION}-slim AS builder
+
 # Set environment variables for Python
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
- 
+
+# Set up a venv for more predictable copying to production stage
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 # Upgrade pip
-RUN pip install --upgrade pip 
+RUN pip install --upgrade pip
 
 # Install Python dependencies
 ARG PIP_REQUIREMENTS
 COPY requirements/ ./requirements/
-RUN pip install --no-cache-dir -r $PIP_REQUIREMENTS
+RUN pip install -r $PIP_REQUIREMENTS
 
 ####################
 # 2: Production stage
 
-FROM python:3.13-slim
+FROM python:${PYTHON_VERSION}-slim
 
 RUN useradd -m -r appuser && \
    mkdir /app && \
    chown -R appuser /app
 
 # Copy the Python dependencies from the builder stage
-COPY --from=builder /usr/local/lib/python3.13/site-packages/ /usr/local/lib/python3.13/site-packages/
-COPY --from=builder /usr/local/bin/ /usr/local/bin/
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Set the working directory
 WORKDIR /app
