@@ -156,10 +156,12 @@ def artist_dashboard(request):
     # Remove duplicates in case user manages multiple artists on same bill
     concerts = set(c for a in artists for c in a.concert_set.filter(date__gte=timezone_today()))
     concerts = sorted(concerts, key = lambda c: c.date)
+    outstanding_invites = ArtistLinkingInfo.objects.filter(created_by=request.user.userprofile)
 
     return render(request, "findshows/pages/artist_dashboard.html", context = {
         "artists": artists,
         "concerts": concerts,
+        "outstanding_invites": outstanding_invites,
     })
 
 
@@ -731,9 +733,11 @@ def artist_verification_buttons(request, pk):
     })
 
 
-@user_passes_test(User.is_mod_or_admin)
+@user_passes_test(User.is_local_artist_or_mod_or_admin)
 def resend_invite(request, pk):
     ali = get_object_or_404(ArtistLinkingInfo, pk=pk)
+    if (not request.user.is_mod_or_admin()) and (ali.created_by != request.user.userprofile):
+        raise PermissionDenied
     if ali.generated_datetime > timezone.now() - timedelta(minutes=5):
         success = False
         errorlist = ["Please wait at least five minutes before sending again."]

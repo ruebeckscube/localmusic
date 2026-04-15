@@ -593,6 +593,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         return (not self.is_anonymous) and (self.is_local_artist_account() or self.is_staff)
 
 
+    def is_local_artist_or_mod_or_admin(self):
+        return (not self.is_anonymous) and (self.is_local_artist_account() or self.is_staff or self.is_mod)
+
+
     def has_exceeded_daily_invites(self):
         return (not self.is_mod_or_admin() and
                 self.userprofile.records_created_today(ArtistLinkingInfo) >= settings.MAX_DAILY_INVITES)

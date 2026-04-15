@@ -36,6 +36,7 @@ ARTIST_URLS_WITH_PK = (
     "cancel_concert",
     "uncancel_concert",
     "manage_artist_access",
+    "resend_invite",
 )
 MOD_URLS_NO_PK = (
     "mod_dashboard",
@@ -46,7 +47,6 @@ MOD_URLS_NO_PK = (
 MOD_URLS_WITH_PK = (
     "venue_verification",
     "artist_verification_buttons",
-    "resend_invite",
 )
 
 class PermissionsTests(TestCaseHelpers):
@@ -96,7 +96,7 @@ class PermissionsTests(TestCaseHelpers):
         self.artist = self.create_artist(pk=self.pk, created_by=self.userprofile)
         self.userprofile.managed_artists.add(self.artist)
         self.concert = self.create_concert(pk=self.pk, venue = self.venue, artists = [self.artist], created_by=self.userprofile)
-        self.ali = self.create_artist_linking_info(pk=self.pk)
+        self.ali = self.create_artist_linking_info(pk=self.pk, created_by=self.userprofile)
 
         self.other_pk = 1001
         self.other_email = "has@hidden.rec"
@@ -148,8 +148,10 @@ class PermissionsTests(TestCaseHelpers):
             chain(MOD_URLS_WITH_PK))
         self.assert_permissions_for_hidden_records((), PUBLIC_URLS_WITH_PK)
 
+        # Checks that the artist can't access records they don't own
         self.create_artist(pk=9999)
         self.create_concert(pk=9999)
+        self.create_artist_linking_info(pk=9999)
         self.assert_view_permissions(ARTIST_URLS_WITH_PK, False, pk=9999)
 
 
