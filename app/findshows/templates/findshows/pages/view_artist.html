@@ -11,7 +11,7 @@
     <div class="flex max-md:flex-col w-full">
         {# Name and socials #}
         <div class="md:w-3/5 m-2 flex flex-col content-center justify-around bg-sub-background">
-                <h1 class="text-[10vw] md:text-[8vw] text-center font-extralight mt-8 md:my-auto">
+                <h1 class="text-[10vw] md:text-[7vw] text-center font-extralight mt-8 md:my-auto">
                     {{artist.name}}
                 </h1>
 
@@ -25,10 +25,10 @@
                 </div>
         </div>
         {# Profile pic #}
-        <div class="md:w-2/5">
-            <div class="bg-sub-background m-2">
+        <div class="md:w-2/5 p-2">
+            <div class="bg-sub-background h-full flex">
                 {% if artist.profile_picture %}
-                    <img class="w-full max-h-[30em] object-contain"
+                    <img class="w-full max-h-[30em] object-contain my-auto"
                          src="{{ artist.profile_picture.url }}">
                 {% endif %}
             </div>

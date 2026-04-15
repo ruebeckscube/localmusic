@@ -8,7 +8,6 @@
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
     --color-red-700: oklch(50.5% 0.213 27.518);
-    --color-gray-200: oklch(92.8% 0.006 264.531);
     --color-gray-400: oklch(70.7% 0.022 261.325);
     --color-gray-500: oklch(55.1% 0.027 264.364);
     --color-gray-600: oklch(44.6% 0.03 256.802);
@@ -43,7 +42,6 @@
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
     --leading-loose: 2;
-    --radius-xl: 0.75rem;
     --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
     --default-transition-duration: 150ms;
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -472,9 +470,6 @@
   .w-7 {
     width: calc(var(--spacing) * 7);
   }
-  .w-8 {
-    width: calc(var(--spacing) * 8);
-  }
   .w-11\/12 {
     width: calc(11/12 * 100%);
   }
@@ -668,9 +663,6 @@
   .overflow-auto {
     overflow: auto;
   }
-  .rounded-xl {
-    border-radius: var(--radius-xl);
-  }
   .border {
     border-style: var(--tw-border-style);
     border-width: 1px;
@@ -694,9 +686,6 @@
   }
   .bg-background {
     background-color: var(--color-background);
-  }
-  .bg-gray-200 {
-    background-color: var(--color-gray-200);
   }
   .bg-gray-600\/40 {
     background-color: color-mix(in srgb, oklch(44.6% 0.03 256.802) 40%, transparent);
@@ -926,26 +915,6 @@
   .ease-in-out {
     --tw-ease: var(--ease-in-out);
     transition-timing-function: var(--ease-in-out);
-  }
-  .select-none {
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  .peer-checked\:bg-clickable {
-    &:is(:where(.peer):checked ~ *) {
-      background-color: var(--color-clickable);
-    }
-  }
-  .peer-checked\:font-bold {
-    &:is(:where(.peer):checked ~ *) {
-      --tw-font-weight: var(--font-weight-bold);
-      font-weight: var(--font-weight-bold);
-    }
-  }
-  .peer-checked\:text-white {
-    &:is(:where(.peer):checked ~ *) {
-      color: var(--color-white);
-    }
   }
   .odd\:bg-white {
     &:nth-child(odd) {
@@ -1181,9 +1150,9 @@
       max-width: var(--container-xl);
     }
   }
-  .md\:text-\[8vw\] {
+  .md\:text-\[7vw\] {
     @media (width >= 48rem) {
-      font-size: 8vw;
+      font-size: 7vw;
     }
   }
   .xl\:w-1\/4 {
