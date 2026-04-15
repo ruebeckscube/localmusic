@@ -1,4 +1,5 @@
 from enum import Enum
+from itertools import zip_longest
 import json
 from django.core.validators import URLValidator
 from django.forms import ClearableFileInput, Field, ValidationError
@@ -47,7 +48,9 @@ class SocialsLinksWidget(Input):
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         l = json.loads(value)
-        context['widget']['socials_links'] = l + [('','')] * (self.num_links - len(l))
+        links = l + [('','')] * (self.num_links - len(l))
+        placeholders = (("Website", "https://band-site.com"), ("Email", "mailto:address@mail.com"))
+        context['widget']['socials_links'] =  zip_longest(links, placeholders, fillvalue=('',''))
         return context
 
 

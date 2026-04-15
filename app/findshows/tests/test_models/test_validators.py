@@ -10,6 +10,9 @@ class LabeledURLsValidatorTests(TestCase):
         except ValidationError:
             self.fail("ValidationError raised for valid input")
 
+    def test_mailto(self):
+        LabeledURLsValidator()([('Label 1', 'mailto:user@email.com')])
+
     def test_no_display_name(self):
         with self.assertRaises(ValidationError):
             LabeledURLsValidator()([('Label', 'http://www.testurl.com'), ('', 'http://www.testurl.com')])

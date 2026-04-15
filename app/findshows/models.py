@@ -12,7 +12,7 @@ from django.db import models
 from django.db.models import Q
 from django.db.models.fields.files import ImageFieldFile
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.core.validators import URLValidator
+from django.core.validators import EmailValidator, URLValidator
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.conf import settings
@@ -97,9 +97,10 @@ class LabeledURLsValidator(URLValidator):
                 raise ValidationError("Internal parsing error. Please report.", code=self.code, params={"value": value})
             if not tup[0]:
                 raise ValidationError("Display name is required.", code=self.code, params={"value": value})
-            if "://" not in tup[1]:
-                raise ValidationError("URL must include protocol (https://)")
-            super().__call__(tup[1])
+            if tup[1][:7] == "mailto:":
+                EmailValidator(tup[1][7:])
+            else:
+                URLValidator(schemes=('http', 'https'))(tup[1])
 
 
 class MusicBrainzArtist(models.Model):
@@ -155,7 +156,7 @@ class Artist(CreationTrackingMixin):
 
     # List of tuples [ (display_name, url), ... ]
     socials_links=models.JSONField(default=list, blank=True,
-                                   help_text="Enter links to socials, website, etc.")
+                                   help_text="Enter links to socials, website, email, etc. Include protocol (https://, http://, or mailto:)")
 
     similar_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist, verbose_name="Sounds like",
                                                        help_text="Select 3 artists whose fans might also like to listen to this artist. If an artist doesn't appear on the list, it means MusicBrainz doesn't have any similarity data on them; please pick another while their database grows!")

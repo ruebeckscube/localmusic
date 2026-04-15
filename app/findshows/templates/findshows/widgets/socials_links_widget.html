@@ -3,10 +3,12 @@
         <th class="font-light text-lg"> Display name </th>
         <th class="font-light text-lg w-full"> URL </th>
     </tr>
-    {% for display_name, url in widget.socials_links %} {# num_links is included in data prep (fill w empty strings) #}
+    {% for link, placeholder in widget.socials_links %} {# num_links is included in data prep (fill w empty strings) #}
         <tr>
-            <td> <input class="textinput" name="{{widget.name}}_display_name" type="text" value="{{ display_name }}"> </td>
-            <td> <input class="textinput w-full" name="{{widget.name}}_url" type="url" value="{{ url }}"> </td>
+            <td> <input class="textinput" name="{{widget.name}}_display_name" type="text" value="{{ link.0 }}"
+                        placeholder="{{ placeholder.0 }}"> </td>
+            <td> <input class="textinput w-full" name="{{widget.name}}_url" type="url" value="{{ link.1 }}"
+                        placeholder="{{ placeholder.1 }}"> </td>
         </tr>
     {% endfor %}
 </table>

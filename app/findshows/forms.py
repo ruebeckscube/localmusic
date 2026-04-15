@@ -88,7 +88,7 @@ artist/playlist links work as well. """
 
 class ArtistEditForm(DefaultStylingModelForm):
     listen_links=EmbedLinkField(num_links=3, help_text=LISTEN_LINK_HELP,
-                                placeholder="https://cool-artist.bandcamp.com/track/cool-track-title")
+                                placeholder="https://artist.bandcamp.com/track/track-title")
     youtube_links=EmbedLinkField(num_links=2, required=False,
                                  help_text="Youtube videos will be embedded on your artist page.",
                                  placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
