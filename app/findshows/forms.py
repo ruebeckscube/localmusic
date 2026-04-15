@@ -7,13 +7,14 @@ from django.contrib.auth.forms import BaseUserCreationForm
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
 from django.db import models
+from django.forms.widgets import TimeInput
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 from multiselectfield.forms.fields import MultiSelectFormField
 from captcha.fields import CaptchaField
 
 from findshows.models import MAX_UPLOADED_IMAGE_SIZE_IN_MB, Artist, Concert, ConcertTags, LabeledURLsValidator, ListenLink, MusicBrainzArtist, UserProfile, Venue, YoutubeLink
-from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, EmbedLinkField, ImageInput, SocialsLinksWidget, MusicBrainzArtistSearchWidget, StyledSelect, TimePickerField, VenuePickerWidget
+from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, EmbedLinkField, ImageInput, SocialsLinksWidget, MusicBrainzArtistSearchWidget, StyledSelect, VenuePickerWidget
 
 User = get_user_model()
 
@@ -25,6 +26,7 @@ def add_default_styling_to_fields(fields):
         MultiSelectFormField: 'accent-clickable',
         forms.BooleanField: 'accent-clickable mr-auto',
         CaptchaField: 'textinput',
+        forms.TimeField: 'textinput',
     }
     for field in fields:
         field.widget.attrs.update({
@@ -181,9 +183,6 @@ class ArtistEditForm(DefaultStylingModelForm):
 
 class ConcertForm(DefaultStylingModelForm):
     date = DatePickerField()
-    doors_time = TimePickerField(required=False)
-    start_time = TimePickerField()
-    end_time = TimePickerField(required=False)
     # NOT a model field, we parse this and save to the artists field through the SetOrder through-model
     bill = forms.JSONField(widget=BillWidget, help_text="""The artists will be
     listed in the order they're entered; the artist performing first should be
@@ -198,6 +197,9 @@ class ConcertForm(DefaultStylingModelForm):
             "venue": VenuePickerWidget,
             "poster": ImageInput,
             "ages": StyledSelect,
+            "doors_time": TimeInput({'type': 'time'}, format='%H:%M'),
+            "start_time": TimeInput({'type': 'time'}, format='%H:%M'),
+            "end_time": TimeInput({'type': 'time'}, format='%H:%M'),
         }
 
     def __init__(self, *args, **kwargs):

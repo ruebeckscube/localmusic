@@ -13,15 +13,9 @@ from findshows.tests.test_helpers import TestCaseHelpers
 class ConcertViewTestHelpers(TestCaseHelpers):
     def concert_post_request(self, artist):
         return {'date': (timezone_today() + datetime.timedelta(3)).isoformat(),
-                'doors_time_hour': ['8'],
-                'doors_time_minutes': ['00'],
-                'doors_time_ampm': ['pm'],
-                'start_time_hour': ['8'],
-                'start_time_minutes': ['30'],
-                'start_time_ampm': ['pm'],
-                'end_time_hour': ['11'],
-                'end_time_minutes': ['30'],
-                'end_time_ampm': ['pm'],
+                'doors_time': ['20:00'],
+                'start_time': ['20:30'],
+                'end_time': ['23:30'],
                 'venue': [str(self.StaticVenues.DEFAULT_VENUE.value)],
                 'ticket_link': ['https://www.thisisthevalueforconcertpostrequests.com'],
                 'ticket_description': ['$10 suggested'],
