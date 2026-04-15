@@ -12,26 +12,22 @@ services:
     restart: always
 
   proxy:
-    image: nginx:latest
+    image: caddy
     ports:
       - 80:80
       - 443:443
+      - 443:443/udp
+    cap_add:
+      - NET_ADMIN
     volumes:
-      - ../config/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ../certbot/www:/var/www/certbot/:ro
-      - ../certbot/conf:/etc/nginx/ssl/:ro
+      - ../config:/etc/caddy
+      - caddy_data:/data
+      - caddy_config:/config
       - static:/static:ro
       - media:/media:ro
     depends_on:
       - web
     restart: always
-
-  certbot:
-    image: certbot/certbot:latest
-    profiles: ["certbot"]
-    volumes:
-      - ../certbot/www:/var/www/certbot/:rw
-      - ../certbot/conf:/etc/letsencrypt/:rw
 
   db:
     extends:
@@ -55,3 +51,5 @@ volumes:
    postgres_data:
    static:
    media:
+   caddy_data:
+   caddy_config:

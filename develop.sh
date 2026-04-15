@@ -45,15 +45,15 @@ invoke_manage() {
 }
 
 update_config() {
-    echo "Updating nginx config file from ${1:-config/nginx.template}"
-    sed "s=TEMPLATE_HOST_NAME=$HOST_NAME=g" < "${1:-config/nginx.template}" > config/nginx.conf
+    echo "Updating caddy config file from ${1:-config/Caddyfile.template}"
+    sed "s=TEMPLATE_HOST_NAME=$HOST_NAME=g" < "${1:-config/Caddyfile.template}" > config/Caddyfile
 
     echo "Updating logrotate config from config/logrotate.template"
     sed "s=TEMPLATE_DIRECTORY_NAME=$(pwd)=g" < config/logrotate.template > config/logrotate.conf
 }
 
 setup_initial_server() {
-    update_config "config/nginx_temp_cert.template"
+    update_config
     mkdir "$BACKUP_DIR"
     mkdir logs
 
@@ -62,18 +62,10 @@ setup_initial_server() {
     sleep 3
     invoke_docker_compose run --rm -u root web sh -c "chown -R appuser:appuser media/ && chown -R appuser:appuser staticfiles/"
 
-    echo "Setting up SSL certificates"
-    invoke_docker_compose up -d proxy
-    invoke_docker_compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ -d "$HOST_NAME" -d "www.$HOST_NAME"
-    invoke_docker_compose down proxy
-
-    update_config "config/nginx.template"
-
     invoke_docker_compose up -d
     echo "Initialization complete; server started at $HOST_NAME. It will now take 10 minutes or more to download MusicBrainz data."
 
     invoke_manage update_musicbrainz_data
-
 }
 
 dump_data() {
@@ -208,8 +200,6 @@ weekly_tasks() {
 biweekly_tasks() {
     echo
     date -Iseconds
-    echo "RENEWING SSL CERTICFICATES"
-    invoke_docker_compose run --rm certbot renew
     echo "UPDATING MUSICBRAINZ DATA"
     invoke_manage update_musicbrainz_data
 }

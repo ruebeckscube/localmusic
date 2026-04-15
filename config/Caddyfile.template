@@ -1,0 +1,17 @@
+{
+    admin off
+}
+
+TEMPLATE_HOST_NAME, www.TEMPLATE_HOST_NAME {
+    handle_path /static/* {
+		root * /static/
+		file_server
+    }
+
+    handle_path /media/* {
+        root * /media/
+    }
+
+    reverse_proxy web:8000
+
+}

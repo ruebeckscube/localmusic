@@ -7,7 +7,7 @@
    beginner-friendly setup. (note the ufw part is irrelevant to a Docker
    installation, see
    [here](https://docs.docker.com/engine/network/packet-filtering-firewalls/#docker-and-ufw).)
-   
+
 2. Get a domain, and set an A record with bare domain name pointing to IP. Set
    up a CNAME record to redirect www to bare domain.
 
@@ -25,7 +25,7 @@
    ```
    cd localmusic
    ```
-   
+
 6. Copy `config/example.env` to a new file named `.env` (in the main project directory):
    ```
    cp config/example.env .env
@@ -35,23 +35,23 @@
 7. Run the initialization script, which will take a solid ~10 minutes to
    download MusicBrainz data:
    ```
-   ./develop.sh init 
+   ./develop.sh init
    ```
    This will perform one-time tasks like
-   database setup, SSL certificates, and nginx configuration, as well as
+   database setup and proxy server configuration, as well as
    building and starting all Docker services. It will take a few minutes.
-   Follow any prompts from certbot/letsencrypt; when they ask for your email
+   Follow any prompts from letsencrypt; when they ask for your email
    address, this is for warnings about SSL certificate expiration, but it's
    optional (they will auto-renew).
-   
+
 8. Create the initial user for the website:
    ```./develop.sh manage createsuperuser```
-   
+
 9. Set up cron jobs;Copy the contents
    of crontab.env into your crontab and edit file paths appropriately. Please
    edit the "biweekly\_tasks" line to run on different days of the month; e.g.
    5,19 rather than 1,14 (to respect MusicBrainz resources).
-   
+
 10. From here, you can login to your account in your browser and refer to the
     [mod guide](mod-guide.md) to continue setting up the website.
 
@@ -87,7 +87,7 @@ to access the django management system. For other helpers, see the last few line
    ./develop.sh manage update_musicbrainz_data
    ```
    And the server should be up and running on localhost:8000
-   
+
 5. Create the initial user for the website. (Note this is NOT the default Django
    createsuperuser)
    ```./develop.sh manage add_superuser```
