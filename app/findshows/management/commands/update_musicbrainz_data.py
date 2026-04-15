@@ -3,7 +3,6 @@ import requests
 import tarfile
 import itertools
 import re
-import zstandard
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -42,14 +41,12 @@ class Command(BaseCommand):
 
         with requests.get(stats_url, stream=True) as response:
             response.raise_for_status()
-            unzstd = zstandard.ZstdDecompressor()
-            with unzstd.stream_reader(response.raw) as stream:
-                with tarfile.open(fileobj=stream, mode="r|") as tar:
-                    for member in tar:
-                        if member.isfile() and member.path == f"{folder_name}/lbdump/statistics/artists_all_time.jsonl":
-                            self.stdout.write(f"\nProcessing {member.path}")
-                            with tar.extractfile(member) as stats_jsonl_file:
-                                return self.get_lb_stats_from_filestream(stats_jsonl_file)
+            with tarfile.open(fileobj=response.raw, mode="r|*") as tar:
+                for member in tar:
+                    if member.isfile() and member.path == f"{folder_name}/lbdump/statistics/artists_all_time.jsonl":
+                        self.stdout.write(f"\nProcessing {member.path}")
+                        with tar.extractfile(member) as stats_jsonl_file:
+                            return self.get_lb_stats_from_filestream(stats_jsonl_file)
 
 
     def mb_artist_from_line(self, line):
