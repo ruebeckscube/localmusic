@@ -13,12 +13,12 @@ function setup_svg(svg, p) {
 ////////////////////////////////////
 function rough_rect_helper(svg, p, options) {
   let [rough_svg, d] = setup_svg(svg, p)
-  svg.appendChild(rough_svg.rectangle(p, p, d.width, d.height, options));
+  svg.replaceChildren(rough_svg.rectangle(p, p, d.width, d.height, options));
 }
 
 function rough_ellipse_helper(svg, p, options) {
   let [rough_svg, d] = setup_svg(svg, p)
-    svg.appendChild(rough_svg.ellipse(p + d.width/2, p + d.height/2, d.width * .9, d.height * .9, options));  
+    svg.replaceChildren(rough_svg.ellipse(p + d.width/2, p + d.height/2, d.width * .9, d.height * .9, options));
 }
 
 function rough_bg_rect(svg) {

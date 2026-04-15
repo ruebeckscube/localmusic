@@ -1,6 +1,8 @@
 {% load findshows_tags %}
 
-<div class="@container my-2 z-0 relative w-full">
+<div class="@container my-2 z-0 relative w-full"
+     x-data="{show_details: false}"
+>
     <div class="@max-4xl:w-fit mx-auto relative">
         <svg class="rough-bg-rect absolute w-full h-full @max-4xl:max-w-[670px] -z-10" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio='none'></svg>
 
@@ -20,11 +22,16 @@
                                   @md:max-h-90" />
                     </a>
                 </div>
+                <div class="@md:hidden mx-auto link mb-3"
+                     @click="show_details=!show_details;$nextTick(() => add_rough_to_node($root))"
+                     x-text="show_details ? 'hide details ▼' : 'show details ▲'">
+                </div>
                 <!-- Artists with similar artists and players -->
                 <div class="grid justify-around align-center items-center
                             grid-cols-1
                             @md:grid-cols-2 @md:w-full @md:@max-4xl:order-last @md:@max-4xl:px-3
-                            @4xl:w-[55%]">
+                            @4xl:w-[55%]"
+                     :class="show_details ? '' : '@max-md:hidden'">
                     {% for artist in concert.sorted_artists %}
                         <div class="text-center pb-2 @md:text-right @md:mr-4">
                             <div><a href="{% url 'findshows:view_artist' artist.pk %}"
@@ -43,9 +50,9 @@
                     {% endfor %}
                 </div>
 
-                <div class="@md:w-1/2 @md:@max-4xl:px-5 @4xl:w-1/5
-                            @max-md:max-h-96
-                            flex flex-col justify-center">
+                <!-- Details about the concert-->
+                <div class="@md:w-1/2 @md:@max-4xl:px-5 @4xl:w-1/5"
+                     :class="show_details ? '' : '@max-md:hidden'">
                     {% include "findshows/partials/concert_info.html" %}
                 </div>
 
