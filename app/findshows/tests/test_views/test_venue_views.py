@@ -12,6 +12,8 @@ class VenueSearchTests(TestCaseHelpers):
     def test_handles_missing_params(self):
         response = self.client.get(reverse("findshows:venue_search_results"))
         self.assertEqual(response.content, b'')
+        response = self.client.get(reverse("findshows:venue_search_results"), data={"notaparam": 'heehee'})
+        self.assertEqual(response.content, b'')
 
     def test_search(self):
         bottle = self.create_venue(name="Empty Bottle")

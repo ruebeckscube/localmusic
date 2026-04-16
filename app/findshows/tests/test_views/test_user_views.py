@@ -260,6 +260,14 @@ class VerifyEmailTests(TestCaseHelpers):
         self.assertIn('error', response.context)
         self.assertIn('Invalid link.', response.context['error'])
 
+    def test_nonnumeric_id_doesnt_error(self):
+        user_profile = self.create_user_profile(email_is_verified=False, password='1234')
+        self.client.login(username=user_profile.user.email, password='1234')
+
+        response = self.client.post(reverse('verify_email', query={'id': 'sant2b4oehu', 'code': 'sasoentuhanhteo'}))
+
+        self.assertIn('Invalid link.', response.context['error'])
+
 
     def test_invite_id_doesnt_exist(self):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
@@ -268,7 +276,7 @@ class VerifyEmailTests(TestCaseHelpers):
         response = self.client.get(reverse('verify_email',
                                    query={'id': '123', 'code': 'ESOSdtoeia928y'}))
         self.assertIn('error', response.context)
-        self.assertIn('Could not find', response.context['error'])
+        self.assertIn('Invalid link', response.context['error'])
 
 
     def test_bad_invite_code(self):

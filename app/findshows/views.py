@@ -8,7 +8,7 @@ from pymemcache.client.base import Client
 from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -200,7 +200,10 @@ def from_link(request, pk=None):
     pk = request.GET.get('from_pk') or pk
     if view_name in ('view_artist', 'view_concert'):
         if pk:
-            return reverse(f'findshows:{view_name}', args=[pk])
+            try:
+                return reverse(f'findshows:{view_name}', args=[pk])
+            except NoReverseMatch:
+                pass
     elif view_name in ('artist_dashboard', ):
         return reverse(f'findshows:{view_name}')
     # Defaults
@@ -263,11 +266,14 @@ def edit_artist(request, pk=None):
 
 def artist_search_results(request):
     # there are multiple artist search fields on the bill widget; idx is the index of the search field
-    if not (request.GET and request.GET["artist-search"] and request.GET["idx"]):
+    if not (request.GET and request.GET.get("artist-search") and request.GET.get("idx")):
         return HttpResponse("")
 
     keywords = request.GET["artist-search"].split()
-    idx = int(request.GET["idx"])
+    try:
+        idx = int(request.GET["idx"])
+    except ValueError:
+        return HttpResponse("")
 
     search_results = Artist.objects.filter(reduce(and_, (Q(name__icontains=k) for k in keywords))
     ).exclude(created_by__artist_verification_status=ArtistVerificationStatus.DEVERIFIED
@@ -514,7 +520,7 @@ def cancel_concert(request, pk, uncancel=False):
 #################
 
 def venue_search_results(request):
-    if not (request.GET and request.GET["venue-search"]):
+    if not (request.GET and request.GET.get("venue-search")):
         return HttpResponse("")
 
     keywords = request.GET['venue-search'].split()
@@ -571,7 +577,7 @@ def create_venue(request):
 
 
 def musicbrainz_artist_search_results(request):
-    if not (request.GET and request.GET["mb_search"]):
+    if not (request.GET and request.GET.get("mb_search")):
         return HttpResponse("")
 
     q = request.GET['mb_search']

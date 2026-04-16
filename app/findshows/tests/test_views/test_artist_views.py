@@ -267,11 +267,14 @@ class CreateArtistTests(ArtistViewTestHelpers):
 class EditArtistTests(ArtistViewTestHelpers):
     def test_edit_artist_successful_GET(self, *args):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        response = self.client.get(reverse("findshows:edit_artist", args=(self.StaticArtists.LOCAL_ARTIST.value,)))
+        response = self.client.get(reverse("findshows:edit_artist", args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+                                   data={'from': 'view_artist'})
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/edit_artist.html')
         self.assertEqual(response.context['form'].instance.pk, self.StaticArtists.LOCAL_ARTIST.value)
-        self.assertNotIn('This artist listing has not been filled out', str(response.content))
+        content = str(response.content)
+        self.assertNotIn('This artist listing has not been filled out', content)
+        self.assertIn(reverse('findshows:view_artist', args=(self.StaticArtists.LOCAL_ARTIST.value,)), content)
 
 
     def test_edit_artist_successful_POST(self, *args):
@@ -296,9 +299,19 @@ class EditArtistTests(ArtistViewTestHelpers):
         self.assertIn('This artist listing has not been filled out', str(response.content))
 
 
+    def test_cancel_link_bad_inputs(self, *args):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        response = self.client.get(reverse("findshows:edit_artist", args=(self.StaticArtists.LOCAL_ARTIST.value,)),
+                                   data={'from': 'view_artist', 'from_pk': 'notanumber'})
+        self.assertIn(reverse('findshows:artist_dashboard'), str(response.content))
+
+
+
 class ArtistSearchResultsTests(TestCaseHelpers):
     def test_handles_missing_params(self):
         response = self.client.get(reverse("findshows:artist_search_results"))
+        self.assertEqual(response.content, b'')
+        response = self.client.get(reverse("findshows:artist_search_results"), data={'notaparam':'haha'})
         self.assertEqual(response.content, b'')
 
     def test_search(self):
@@ -531,7 +544,7 @@ class LinkArtistTests(TestCaseHelpers):
                                    query_params={'id': '123', 'code': 'ESOSdtoeia928y'})
         self.assertTemplateUsed(response, 'findshows/pages/artist_link_failure.html')
         self.assertIn('error', response.context)
-        self.assertIn('Could not find', response.context['error'])
+        self.assertIn('Invalid link', response.context['error'])
 
 
     def test_bad_invite_code(self):

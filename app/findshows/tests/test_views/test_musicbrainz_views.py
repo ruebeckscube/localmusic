@@ -6,6 +6,8 @@ class MusicbrainzArtistSearchTests(TestCaseHelpers):
     def test_handles_missing_params(self):
         response = self.client.get(reverse("findshows:musicbrainz_artist_search_results"))
         self.assertEqual(response.content, b'')
+        response = self.client.get(reverse("findshows:musicbrainz_artist_search_results"), data={"notaparam": "lol"})
+        self.assertEqual(response.content, b'')
 
 
     def test_search(self):
