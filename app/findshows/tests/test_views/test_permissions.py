@@ -1,6 +1,6 @@
 '''Tests permissions for all urls'''
 from itertools import chain
-from django.urls import reverse
+from django.urls import URLPattern, URLResolver, get_resolver, reverse
 from findshows.models import ArtistVerificationStatus
 from findshows.tests.test_helpers import TestCaseHelpers
 
@@ -225,3 +225,41 @@ class PermissionsTests(TestCaseHelpers):
         self.client.login(email="admin@admin.net", password='12345')
 
         self.assert_404s(chain(PUBLIC_URLS_WITH_PK, ARTIST_URLS_WITH_PK, MOD_URLS_WITH_PK), self.pk*3)
+
+
+    def all_url_patterns(self, url_patterns=None, namespace=""):
+        """
+        Yield tuples of (URLPattern, namespace) for all URLPattern objects in the
+        given Django URLconf, or the default one if none is provided.
+        """
+        if url_patterns is None:
+            url_patterns = get_resolver().url_patterns
+
+        for pattern in url_patterns:
+            if isinstance(pattern, URLPattern):
+                yield pattern, namespace
+            elif isinstance(pattern, URLResolver):
+                if pattern.namespace:
+                    if namespace:
+                        namespace = f"{namespace}:{pattern.namespace}"
+                    else:
+                        namespace = pattern.namespace
+                yield from self.all_url_patterns(pattern.url_patterns, namespace)
+            else:
+                raise TypeError(f"Unexpected pattern type: {type(pattern)} in {namespace}")
+
+
+    def test_all_urls_accounted_for(self):
+        all_here = chain(
+            PUBLIC_URLS_NO_PK,
+            PUBLIC_URLS_WITH_PK,
+            LOGGED_IN_URLS,
+            ARTIST_URLS_NO_PK,
+            ARTIST_URLS_WITH_PK,
+            MOD_URLS_NO_PK,
+            MOD_URLS_WITH_PK,
+        )
+        all_existing = (pattern.name
+                        for pattern, namespace in self.all_url_patterns()
+                        if namespace=="findshows")
+        self.assert_equal_as_sets(all_here, all_existing)
