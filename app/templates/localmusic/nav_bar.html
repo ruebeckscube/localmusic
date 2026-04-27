@@ -5,7 +5,7 @@
     <div class="self-center
                 text-left text-2xl font-stretch-[30%] font-thin
                 sm:text-center sm:font-stretch-100% sm:font-extralight">
-        <a href="{% url 'findshows:home' %}">{% custom_text 'ST' %}</a>
+        <a href="{% url 'findshows:home' %}">{{ SITE_TITLE }}</a>
     </div>
     <div class="grow flex justify-end min-w-0">
         {% if user.is_authenticated %}
@@ -58,7 +58,7 @@
 
 {% custom_text 'BR' as banner_text %}
 {% if banner_text %}
-    <div class="banner">
+    <div class="banner markdown">
         {{ banner_text }}
     </div>
 {% endif %}

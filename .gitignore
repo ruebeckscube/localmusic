@@ -93,3 +93,4 @@ notes.org
 /package.json
 /backups/
 /config/logrotate.conf
+/app/emails/

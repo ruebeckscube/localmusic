@@ -204,6 +204,16 @@ biweekly_tasks() {
     invoke_manage update_musicbrainz_data
 }
 
+open_email() {
+    # Opens the most recent email from emails directory
+    # (.env -> EMAIL_BACKEND must be set to FILEBASED)
+    EMAIL_DIR="app/emails/"
+    latest="$(ls -Art $EMAIL_DIR | tail -n 1)"
+    name="$EMAIL_DIR""${latest%.eml}"
+    mv "$EMAIL_DIR""$latest" "$name.eml"
+    open "$name.eml"
+}
+
 # Arguments following "manage" are passed to manage.py inside a new web container.
 if [ "$1" = "manage" ]; then shift
     echo "Running manage.py..."
@@ -235,6 +245,8 @@ elif [ "$1" = "psql" ]; then
     connect_to_database
 elif [ "$1" = "tailwind" ]; then
     tailwind
+elif [ "$1" = "open-email" ]; then
+    open_email
 
 else
     echo "Running docker-compose with the given command..."

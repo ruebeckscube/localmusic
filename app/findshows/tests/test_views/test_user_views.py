@@ -190,7 +190,7 @@ class CreateAccountTests(TestCaseHelpers):
 
 
     @patch('findshows.email.logger')
-    @patch("findshows.email.EmailMessage.send")
+    @patch("findshows.email.EmailMultiAlternatives.send")
     def test_verification_email_fails(self, mock_send_mail, mock_logger):
         mock_send_mail.side_effect = SMTPException()
         data = create_account_post_request()  # No sendartistinfo flag
@@ -358,7 +358,7 @@ class ResendEmailVerificationTests(TestCaseHelpers):
 
 
     @patch('findshows.email.logger')
-    @patch("findshows.email.EmailMessage.send")
+    @patch("findshows.email.EmailMultiAlternatives.send")
     def test_verification_email_fails(self, mock_send_mail, mock_logger):
         mock_send_mail.side_effect = SMTPException()
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')

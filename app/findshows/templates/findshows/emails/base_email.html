@@ -1,0 +1,43 @@
+{% load mjml %}
+
+{% mjml %}
+<mjml>
+    <mj-head>
+        <mj-title>{{ SITE_TITLE }}</mj-title>
+        <mj-preview>{{ email_header }}</mj-preview>
+        <mj-attributes>
+            <mj-text align="left" font-family="Courier New" font-size="20px"/>
+        </mj-attributes>
+        <mj-style>
+            a {
+              color: #9719ea;
+              text-decoration: inherit;
+              font-weight: bold;
+            }
+        </mj-style>
+        <mj-raw>
+            <meta name="color-scheme" content="light">
+            <meta name="supported-color-schemes" content="light">
+        </mj-raw>
+    </mj-head>
+
+    <mj-body width="800px" background-color="#F9F9ED">
+        {# Header #}
+        <mj-section>
+            <mj-column>
+                <mj-text align="center" font-size="26px">
+                    <a href={{ SITE_LINK }}>{{ SITE_TITLE }}</a>
+                </mj-text>
+                <mj-text>{{ email_header }}</mj-text>
+            </mj-column>
+        </mj-section>
+
+        {# Content #}
+        {% with "#ebe7eb" as bg_section %}
+            {% block content %}
+            {% endblock %}
+        {% endwith %}
+
+    </mj-body>
+</mjml>
+{% endmjml %}

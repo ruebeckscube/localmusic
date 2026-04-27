@@ -12,6 +12,7 @@ urlpatterns = [
     path('about/', TemplateView.as_view(template_name='findshows/pages/about.html'), name="about"),
     path('artist_faq/', TemplateView.as_view(template_name='findshows/pages/artist_faq.html'), name="artist_faq"),
     path('contact/', views.contact, name="contact"),
+    path('terms_of_service/', TemplateView.as_view(template_name='findshows/pages/terms_of_service.html'), name="terms_of_service"),
 
     path("artist/<int:pk>", views.view_artist, name="view_artist"),
     path("artist/<int:pk>/edit", views.edit_artist, name="edit_artist"),
@@ -29,6 +30,7 @@ urlpatterns = [
     path("htmx/mod_daily_digest", views.mod_daily_digest, name="mod_daily_digest"),
     path("htmx/mod_queue", views.mod_queue, name="mod_queue"),
     path("htmx/mod_outstanding_invites", views.mod_outstanding_invites, name="mod_outstanding_invites"),
+    path("htmx/mod_text_customization", views.mod_text_customization, name="mod_text_customization"),
     path("htmx/venue_verification/<int:pk>", views.venue_verification, name="venue_verification"),
     path("htmx/artist_verification/<int:pk>", views.artist_verification_buttons, name="artist_verification_buttons"),
     path("htmx/resend_invite/<int:pk>", views.resend_invite, name="resend_invite"),

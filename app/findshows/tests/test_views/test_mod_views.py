@@ -7,35 +7,38 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 
-from findshows.models import ArtistVerificationStatus
+from findshows.forms import CustomTextFormSet
+from findshows.models import ArtistVerificationStatus, CustomText, CustomTextTypes
 from findshows.tests.test_helpers import TestCaseHelpers
 
 
-class ModDailyDigestTests(TestCaseHelpers):
-    def test_defaults_to_today(self):
+class ModTestCaseHelpers(TestCaseHelpers):
+    def setUp(self) -> None:
         self.login_static_user(self.StaticUsers.MOD_USER)
+        return super().setUp()
+
+
+class ModDailyDigestTests(ModTestCaseHelpers):
+    def test_defaults_to_today(self):
         artist = self.create_artist(created_at=timezone_today())
         response = self.client.get(reverse("findshows:mod_daily_digest"))
         self.assertIn(artist, response.context['artists'])
 
     def test_future_date_defaults_to_today(self):
-        self.login_static_user(self.StaticUsers.MOD_USER)
         artist = self.create_artist(created_at=timezone_today())
         tomorrow = timezone_today() + timedelta(1)
         response = self.client.get(reverse("findshows:mod_daily_digest"), {'date': tomorrow.isoformat()})
         self.assertIn(artist, response.context['artists'])
 
     def test_filters_date(self):
-        self.login_static_user(self.StaticUsers.MOD_USER)
         yesterday = timezone_today() - timedelta(1)
         artist = self.create_artist(created_at=yesterday)
         response = self.client.get(reverse("findshows:mod_daily_digest"), {'date': yesterday.isoformat()})
         self.assertIn(artist, response.context['artists'])
 
 
-class ModQueueTests(TestCaseHelpers):
+class ModQueueTests(ModTestCaseHelpers):
     def test_filters_records(self):
-        self.login_static_user(self.StaticUsers.MOD_USER)
         unverified_profile = self.create_user_profile(artist_verification_status=ArtistVerificationStatus.UNVERIFIED)
         verified_profile = self.create_user_profile(artist_verification_status=ArtistVerificationStatus.VERIFIED)
         deverified_profile = self.create_user_profile(artist_verification_status=ArtistVerificationStatus.DEVERIFIED)
@@ -52,25 +55,63 @@ class ModQueueTests(TestCaseHelpers):
                                   [unverified_venue])
 
 
-class ModOutstandingInviteTests(TestCaseHelpers):
+class ModOutstandingInviteTests(ModTestCaseHelpers):
     def test_filters_records(self):
-        self.login_static_user(self.StaticUsers.MOD_USER)
         ali = self.create_artist_linking_info()[0]
         response = self.client.get(reverse("findshows:mod_outstanding_invites"))
         self.assert_equal_as_sets(response.context['artist_linking_infos'],
                                   [ali])
 
 
-class VenueVerificationTests(TestCaseHelpers):
+class TextCustomizationTests(ModTestCaseHelpers):
+    def post_data(self):
+        num_texts = len(CustomTextTypes.values)
+        data = {
+         'form-TOTAL_FORMS': [str(num_texts)],
+         'form-INITIAL_FORMS': [str(num_texts)],
+         'form-MIN_NUM_FORMS': ['0'],
+         'form-MAX_NUM_FORMS': ['1000'],
+        }
+        for i in range(num_texts):
+            data.update({f'form-{i}-id': [str(i+1)],
+                         f'form-{i}-text': ["this is the text content"]})
+        return data
+
+
+    def test_GET(self):
+        response = self.client.get(reverse("findshows:mod_text_customization"))
+        self.assert_blank_form(response.context['formset'], CustomTextFormSet)
+        self.assertFalse(response.context['saved'])
+        self.assertIn("Your weekly local music recs", str(response.text))  # defaults from migration 0005
+
+
+    def test_POST_successful(self):
+        response = self.client.post(reverse("findshows:mod_text_customization"), data=self.post_data())
+        self.assertTrue(response.context['saved'])
+        custom_texts = CustomText.objects.all()
+        self.assertEqual(len(custom_texts), 6) # This will need to be updated as types are added
+        for custom_text in custom_texts:
+            self.assertEqual(custom_text.text, "this is the text content")
+
+
+    def test_POST_errors(self):
+        data = self.post_data()
+        data.pop('form-2-id') # Not a realistic error just forcing one
+        response = self.client.post(reverse("findshows:mod_text_customization"), data=data)
+        self.assertFalse(response.context['saved'])
+        for custom_text in CustomText.objects.all():
+            self.assertNotEqual(custom_text.text, "this is the text content")
+        self.assertIn('id', response.context['formset'].errors[2]) # Matching form-2-id
+
+
+class VenueVerificationTests(ModTestCaseHelpers):
     def test_no_POST(self):
-        self.login_static_user(self.StaticUsers.MOD_USER)
         venue = self.create_venue(is_verified=False)
         self.client.get(reverse("findshows:venue_verification", args=(venue.pk,)))
         venue.refresh_from_db()
         self.assertFalse(venue.is_verified)
 
     def test_verify(self):
-        self.login_static_user(self.StaticUsers.MOD_USER)
         venue = self.create_venue(is_verified=False)
         self.client.post(reverse("findshows:venue_verification", args=(venue.pk,)), {
             'action': 'verify'
@@ -80,7 +121,6 @@ class VenueVerificationTests(TestCaseHelpers):
         self.assertFalse(venue.declined_listing)
 
     def test_decline(self):
-        self.login_static_user(self.StaticUsers.MOD_USER)
         venue = self.create_venue(is_verified=False)
         self.client.post(reverse("findshows:venue_verification", args=(venue.pk,)), {
             'action': 'decline'
@@ -90,17 +130,17 @@ class VenueVerificationTests(TestCaseHelpers):
         self.assertTrue(venue.declined_listing)
 
 
-class ArtistVerificationButtonsTests(TestCaseHelpers):
+class ArtistVerificationButtonsTests(ModTestCaseHelpers):
     def test_no_POST(self):
-        self.login_static_user(self.StaticUsers.MOD_USER)
         user_profile = self.create_user_profile(artist_verification_status=ArtistVerificationStatus.UNVERIFIED)
         self.client.get(reverse("findshows:artist_verification_buttons", args=(user_profile.pk,)))
         user_profile.refresh_from_db()
         self.assertEqual(user_profile.artist_verification_status, ArtistVerificationStatus.UNVERIFIED)
 
     def test_verify(self):
-        mod_profile = self.login_static_user(self.StaticUsers.MOD_USER)
-        user_profile = self.create_user_profile(artist_verification_status=ArtistVerificationStatus.UNVERIFIED)
+        mod_profile = self.get_static_instance(self.StaticUsers.MOD_USER)
+        user_profile = self.create_user_profile(artist_verification_status=ArtistVerificationStatus.UNVERIFIED,
+                                                email="user_being_verified@notified.com")
         ali1 = self.create_artist_linking_info(email='thisshouldntmatch@anyone.com', created_by=user_profile)
         ali2 = self.create_artist_linking_info(email='thisshouldntmatch@either.com', created_by=user_profile)
         ali3 = self.create_artist_linking_info(email='', created_by=user_profile) # blank email causes error
@@ -113,12 +153,13 @@ class ArtistVerificationButtonsTests(TestCaseHelpers):
         self.assertEqual(user_profile.artist_verification_status, ArtistVerificationStatus.VERIFIED)
         self.assertEqual(user_profile.given_artist_access_by, mod_profile)
         self.assert_equal_as_sets(('thisshouldntmatch@anyone.com', 'thisshouldntmatch@either.com'),
-                                  (msg.to[0] for msg in mail.outbox))
+                                  (msg.to[0] for msg in mail.outbox if msg.subject=="Artist profile invite"))
+        self.assert_equal_as_sets(("user_being_verified@notified.com",),
+                                  (msg.to[0] for msg in mail.outbox if msg.subject=="Artist profile verified"))
         self.assertIn('Internal error; admins have been notified, please try again later.',
                       response.context['invite_errors'][''])
 
     def test_deverify(self):
-        self.login_static_user(self.StaticUsers.MOD_USER)
         user_profile = self.create_user_profile(artist_verification_status=ArtistVerificationStatus.UNVERIFIED)
         self.client.post(reverse("findshows:artist_verification_buttons", args=(user_profile.pk,)), {
             'action': 'deverify'
@@ -128,7 +169,6 @@ class ArtistVerificationButtonsTests(TestCaseHelpers):
         self.assertFalse(user_profile.given_artist_access_by)
 
     def test_not_local(self):
-        self.login_static_user(self.StaticUsers.MOD_USER)
         user_profile = self.create_user_profile(artist_verification_status=ArtistVerificationStatus.UNVERIFIED)
         self.client.post(reverse("findshows:artist_verification_buttons", args=(user_profile.pk,)), {
             'action': 'notlocal'
@@ -139,14 +179,12 @@ class ArtistVerificationButtonsTests(TestCaseHelpers):
 
 
 
-class ResendInviteTests(TestCaseHelpers):
+class ResendInviteTests(ModTestCaseHelpers):
     def test_invite_doesnt_exist(self):
-        self.login_static_user(self.StaticUsers.MOD_USER)
         response = self.client.post(reverse("findshows:resend_invite", args=(100,)))
         self.assertEqual(response.status_code, 404)
 
     def test_recent_regen(self):
-        self.login_static_user(self.StaticUsers.MOD_USER)
         ali = self.create_artist_linking_info()[0]
 
         response = self.client.post(reverse("findshows:resend_invite", args=(ali.pk,)))
@@ -155,9 +193,8 @@ class ResendInviteTests(TestCaseHelpers):
         self.assertIn("Please wait at least five minutes before sending again.", response.context['errors'])
 
     @patch('findshows.email.logger')
-    @patch("findshows.email.EmailMessage.send")
+    @patch("findshows.email.EmailMultiAlternatives.send")
     def test_email_failure(self, mock_send_mail, mock_logger):
-        self.login_static_user(self.StaticUsers.MOD_USER)
         ali = self.create_artist_linking_info(email="invited@em.ail", generated_datetime=now()-timedelta(1))[0]
         mock_send_mail.side_effect = SMTPException()
 
@@ -170,7 +207,6 @@ class ResendInviteTests(TestCaseHelpers):
         mock_logger.warning.assert_called_once()
 
     def test_success(self):
-        self.login_static_user(self.StaticUsers.MOD_USER)
         ali = self.create_artist_linking_info(generated_datetime=now()-timedelta(1))[0]
 
         response = self.client.post(reverse("findshows:resend_invite", args=(ali.pk,)))

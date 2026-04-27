@@ -32,6 +32,7 @@ IS_DEV = os.getenv("IS_DEV", "False") == "True"
 DEBUG = IS_DEV
 
 HOST_NAME = os.getenv("HOST_NAME", "localhost")
+SITE_TITLE = os.getenv("SITE_TITLE", HOST_NAME)
 ALLOWED_HOSTS = [HOST_NAME, f"www.{HOST_NAME}"]
 CSRF_TRUSTED_ORIGINS = [f"https://{HOST_NAME}", f"https://www.{HOST_NAME}"]
 CSRF_COOKIE_SECURE = not IS_DEV
@@ -76,6 +77,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'findshows.context_processors.site_settings',
             ],
         },
     },

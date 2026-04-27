@@ -1,32 +1,8 @@
-{% load mjml %}
+{% extends "findshows/emails/base_email.html" %}
 {% load findshows_tags %}
 
-{% mjml %}
-<mjml>
-    <mj-head>
-        <mj-title>{{ site_title }}</mj-title>
-        <mj-preview>{{ email_header }}</mj-preview>
-        <mj-attributes>
-            <mj-text align="center" font-family="Courier New" font-size="17px"/>
-        </mj-attributes>
-        <mj-style>
-            a {
-              color: #9719ea;
-              text-decoration: inherit;
-              font-weight: bold;
-            }
-        </mj-style>
-    </mj-head>
-
-    <mj-body width="1000px" background-color="#F9F9ED">
-        <mj-section>
-            <mj-column>
-                <mj-text font-size="26px">{{ site_title }}</mj-text>
-                <mj-text>{{ email_header }}</mj-text>
-            </mj-column>
-        </mj-section>
-
-        <mj-section background-color="#ebe7eb">
+{% block content %}
+        <mj-section background-color="{{ bg_section }}">
             <mj-column>
                 <mj-text>
                     {% if has_recs %}
@@ -70,7 +46,7 @@
             </mj-section>
         {% endfor %}
 
-        <mj-section background-color="#ebe7eb">
+        <mj-section background-color="{{ bg_section }}">
             <mj-column>
                 <mj-text>
                     To unsubscribe, please visit your
@@ -79,6 +55,4 @@
                 </mj-text>
             </mj-column>
         </mj-section>
-    </mj-body>
-</mjml>
-{% endmjml %}
+{% endblock %}

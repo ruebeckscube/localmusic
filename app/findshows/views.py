@@ -18,11 +18,11 @@ from django.utils import timezone
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.email import contact_email, invite_artist, invite_user_to_artist, send_verify_email
+from findshows.email import contact_email, invite_artist, invite_user_to_artist, notify_artist_verified, send_verify_email
 from findshows.widgets import ArtistAccessWidget
 
 from .models import Artist, ArtistLinkingInfo, ArtistVerificationStatus, Concert, ConcertTags, EmailCodeError, EmailVerification, JPEGImageException, MusicBrainzArtist, User, UserProfile, Venue
-from .forms import ArtistAccessForm, ArtistEditForm, ConcertForm, ContactForm, ModDailyDigestForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
+from .forms import ArtistAccessForm, ArtistEditForm, ConcertForm, ContactForm, CustomTextFormSet, ModDailyDigestForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
 
 
 #################
@@ -662,7 +662,15 @@ def concert_search(request):
 @user_passes_test(User.is_mod_or_admin)
 def mod_dashboard(request):
     return render(request, "findshows/pages/mod_dashboard.html", context={
-        'date': request.GET.get('date') if request.GET else None
+        'query': {
+            'date': request.GET.get('date') if request.GET else None,
+        },
+        'tabs': [
+            {'name': 'actionRequired', 'url_name': 'findshows:mod_queue', 'label': 'Action required'},
+            {'name': 'dailyDigest', 'url_name': 'findshows:mod_daily_digest', 'label': 'Daily digest'},
+            {'name': 'outstandingInvites', 'url_name': 'findshows:mod_outstanding_invites', 'label': 'Outstanding invites'},
+            {'name': 'customTexts', 'url_name': 'findshows:mod_text_customization', 'label': 'Text customization'},
+        ]
     })
 
 
@@ -699,6 +707,22 @@ def mod_outstanding_invites(request):
 
 
 @user_passes_test(User.is_mod_or_admin)
+def mod_text_customization(request):
+    saved = False
+    if request.POST:
+        formset = CustomTextFormSet(request.POST)
+        if formset.is_valid():
+            formset.save()
+            saved = True
+    else:
+        formset = CustomTextFormSet()
+    return render(request, "findshows/htmx/mod_text_customization.html", context={
+        'formset': formset,
+        'saved': saved,
+    })
+
+
+@user_passes_test(User.is_mod_or_admin)
 def venue_verification(request, pk):
     venue = get_object_or_404(Venue, pk=pk)
     match request.POST.get('action'):
@@ -727,6 +751,8 @@ def artist_verification_buttons(request, pk):
                 errors = []
                 if not invite_artist(link_info, invite_code, errorlist=errors):
                     invite_errors[link_info.invited_email] = errors
+            notify_artist_verified(userprofile)
+
         case 'deverify':
             userprofile.artist_verification_status = ArtistVerificationStatus.DEVERIFIED
         case 'notlocal':

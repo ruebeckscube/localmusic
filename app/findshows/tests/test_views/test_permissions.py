@@ -14,6 +14,7 @@ PUBLIC_URLS_NO_PK = (
     "musicbrainz_artist_search_results",
     "venue_search_results",
     "artist_search_results",
+    "terms_of_service",
 )
 PUBLIC_URLS_WITH_PK = (
     "view_artist",
@@ -43,6 +44,7 @@ MOD_URLS_NO_PK = (
     "mod_daily_digest",
     "mod_queue",
     "mod_outstanding_invites",
+    "mod_text_customization",
 )
 MOD_URLS_WITH_PK = (
     "venue_verification",

@@ -4,48 +4,28 @@
     <div class="p-3">
         <h1> Mod Dashboard </h1>
 
-        <div x-data="{selectedTab: '{{ date|yesno:'dailyDigest,actionRequired'}}'}"
+        <div x-data="{selectedTab: '{{ query.date|yesno:'dailyDigest,actionRequired'}}'}"
             class="flex flex-wrap max-w-4xl fieldgroup items-center">
 
-            <button type="button" class="btn"
-                    @mouseup="selectedTab='actionRequired'"
-                    :class="selectedTab==='actionRequired' ? 'bg-highlight-item-light border-4 border-clickable font-semibold text-black shadow-none' : 'shadow-2xl border-transparent' "
-                    hx-get="{% url 'findshows:mod_queue' %}"
-                    {% if date %}
-                    hx-trigger="click"
-                    {% else %}
-                    hx-trigger="click,load"
-                    {% endif %}
-                    hx-target="#mod-content"
-                    hx-swap="innerHTML">
-                Action required
-            </button>
-
-            <button type="button" class="btn"
-                    @mouseup="selectedTab='dailyDigest'"
-                    :class="selectedTab==='dailyDigest' ? 'bg-highlight-item-light border-4 border-clickable font-semibold text-black shadow-none' : 'shadow-2xl border-transparent' "
-                    hx-get="{% url 'findshows:mod_daily_digest' %}"
-                    {% if date %}
-                    hx-trigger="click,load"
-                    hx-vals='{"date": "{{date}}"}'
-                    {% else %}
-                    hx-trigger="click"
-                    {% endif %}
-                    hx-trigger="click"
-                    hx-target="#mod-content"
-                    hx-swap="innerHTML">
-                Daily digest
-            </button>
-
-            <button type="button" class="btn"
-                    @mouseup="selectedTab='outstandingInvites'"
-                    :class="selectedTab==='outstandingInvites' ? 'bg-highlight-item-light border-4 border-clickable font-semibold text-black shadow-none' : 'shadow-2xl border-transparent' "
-                    hx-get="{% url 'findshows:mod_outstanding_invites' %}"
-                    hx-trigger="click"
-                    hx-target="#mod-content"
-                    hx-swap="innerHTML">
-                Outstanding invites
-            </button>
+            {% for tab in tabs %}
+                <button type="button" class="btn"
+                        @mouseup="selectedTab='{{ tab.name }}'"
+                        :class="selectedTab==='{{ tab.name }}' ? 'bg-highlight-item-light border-4 border-clickable font-semibold text-black shadow-none' : 'shadow-2xl border-transparent' "
+                        hx-get="{% url tab.url_name %}"
+                        {# default tab depends on query #}
+                        {% if not query.date and tab.name == 'actionRequired' %}
+                        hx-trigger="click,load"
+                        {% elif query.date and tab.name == 'dailyDigest' %}
+                        hx-trigger="click,load"
+                        hx-vals='{"date": "{{date}}"}'
+                        {% else %}
+                        hx-trigger="click"
+                        {% endif %}
+                        hx-target="#mod-content"
+                        hx-swap="innerHTML">
+                    {{ tab.label }}
+                </button>
+            {% endfor %}
 
             <div class="basis-0 grow"></div>
 

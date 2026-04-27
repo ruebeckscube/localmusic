@@ -18,11 +18,14 @@ from django.core.files.base import ContentFile
 from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from django.contrib.postgres.indexes import GinIndex
 
+from markdown import markdown
 from multiselectfield import MultiSelectField
+import nh3
 import requests
 
 from findshows import musicbrainz
@@ -747,29 +750,33 @@ class SetOrder(models.Model):
     order_number=models.IntegerField()
 
 
-class CustomText(models.Model):
-    BANNER = "BR"
-    ABOUT = "AB"
-    SITE_TITLE = "ST"
-    WEEKLY_EMAIL_SUBJECT = "ES"
-    WEEKLY_EMAIL_HEADER = "EH"
-    TEXT_TYPES = {
-        BANNER: "Warning/announcement banner",
-        ABOUT: "About page",
-        SITE_TITLE: "Site title",
-        WEEKLY_EMAIL_SUBJECT: "Subject for weekly email",
-        WEEKLY_EMAIL_HEADER: "Header message for weekly email",
-    }
+class CustomTextTypes(models.TextChoices):
+    BANNER = "BR", "Announcement banner"
+    ABOUT = "AB", "About page"
+    WEEKLY_EMAIL_SUBJECT = "ES", "Subject for weekly recommendation email"
+    WEEKLY_EMAIL_HEADER = "EH", "Header message for weekly recommendation email"
+    ARTIST_INVITE_EMAIL = "AI", "Artist invite email"
+    TERMS_OF_SERVICE = "TS", "Terms of service"
 
-    type = models.CharField(choices=TEXT_TYPES, unique=True, max_length=2)
-    text = models.TextField()
+
+class CustomText(models.Model):
+    type = models.CharField(choices=CustomTextTypes, unique=True, max_length=2)
+    text = models.TextField(null=True, blank=True)
 
     @classmethod
-    def get_text(cls, type):
+    def get_text(cls, type: CustomTextTypes):
         try:
-            return cls.objects.get(type=type).text
+            return cls.objects.get(type=type).text or ""
         except cls.DoesNotExist:
             return ""
+
+    @classmethod
+    def get_html(cls, type: CustomTextTypes):
+        try:
+            md = cls.objects.get(type=type).text
+        except cls.DoesNotExist:
+            return ""
+        return mark_safe(nh3.clean(markdown(md)))
 
     def __str__(self):
         return self.get_type_display()

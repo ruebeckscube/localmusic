@@ -1,0 +1,30 @@
+<div id="mod-text-htmx">
+    <div class="text-lg p-3">
+        Customize email and webpage texts. Most support
+        <a class="link" target="_blank" href="https://www.markdownguide.org/cheat-sheet/">Markdown</a>
+        for formatting.
+    </div>
+    <form class="flex flex-col" method="POST" action="" id="custom-text-form">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            <h3>{{ form.instance.get_type_display }}</h3>
+            <div class="flex flex-col fieldgroup max-w-4xl">
+                {{ form.non_field_errors }}
+                {{ form.text }}
+            </div>
+            {{ form.id }}
+        {% endfor %}
+        <button type="button" class="btn block btn w-full max-w-30 m-8"
+                hx-post="{% url 'findshows:mod_text_customization' %}"
+                hx-trigger="click"
+                hx-include="#custom-text-form"
+                hx-target="#mod-text-htmx"
+        >Save</button>
+        {% if saved %}
+        <div>
+            Changes saved!
+        </div>
+        {% endif %}
+    </form>
+</div>

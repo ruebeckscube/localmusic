@@ -3,6 +3,7 @@ import datetime
 from django import template
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 from findshows.email import local_url_to_email
 from findshows.models import CustomText
@@ -51,7 +52,7 @@ def similar_artist_name_with_relevancy(similar_musicbrainz_artist, is_last, sear
 
 @register.simple_tag
 def custom_text(type: str):
-    return CustomText.get_text(type)
+    return mark_safe(CustomText.get_html(type))
 
 @register.simple_tag
 def email_url(url_name: str, *args, **kwargs):

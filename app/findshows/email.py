@@ -2,28 +2,39 @@ import datetime
 from random import shuffle
 import logging
 from smtplib import SMTPException
+from django.utils.safestring import mark_safe
+from markdown import markdown
+import nh3
 
 from django.conf import settings
-from django.core.mail import EmailMessage, EmailMultiAlternatives, get_connection
+from django.core.mail import EmailMultiAlternatives, get_connection
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
 from django.urls import reverse
 
 from findshows.forms import ContactForm
-from findshows.models import Artist, ArtistLinkingInfo, ArtistVerificationStatus, Concert, CustomText, EmailVerification, UserProfile, Venue
+from findshows.models import Artist, ArtistLinkingInfo, ArtistVerificationStatus, Concert, CustomText, CustomTextTypes, EmailVerification, UserProfile, Venue
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
 PROTOCOL = "http" if settings.IS_DEV else "https"
-def local_url_to_email(local_url):
-    return f"{PROTOCOL}://{settings.HOST_NAME}{local_url}"
+def local_url_to_email(local_url, display=""):
+    if display:
+        return f"[{display}]({PROTOCOL}://{settings.HOST_NAME}{local_url})"
+    else:
+        return f"{PROTOCOL}://{settings.HOST_NAME}{local_url}"
 
+EMAIL_CONTEXT = { # render_to_string doesn't use default context processors
+    'SITE_TITLE': settings.SITE_TITLE,
+    'SITE_LINK': local_url_to_email(''),
+}
 
-def send_mail_helper(subject, message, recipient_list, form=None, from_email=None, errorlist=None, reply_to_list=None, cc_reply_to=False):
+def send_simple_email(subject, message_blocks, recipient_list, form=None, from_email=None, errorlist=None, reply_to_list=None, cc_list=None):
     """
-    Sends a single email.
+    Sends a single email. Includes raw <message> in text version of email, and <message> converted
+    from markdown to HTML in the HTML version of the message.
 
     If form is provided, we will add an error to it if email fails. Assumes is_valid() has been called.
     If from_email is not provided, it will be from DEFAULT_FROM_EMAIL. It should always be one from our domain (i.e. mod or admin email).
@@ -35,14 +46,21 @@ def send_mail_helper(subject, message, recipient_list, form=None, from_email=Non
         log_error = "Email failure: no recipients specified for email."
     else:
         try:
-            email = EmailMessage(
+            context = EMAIL_CONTEXT.copy()
+            context.update({
+                'message_blocks': [mark_safe(nh3.clean(markdown(block))) for block in message_blocks],
+                'homepage_link': local_url_to_email(""),
+            })
+            html_message = render_to_string("findshows/emails/simple_email.html", context)
+            email = EmailMultiAlternatives(
                 subject,
-                message,
+                ("\n\n".join(block for block in message_blocks)),
                 from_email,
                 recipient_list,
                 reply_to=reply_to_list,
-                cc=reply_to_list if cc_reply_to else None,
+                cc=cc_list,
             )
+            email.attach_alternative(html_message, 'text/html')
             return email.send(fail_silently=False)
         except SMTPException as e:
             display_error = f"Unable to send email to {','.join(recipient_list)}. Please try again later."
@@ -58,25 +76,63 @@ def send_mail_helper(subject, message, recipient_list, form=None, from_email=Non
 
 def send_verify_email(email_verification: EmailVerification, invite_code, form=None, errorlist=None):
     subject = "Confirm your email address"
-    message = f"Please click the following link to verify your email address:\n\n{local_url_to_email(email_verification.get_url(invite_code))}"
+    message_blocks = [f"""
+Welcome to {settings.SITE_TITLE}!
+
+Please click the following link to verify your email address:
+{local_url_to_email(email_verification.get_url(invite_code))}
+    """]
     logger.info("Sending verification email")
-    return send_mail_helper(subject, message, [email_verification.invited_email], form, errorlist=errorlist)
+    return send_simple_email(subject, message_blocks, [email_verification.invited_email], form, errorlist=errorlist)
 
 
 def invite_artist(link_info: ArtistLinkingInfo, invite_code, form=None, errorlist=None):
-    name = CustomText.get_text(CustomText.SITE_TITLE) or settings.HOST_NAME
     subject = "Artist profile invite"
-    message = f"{link_info.created_by.user.email} has invited you to create an artist profile on {name}. Click the link to claim it and fill out your profile!\n\n{local_url_to_email(link_info.get_url(invite_code))}"
+    message_blocks = [f"""
+{link_info.created_by.user.email} has invited you to create an artist profile
+on {settings.SITE_TITLE}. {local_url_to_email(link_info.get_url(invite_code), "Click here")}
+to make an account and fill out your profile. If they've added you to a show, it will not be
+publically visible until you do so. This link expires in {settings.INVITE_CODE_EXPIRATION_DAYS} days.
+    """]
+    if link_info.artist.local:
+        message_blocks.append(CustomText.get_text(CustomTextTypes.ARTIST_INVITE_EMAIL))
+    else:
+        message_blocks.append(f"""
+Hello & welcome! This site is an instance of the [localmusic](https://github.com/ruebeckscube/localmusic)
+project, an online bulletin board for keeping up with your local music scene. It's a free & open source
+project, and if you like the idea you can set it up for your city by
+following [these instructions](https://github.com/ruebeckscube/localmusic/blob/master/docs/self-hosting.md).
+It's still under development, so you need to have some technical know-how (or know somebody), but we'll
+be making it easier & improving documentation in the near future so please
+{local_url_to_email(reverse("findshows:contact"), "contact us")} if you'd like to stay up to date
+on that front.
+        """)
+
     logger.info("Sending artist invite email")
-    return send_mail_helper(subject, message, [link_info.invited_email], form, errorlist=errorlist)
+    return send_simple_email(subject, message_blocks, [link_info.invited_email], form, errorlist=errorlist)
 
 
 def invite_user_to_artist(link_info: ArtistLinkingInfo, invite_code, form):
-    name = CustomText.get_text(CustomText.SITE_TITLE) or settings.HOST_NAME
     subject = "Artist profile invite"
-    message = f"You've been invited to manage an artist profile on {name}. Click the link to claim access:\n\n{local_url_to_email(link_info.get_url(invite_code))}"
+    message_blocks = [f"""
+You've been invited to manage an artist profile on {settings.SITE_TITLE}.
+{local_url_to_email(link_info.get_url(invite_code), "Click here")}
+to claim access. This link expires in {settings.INVITE_CODE_EXPIRATION_DAYS} days.
+    """]
+    message_blocks.append(CustomText.get_text(CustomTextTypes.ARTIST_INVITE_EMAIL))
     logger.info("Sending user_to_artist invite email")
-    return send_mail_helper(subject, message, [link_info.invited_email], form)
+    return send_simple_email(subject, message_blocks, [link_info.invited_email], form)
+
+
+def notify_artist_verified(userprofile):
+    subject = "Artist profile verified"
+    message_blocks = [f"""
+Your artist profile has been verified! Any concerts you've listed will now
+be publically visible, and any artist invites have been sent.
+    """]
+    message_blocks.append(CustomText.get_text(CustomTextTypes.ARTIST_INVITE_EMAIL))
+    logger.info("Sending artist verification confirmation email")
+    return send_simple_email(subject, message_blocks, [userprofile.user.email])
 
 
 def contact_email(cf: ContactForm):
@@ -93,16 +149,15 @@ def contact_email(cf: ContactForm):
             recipient_list = [mod.email for mod in mods]
 
     logger.info("Sending contact email")
-    return send_mail_helper(f"[Contact|{type.label}] {cf.cleaned_data['subject']}",
+    return send_simple_email(f"[Contact|{type.label}] {cf.cleaned_data['subject']}",
                             cf.cleaned_data['message'],
                             recipient_list,
                             cf,
                             reply_to_list=[cf.cleaned_data['email']],
-                            cc_reply_to=False,
                             )
 
 def daily_mod_email(date):
-    query_labels = ("NEW ARTISTS", "ACTIONABLE ARTIST ACCOUNTS", "NEW VENUES", "ACTIONABLE VENUES", "NEW CONCERTS")
+    query_labels = ("New artists", "Actionable artist accounts", "New venues", "Actionable venues", "New concerts")
     queries = (
         Artist.objects.filter(created_at=date),
         UserProfile.objects.filter(artist_verification_status=ArtistVerificationStatus.UNVERIFIED),
@@ -115,16 +170,16 @@ def daily_mod_email(date):
 
     records_tuple = ('\n'.join(str(record) for record in q.all())
                       for q in queries)
-    records_string = '\n\n'.join(f"{label}\n{records}"
-                                 for label, records in zip(query_labels, records_tuple)
-                                 if records
-                                 )
-    url = local_url_to_email(reverse('findshows:mod_dashboard', query={'date': date.isoformat()}))
-    message = f"There are new or actionable listings to review from {str(date)}.\n\n{url}\n\n{records_string}"
+
+    url = local_url_to_email(reverse('findshows:mod_dashboard', query={'date': date.isoformat()}), "Click here to review")
+    message_blocks = [f"There are new or actionable listings from {str(date)}. {url}."]
+    message_blocks.extend(f"## {label}\n{records}"
+                          for label, records in zip(query_labels, records_tuple)
+                          if records)
     recipient_list = [mod.email for mod in User.objects.filter(is_mod=True)]
     logger.info("Sending daily mod email")
-    return send_mail_helper(f"{CustomText.get_text(CustomText.SITE_TITLE)} Moderation reminder",
-                            message, recipient_list)
+    return send_simple_email(f"{settings.SITE_TITLE} Moderation reminder",
+                            message_blocks, recipient_list)
 
 
 # from https://stackoverflow.com/questions/7583801/send-mass-emails-with-emailmultialternatives/10215091#10215091
@@ -161,8 +216,7 @@ def rec_email_generator():
     search_params = {'date': today,
                       'end_date': week_later,
                       'is_date_range': True}
-    email_header = CustomText.get_text(CustomText.WEEKLY_EMAIL_HEADER)
-    site_title = CustomText.get_text(CustomText.SITE_TITLE)
+    email_header = CustomText.get_text(CustomTextTypes.WEEKLY_EMAIL_HEADER)
     next_week_concerts = tuple(Concert.publically_visible().select_related('venue').prefetch_related('artists__similar_musicbrainz_artists').filter(date__gte=today, date__lte=week_later))
 
     if not next_week_concerts:
@@ -189,13 +243,14 @@ def rec_email_generator():
             shuffle(rec_concerts)
         rec_concerts = rec_concerts[:settings.CONCERT_RECS_PER_EMAIL]
 
-        html_message = render_to_string("findshows/emails/rec_email.html",
-                                        context={'user_profile': user_profile,
-                                                 'concerts': rec_concerts,
-                                                 'search_url': search_url,
-                                                 'email_header': email_header,
-                                                 'site_title': site_title,
-                                                 'has_recs': has_recs})
+        context = EMAIL_CONTEXT.copy()
+        context.update({
+            'concerts': rec_concerts,
+            'search_url': search_url,
+            'email_header': nh3.clean(markdown(email_header)),
+            'has_recs': has_recs
+        })
+        html_message = render_to_string("findshows/emails/rec_email.html", context)
         text_message = f'{email_header}\n\nGo to {search_url} to see your weekly concert recommendations.'
 
         yield text_message, html_message, user_profile.user.email
@@ -203,7 +258,7 @@ def rec_email_generator():
 
 
 def send_rec_email():
-    subject = CustomText.get_text(CustomText.WEEKLY_EMAIL_SUBJECT)
+    subject = CustomText.get_text(CustomTextTypes.WEEKLY_EMAIL_SUBJECT)
     datatuple = ( (subject, text_message, html_message, None, [email])
                   for text_message, html_message, email in rec_email_generator() )
     sent = send_mass_html_mail(datatuple)

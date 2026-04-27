@@ -13,7 +13,7 @@ from django.conf import settings
 from multiselectfield.forms.fields import MultiSelectFormField
 from captcha.fields import CaptchaField
 
-from findshows.models import MAX_UPLOADED_IMAGE_SIZE_IN_MB, Artist, Concert, ConcertTags, LabeledURLsValidator, ListenLink, MusicBrainzArtist, UserProfile, Venue, YoutubeLink
+from findshows.models import MAX_UPLOADED_IMAGE_SIZE_IN_MB, Artist, Concert, ConcertTags, CustomText, LabeledURLsValidator, ListenLink, MusicBrainzArtist, UserProfile, Venue, YoutubeLink
 from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, EmbedLinkField, ImageInput, SocialsLinksWidget, MusicBrainzArtistSearchWidget, StyledSelect, VenuePickerWidget
 
 User = get_user_model()
@@ -416,3 +416,11 @@ class ModDailyDigestForm(forms.Form):
                 "No data for future dates."
                 )
         return date
+
+
+CustomTextFormSet = forms.modelformset_factory(
+    CustomText,
+    DefaultStylingModelForm,
+    fields=["text"],
+    extra=0
+)

@@ -1,0 +1,17 @@
+{% extends "localmusic/base.html" %}
+{% load findshows_tags %}
+{% block content %}
+<div class="p-3">
+    <h1 class="text-center"> Terms of Service </h1>
+{% custom_text 'TS' as terms %}
+{% if terms %}
+    <div class="fieldgroup markdown text-left w-11/12 max-w-3xl p-6 mx-auto">
+        {{ terms }}
+    </div>
+{% else %}
+    <div>
+        Terms of service have not been posted yet!
+    </div>
+{% endif %}
+</div>
+{% endblock %}

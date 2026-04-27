@@ -36,6 +36,7 @@ services:
 
   mjml:
     image: liminspace/mjml-tcpserver:1
+    command: ["--mjml.validationLevel=strict"]
 
 volumes:
    postgres_data:

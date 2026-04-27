@@ -57,6 +57,39 @@
     @apply text-highlight-item;
   }
 
+  .markdown {
+    a {
+      @apply text-clickable hover:text-clickable-h font-semibold cursor-pointer; /*Duplicates link*/
+    }
+
+    ul {
+      @apply list-disc pl-8;
+    }
+
+    ol {
+      @apply list-decimal pl-8;
+    }
+
+    li {
+      @apply m-1;
+    }
+
+    h1 {
+      @apply my-4;
+    }
+
+    h2 {
+      @apply my-2;
+    }
+
+    h3 {
+      @apply my-1;
+    }
+
+    p {
+      @apply p-2;
+    }
+  }
 }
 
 @layer components {

@@ -5,25 +5,25 @@ from unittest.mock import MagicMock, patch
 from django.core import mail
 from django.views.generic.dates import timezone_today
 
-from findshows.email import daily_mod_email, send_mail_helper, send_mass_html_mail, send_rec_email
+from findshows.email import daily_mod_email, invite_artist, send_simple_email, send_mass_html_mail, send_rec_email
 from findshows.models import ArtistVerificationStatus, ConcertTags
 from findshows.tests.test_helpers import TestCaseHelpers
 
 
-class SendMailHelperTests(TestCaseHelpers):
+class SendSimpleEmailTests(TestCaseHelpers):
     def test_success(self):
-        success = send_mail_helper('subject', 'message message message', ['test@em.ail'])
+        success = send_simple_email('subject', ['message message message', 'second block'], ['test@em.ail'])
         self.assertEqual(success, 1)
         self.assert_emails_sent(1)
 
 
     @patch('findshows.email.logger')
-    @patch('findshows.email.EmailMessage.send')
+    @patch('findshows.email.EmailMultiAlternatives.send')
     def test_email_failure(self, mock_send_mail: MagicMock, mock_logger: MagicMock):
         mock_send_mail.side_effect = SMTPConnectError(123, "error message")
         mock_form = MagicMock()
         errorlist=[]
-        success = send_mail_helper('subject', 'message message message', ['test@em.ail'], mock_form, errorlist=errorlist)
+        success = send_simple_email('subject', ['message message message', 'second block'], ['test@em.ail'], mock_form, errorlist=errorlist)
 
         mock_send_mail.assert_called_once()
         self.assertEqual(success, 0)
@@ -44,6 +44,21 @@ class DailyModEmailTests(TestCaseHelpers):
         success = daily_mod_email(timezone_today())
         self.assertTrue(success)
         self.assert_emails_sent(0)
+
+
+class InviteArtistTests(TestCaseHelpers):
+    def test_local_and_nonlocal_get_different_messages(self):
+        ali_local, code_local = self.create_artist_linking_info("local@artist.net", self.create_artist(local=True))
+        ali_nonlocal, code_nonlocal = self.create_artist_linking_info("nonlocal@artist.net", self.create_artist(local=False))
+
+        invite_artist(ali_local, code_local)
+        invite_artist(ali_nonlocal, code_nonlocal)
+
+        self.assert_emails_sent(2)
+        self.assert_equal_as_sets(('local@artist.net',),  # From migration 0005 default CustomText
+                                  (msg.to[0] for msg in mail.outbox if "For more information, read on!" in msg.body))
+        self.assert_equal_as_sets(("nonlocal@artist.net",),  # From email.py
+                                  (msg.to[0] for msg in mail.outbox if "Hello & welcome!" in msg.body))
 
 
 class SendMassHtmlMailTests(TestCaseHelpers):
