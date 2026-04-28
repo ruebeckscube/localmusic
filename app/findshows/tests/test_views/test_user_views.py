@@ -82,6 +82,14 @@ class ContactTests(TestCaseHelpers):
                       response.context['form'].non_field_errors())
 
 
+    def test_prepopulate_email(self):
+        response = self.client.get(reverse("findshows:contact"))
+        self.assertEqual(response.context['form'].initial.get('email'), None)
+        userprofile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        response = self.client.get(reverse("findshows:contact"))
+        self.assertEqual(response.context['form'].initial.get('email'), userprofile.user.email)
+
+
 def user_settings_post_request(musicbrainz_artists=[], weekly_email=True, preferred_concert_tags=[]):
     return {
         'favorite_musicbrainz_artists': musicbrainz_artists,

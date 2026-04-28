@@ -47,7 +47,7 @@ def contact(request):
                 success = True
                 form = ContactForm()
     else:
-        form = ContactForm()
+        form = ContactForm(initial={'email': request.user.email if not request.user.is_anonymous else None})
 
     return render(request, "findshows/pages/contact.html", context={
         "form": form,
