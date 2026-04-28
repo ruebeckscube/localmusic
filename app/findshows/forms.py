@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import time, timedelta
 from itertools import zip_longest
 
 from django import forms
@@ -233,9 +233,7 @@ class ConcertForm(DefaultStylingModelForm):
         return validate_image(self.cleaned_data['poster'])
 
 
-    def clean(self):
-        cleaned_data = super().clean() or {}
-
+    def check_artist_on_bill(self, cleaned_data):
         local_user_artists = set(str(a.id)
                                  for a in self.editing_user.userprofile.managed_artists.all()
                                  if a.local)
@@ -243,6 +241,8 @@ class ConcertForm(DefaultStylingModelForm):
             self.add_error('bill', """The bill must include one of the local
             artists that your account manages.""")
 
+
+    def check_venue_date_unique(self, cleaned_data):
         venue = cleaned_data.get("venue")
         date = cleaned_data.get("date")
         if venue and date:
@@ -255,6 +255,22 @@ class ConcertForm(DefaultStylingModelForm):
                                this is in error, or there are in fact two events
                                on the same date, please contact site admins for
                                an override.""")
+
+
+    def check_time_ordering(self, cleaned_data):
+        # Not checking end time because it could be, say, 1am which is before, say, a 9pm start.
+        # But doors/start shouldn't cross midnight.
+        start_time = cleaned_data.get("start_time")
+        doors_time = cleaned_data.get("doors_time")
+        if start_time and doors_time and doors_time > start_time:
+            self.add_error(None, "Doors time must be before start time if provided.")
+
+
+    def clean(self):
+        cleaned_data = super().clean() or {}
+        self.check_artist_on_bill(cleaned_data)
+        self.check_venue_date_unique(cleaned_data)
+        self.check_time_ordering(cleaned_data)
         return cleaned_data
 
     def save(self, commit = True): # saving this without a commit is gonna be weird, hope it doesn't happen
