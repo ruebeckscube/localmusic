@@ -249,6 +249,19 @@ class CreateArtistTests(ArtistViewTestHelpers):
         self.assertEqual(user_profile.given_artist_access_by, self.get_static_instance(self.StaticUsers.DEFAULT_CREATOR))
 
 
+    def test_existing_invite_shouldnt_link_when_not_temp_artist(self, *args):
+        # This corresponds to someone being invited via the manage artist access dialog
+        name = "this tests existing invites"
+        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        artist = self.create_artist(name=name, is_temp_artist=False)
+        ali = self.create_artist_linking_info(email=user_profile.user.email,
+                                              artist=artist)
+        response = self.client.get(reverse("findshows:create_artist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'findshows/pages/edit_artist.html')
+        self.assertNotEqual(response.context['form'].initial['name'], name)
+
+
     def test_unsuccessful_existing_invite(self, *args):
         name = "this tests existing invites"
         user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)

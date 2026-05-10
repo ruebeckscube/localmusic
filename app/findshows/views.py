@@ -222,8 +222,8 @@ def edit_artist(request, pk=None):
 
     link_infos = None
     if pk is None: # don't modify pk; we're using it later to check we're in the same flow
-        # Check for existing invites for this user before creating new record
-        link_infos = ArtistLinkingInfo.objects.filter(invited_email=request.user.email)
+        # Check for existing invites (to a new artist) for this user before creating new record
+        link_infos = ArtistLinkingInfo.objects.filter(invited_email=request.user.email, artist__is_temp_artist=True)
         if link_infos:
             artist = link_infos[0].artist
         else:
