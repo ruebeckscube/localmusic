@@ -173,6 +173,7 @@ class ArtistEditForm(DefaultStylingModelForm):
     def save(self, commit = True):
         artist = super().save(commit=False)
         artist.is_temp_artist = False
+        artist.profile_picture_small = self.cleaned_data['profile_picture']
         if commit:
             artist.save()
             self.save_m2m()
@@ -275,6 +276,7 @@ class ConcertForm(DefaultStylingModelForm):
 
     def save(self, commit = True): # saving this without a commit is gonna be weird, hope it doesn't happen
         concert = super().save(commit=False)
+        concert.poster_small = self.cleaned_data['poster']
 
         if commit and not concert.id:
             concert.save()

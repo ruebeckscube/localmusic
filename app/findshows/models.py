@@ -19,6 +19,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
+from django.utils.text import slugify
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from django.contrib.postgres.indexes import GinIndex
@@ -64,23 +65,36 @@ class JPEGImageException(Exception):
 
 
 class JPEGImageFieldFile(ImageFieldFile):
+    def _downscale(self, image, quality):
+        buf = io.BytesIO()
+        image.save(buf, format="JPEG", subsampling=1, quality=quality)
+        return ContentFile(buf.getvalue())
+
+    def _iterate_downscale(self, content, quality):
+        image = Image.open(content)  # Don't need to try/except because Django handles it first
+        original_dims = image.size
+        image.thumbnail((self.field.max_dimension, self.field.max_dimension), Image.Resampling.LANCZOS)  # Reduces dimensions
+
+        if image.mode not in ('L', 'RGB'):
+            image = image.convert("RGB")
+
+        new_content = self._downscale(image, quality)
+        while new_content.size > self.field.max_filesize_kb*1024 and quality > 10:
+            quality -= 2
+            new_content = self._downscale(image, quality)
+
+        logger.info(f"Image saved with quality {quality}, dimensions {image.size}, and size {new_content.size//1024}KB. Original image was {original_dims} and {content.size//(1024)}KB.")
+
+        return new_content
+
     def save(self, name, content, save=True):
-        if not name or not content:
-            return super(JPEGImageFieldFile, self).save(name, content, save)
+        if content:
+            try:
+                new_content = self._iterate_downscale(content, self.field.initial_quality)
+            except (OSError) as e: # This also catches PIL.UnidentifiedImageError
+                raise JPEGImageException(f"Error saving image: {e.strerror}")
 
-        if name.split('.')[-1].lower() not in ('jpg','jpeg'):
-            image = Image.open(content)  # Don't need to try/except because Django handles it first
-            if image.mode not in ('L', 'RGB'):
-                image = image.convert("RGB")
-            buf = io.BytesIO()
-            image.save(buf, format="JPEG", subsampling=1, quality=80)
-            content = ContentFile(buf.getvalue())
-            name = f"{name.split('.')[:-1]}.jpeg"
-
-        if content.size > 2*1024*1024:
-            raise JPEGImageException("JPEG file after conversion is larger than 2MB; please try a smaller image.")
-
-        return super(JPEGImageFieldFile, self).save(name, content, save)
+        return super(JPEGImageFieldFile, self).save(name, new_content, save)
 
 
 class JPEGImageField(models.ImageField):
@@ -88,6 +102,24 @@ class JPEGImageField(models.ImageField):
     ImageField that converts all images to JPEG on save.
     """
     attr_class = JPEGImageFieldFile
+
+    def __init__(self, *args, max_dimension=1200, max_filesize_kb=300, initial_quality=80, **kwargs):
+        self.max_dimension = max_dimension
+        self.max_filesize_kb = max_filesize_kb
+        self.initial_quality = initial_quality
+        super().__init__(*args, **kwargs)
+
+
+    def deconstruct(self):
+        # This must match init, including default values
+        name, path, args, kwargs = super().deconstruct()
+        if self.max_dimension != 1200:
+            kwargs['max_dimension'] = self.max_dimension
+        if self.max_filesize_kb != 300:
+            kwargs['max_filesize_kb'] = self.max_filesize_kb
+        if self.initial_quality != 80:
+            kwargs['initial_quality'] = self.initial_quality
+        return name, path, args, kwargs
 
 
 
@@ -149,9 +181,19 @@ class MusicBrainzArtist(models.Model):
         return self.name
 
 
+def prof_pic_name(instance, filename, suffix=""):
+    return f"{slugify(f"{instance.name}{suffix}")}.jpg"
+
+
+def prof_pic_name_small(instance, filename):
+    return prof_pic_name(instance, filename, suffix="-small")
+
+
 class Artist(CreationTrackingMixin):
     name=models.CharField(verbose_name="Artist Name", max_length=60)
-    profile_picture=JPEGImageField(null=True, help_text=f"{IMAGE_HELP_TEXT}")
+    profile_picture=JPEGImageField(null=True, help_text=f"{IMAGE_HELP_TEXT}", upload_to=prof_pic_name)
+    profile_picture_small=JPEGImageField(max_dimension=400, max_filesize_kb=100,
+                                         upload_to=prof_pic_name_small)
     bio=models.TextField(null=True, max_length=800)
     local=models.BooleanField(help_text="Check if this is a local artist. It will give them permission to list shows and invite other artists.")
 
@@ -683,8 +725,19 @@ class Venue(CreationTrackingMixin):
         return self.name
 
 
+def poster_name(instance, filename, suffix=""):
+    return f"{slugify(f"{instance.venue.name}-{str(instance.date)}{suffix}")}.jpg"
+
+
+def poster_name_small(instance, filename):
+    return poster_name(instance, filename, suffix="-small")
+
+
 class Concert(CreationTrackingMixin):
-    poster=JPEGImageField(help_text=f"{IMAGE_HELP_TEXT} Vertical or square orientations display best.")
+    poster=JPEGImageField(help_text=f"{IMAGE_HELP_TEXT} Vertical or square orientations display best.",
+                          upload_to=poster_name)
+    poster_small=JPEGImageField(max_dimension=400, max_filesize_kb=100,
+                                editable=False, upload_to=poster_name_small)
     date=models.DateField()
     doors_time=models.TimeField(blank=True, null=True)
     start_time=models.TimeField()

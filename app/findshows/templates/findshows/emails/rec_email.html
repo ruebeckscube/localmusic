@@ -29,7 +29,7 @@
 
             <mj-column vertical-align="middle" width="33%">
                 <mj-image alt="{{concert}}" width="300px"
-                          src="{% email_raw_url  concert.poster.url %}"
+                          src="{% email_raw_url  concert.poster_small.url %}"
                           href="{% email_url 'findshows:view_concert' concert.pk %}"/>
             </mj-column>
 

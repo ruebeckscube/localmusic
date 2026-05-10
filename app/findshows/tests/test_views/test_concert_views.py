@@ -1,6 +1,8 @@
 import datetime
 import json
+from unittest.mock import patch
 
+import PIL
 from django.conf import settings
 from django.urls import reverse
 from django.views.generic.dates import timezone_today
@@ -184,6 +186,19 @@ class CreateConcertTests(ConcertViewTestHelpers):
         self.assertEqual(concerts[0].created_by, user_profile)
         self.assertEqual(concerts[0].created_at, timezone_today())
         self.assertRedirects(response, reverse('findshows:view_concert', args=(concerts[0].pk,)))
+        self.assertTrue(concerts[0].poster_small)
+        self.assertNotEqual(concerts[0].poster, concerts[0].poster_small)
+
+
+    @patch('findshows.models.Image.open', side_effect=PIL.UnidentifiedImageError)
+    def test_JPEG_image_exception(self, *args):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        post_request = self.concert_post_request(self.get_static_instance(self.StaticArtists.LOCAL_ARTIST))
+
+        response = self.client.post(reverse("findshows:create_concert"), data=post_request)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Upload a valid image.", response.context['form'].errors['poster'][0])
+
 
 
 class EditConcertTests(ConcertViewTestHelpers):

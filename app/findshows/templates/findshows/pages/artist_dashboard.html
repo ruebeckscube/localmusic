@@ -54,8 +54,8 @@
                     {{artist.name}}
                 </div>
                 <div class="w-60 h-60 m-2 flex justify-center items-center">
-                    {% if artist.profile_picture %}
-                    <img class="max-h-60 max-w-60 object-contain" src="{{ artist.profile_picture.url }}">
+                    {% if artist.profile_picture_small %}
+                    <img class="max-h-60 max-w-60 object-contain" src="{{ artist.profile_picture_small.url }}">
                     {% else %}
                     <p class="text-red-700">
                         This artist profile is incomplete! Please edit it so your shows can be listed publically.

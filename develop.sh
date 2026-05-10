@@ -186,6 +186,8 @@ nightly_tasks() {
     backup
     # echo "UPDATING APP"
     # update_app
+    echo "CLEANING UP MEDIA FOLDER"
+    invoke_manage cleanup_media
     echo "ROTATING LOGS"
     logrotate -v -s config/logrotate.status config/logrotate.conf
 }

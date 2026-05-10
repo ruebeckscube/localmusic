@@ -175,11 +175,15 @@ class TestCaseHelpers(TestCase):
                       is_temp_artist=False,
                       created_by=None,
                       pk=None,
-                      created_at=None):
+                      created_at=None,
+                      profile_picture=None
+                      ):
         artist = Artist(name=name,
                         pk=pk,
                         local=local,
                         is_temp_artist=is_temp_artist,
+                        profile_picture=profile_picture,
+                        profile_picture_small=profile_picture,
                         )
         if created_by is None:
             artist.created_by_id = cls.StaticUsers.DEFAULT_CREATOR.value
@@ -260,6 +264,7 @@ class TestCaseHelpers(TestCase):
         concert = Concert(
             pk=pk,
             poster=cls.image_file(),
+            poster_small=cls.image_file(),
             date=date,
             start_time=start_time,
             ticket_description=ticket_description,

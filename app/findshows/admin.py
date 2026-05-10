@@ -29,7 +29,7 @@ class YoutubeLinkInline(admin.TabularInline):
 
 class ArtistAdmin(admin.ModelAdmin):
     inlines = (ListenLinkInline, YoutubeLinkInline)
-    readonly_fields=('similar_musicbrainz_artists',)
+    readonly_fields=('similar_musicbrainz_artists', 'profile_picture_small')
     search_fields=('name',)
 
 class MusicBrainzArtistAdmin(admin.ModelAdmin):

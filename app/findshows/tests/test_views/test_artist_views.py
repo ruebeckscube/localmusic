@@ -2,6 +2,7 @@ import datetime
 import json
 from smtplib import SMTPException
 from unittest.mock import patch, MagicMock
+import PIL
 from django.db import IntegrityError
 
 from django.urls import reverse
@@ -203,6 +204,15 @@ class CreateArtistTests(ArtistViewTestHelpers):
         self.assertEqual(len(artists), existing_num_artists + 1)
 
 
+    def test_profile_picture_small_saved(self, *args):
+        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        self.client.post(reverse("findshows:create_artist"), data=self.artist_post_request())
+        user_profile.refresh_from_db()
+        artist = user_profile.managed_artists.all()[0]
+        self.assertTrue(artist.profile_picture_small)
+        self.assertNotEqual(artist.profile_picture, artist.profile_picture_small)
+
+
     def test_unsuccessful(self, *args):
         user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
         data = self.artist_post_request(youtube_links=['notaurl'])
@@ -305,6 +315,15 @@ class EditArtistTests(ArtistViewTestHelpers):
                                    data={'from': 'view_artist', 'from_pk': 'notanumber'})
         self.assertIn(reverse('findshows:artist_dashboard'), str(response.content))
 
+
+    @patch('findshows.models.Image.open', side_effect=PIL.UnidentifiedImageError)
+    def test_JPEG_image_exception(self, *args):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        post_request = self.artist_post_request()
+
+        response = self.client.post(reverse("findshows:edit_artist", args=(self.StaticArtists.LOCAL_ARTIST.value,)), data=post_request)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Upload a valid image.", response.context['form'].errors['profile_picture'][0])
 
 
 class ArtistSearchResultsTests(TestCaseHelpers):
