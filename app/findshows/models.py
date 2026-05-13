@@ -833,3 +833,20 @@ class CustomText(models.Model):
 
     def __str__(self):
         return self.get_type_display()
+
+
+class Contact(models.Model):
+    class Types(models.TextChoices):
+        HELP = "hlp", "Tech support/help"
+        CONTACT_MOD = "mod", "Moderator question"
+        FEATURE_REQUEST = "ftr", "Feature request"
+        REPORT_BUG = "bug", "Bug report"
+        OTHER = "oth", "Other"
+
+    email = models.EmailField(max_length=100)
+    type = models.CharField(choices=Types, max_length=3)
+    subject = models.CharField(max_length=100)
+    message = models.TextField(max_length=2000, help_text="Please include as much detail as possible for the quickest help.")
+
+    def __str__(self):
+        return f"[{self.get_type_display()}] {self.subject}"

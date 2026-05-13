@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from findshows.forms import ContactForm
-from findshows.models import ConcertTags, EmailVerification, UserProfile
+from findshows.models import ConcertTags, Contact, EmailVerification, UserProfile
 from findshows.tests.test_helpers import TestCaseHelpers
 
 User = get_user_model()
@@ -21,7 +21,7 @@ def contact_post_request():
         'email': ['test@em.ail'],
         'subject': ['bad'],
         'message': ["wow this website sucks"],
-        'type': [ContactForm.Types.OTHER.value],
+        'type': [Contact.Types.OTHER.value],
         'captcha_0': ['this_doesnt_matter'],
         'captcha_1': ['PASSED'],
     }
@@ -40,14 +40,15 @@ class ContactTests(TestCaseHelpers):
         response = self.client.get(reverse("findshows:contact"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/contact.html')
-        self.assert_emails_sent(0)
+        self.assert_records_created(Contact, 0)
 
 
     def test_contact_POST_success(self):
         response = self.client.post(reverse("findshows:contact"), contact_post_request())
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/contact.html')
-        self.assert_emails_sent(1)
+        self.assert_emails_sent(0)
+        self.assert_records_created(Contact, 1)
         self.assert_blank_form(response.context['form'], ContactForm)
 
 
@@ -57,7 +58,7 @@ class ContactTests(TestCaseHelpers):
         response = self.client.post(reverse("findshows:contact"), data)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/contact.html')
-        self.assert_emails_sent(0)
+        self.assert_records_created(Contact, 0)
         self.assert_not_blank_form(response.context['form'], ContactForm)
 
 
@@ -67,16 +68,16 @@ class ContactTests(TestCaseHelpers):
         response = self.client.post(reverse("findshows:contact"), data)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/contact.html')
-        self.assert_emails_sent(0)
+        self.assert_records_created(Contact, 0)
         self.assert_not_blank_form(response.context['form'], ContactForm)
 
 
     def test_max_emails_per_minute(self):
         for i in range(settings.MAX_CONTACTS_PER_MINUTE):
             response = self.client.post(reverse("findshows:contact"), contact_post_request())
-            self.assert_emails_sent(i + 1)
+            self.assert_records_created(Contact, i + 1)
         response = self.client.post(reverse("findshows:contact"), contact_post_request())
-        self.assert_emails_sent(settings.MAX_CONTACTS_PER_MINUTE)
+        self.assert_records_created(Contact, settings.MAX_CONTACTS_PER_MINUTE)
         self.assert_not_blank_form(response.context['form'], ContactForm)
         self.assertIn("High contact volume; please try again in a minute. This is a spam prevention measure, thanks for understanding.",
                       response.context['form'].non_field_errors())

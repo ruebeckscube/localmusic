@@ -1,4 +1,4 @@
-from datetime import time, timedelta
+from datetime import timedelta
 from itertools import zip_longest
 
 from django import forms
@@ -6,14 +6,13 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import BaseUserCreationForm
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
-from django.db import models
 from django.forms.widgets import TimeInput
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 from multiselectfield.forms.fields import MultiSelectFormField
 from captcha.fields import CaptchaField
 
-from findshows.models import MAX_UPLOADED_IMAGE_SIZE_IN_MB, Artist, Concert, ConcertTags, CustomText, LabeledURLsValidator, ListenLink, MusicBrainzArtist, UserProfile, Venue, YoutubeLink
+from findshows.models import MAX_UPLOADED_IMAGE_SIZE_IN_MB, Artist, Concert, ConcertTags, Contact, CustomText, LabeledURLsValidator, ListenLink, MusicBrainzArtist, UserProfile, Venue, YoutubeLink
 from findshows.widgets import ArtistAccessWidget, BillWidget, DatePickerField, DatePickerWidget, EmbedLinkField, ImageInput, SocialsLinksWidget, MusicBrainzArtistSearchWidget, StyledSelect, VenuePickerWidget
 
 User = get_user_model()
@@ -403,19 +402,12 @@ class ShowFinderForm(forms.Form):
         return cleaned_data
 
 
-class ContactForm(DefaultStylingForm):
-    class Types(models.TextChoices):
-        HELP = "hlp", "Tech support/help"
-        CONTACT_MOD = "mod", "Moderator question"
-        FEATURE_REQUEST = "ftr", "Feature request"
-        REPORT_BUG = "bug", "Bug report"
-        OTHER = "oth", "Other"
+class ContactForm(DefaultStylingModelForm):
+    class Meta:
+        model = Contact
+        widgets = {'type': StyledSelect}
+        fields = ('email', 'type', 'subject', 'message')
 
-    email = forms.EmailField(max_length=100, label="Your email")
-    type = forms.ChoiceField(choices=Types, widget=StyledSelect)
-    subject = forms.CharField()
-    message = forms.CharField(widget=forms.Textarea,
-                              help_text="Please include as much detail as possible for the quickest help.")
     captcha = CaptchaField()
 
     def clean_subject(self):

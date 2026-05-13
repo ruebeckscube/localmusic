@@ -18,10 +18,10 @@ from django.utils import timezone
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.email import contact_email, invite_artist, invite_user_to_artist, notify_artist_verified, send_verify_email
+from findshows.email import invite_artist, invite_user_to_artist, notify_artist_verified, send_verify_email
 from findshows.widgets import ArtistAccessWidget
 
-from .models import Artist, ArtistLinkingInfo, ArtistVerificationStatus, Concert, ConcertTags, EmailCodeError, EmailVerification, JPEGImageException, MusicBrainzArtist, User, UserProfile, Venue
+from .models import Artist, ArtistLinkingInfo, ArtistVerificationStatus, Concert, ConcertTags, Contact, EmailCodeError, EmailVerification, JPEGImageException, MusicBrainzArtist, User, UserProfile, Venue
 from .forms import ArtistAccessForm, ArtistEditForm, ConcertForm, ContactForm, CustomTextFormSet, ModDailyDigestForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
 
 
@@ -43,9 +43,10 @@ def contact(request):
 
             if recent_contacts > settings.MAX_CONTACTS_PER_MINUTE:
                 form.add_error(None, "High contact volume; please try again in a minute. This is a spam prevention measure, thanks for understanding.")
-            elif contact_email(form):
+            else:
+                form.save()
+                form = ContactForm(initial={'email': request.user.email if not request.user.is_anonymous else None})
                 success = True
-                form = ContactForm()
     else:
         form = ContactForm(initial={'email': request.user.email if not request.user.is_anonymous else None})
 
@@ -696,6 +697,7 @@ def mod_queue(request):
     return render(request, "findshows/htmx/mod_queue.html", context={
         'unverified_user_profiles': UserProfile.objects.filter(artist_verification_status=ArtistVerificationStatus.UNVERIFIED),
         'venues': Venue.objects.filter(is_verified=False),
+        'contacts': Contact.objects.all(),
     })
 
 
@@ -735,6 +737,13 @@ def venue_verification(request, pk):
     return render(request, "findshows/htmx/venue_verification.html", context={
         'venue': venue,
     })
+
+
+@user_passes_test(User.is_mod_or_admin)
+def delete_contact(request, pk):
+    contact = get_object_or_404(Contact, pk=pk)
+    contact.delete()
+    return HttpResponse("Contact deleted")
 
 
 @user_passes_test(User.is_mod_or_admin)

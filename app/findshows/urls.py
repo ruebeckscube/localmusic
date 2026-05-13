@@ -34,6 +34,7 @@ urlpatterns = [
     path("htmx/venue_verification/<int:pk>", views.venue_verification, name="venue_verification"),
     path("htmx/artist_verification/<int:pk>", views.artist_verification_buttons, name="artist_verification_buttons"),
     path("htmx/resend_invite/<int:pk>", views.resend_invite, name="resend_invite"),
+    path("htmx/delete_contact/<int:pk>", views.delete_contact, name="delete_contact"),
 
     path("htmx/concert_search/", views.concert_search, name="concert_search"),
 

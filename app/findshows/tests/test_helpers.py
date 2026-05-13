@@ -13,7 +13,7 @@ from django.utils.datastructures import MultiValueDict
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 
-from findshows.models import Ages, Artist, ArtistLinkingInfo, Concert, ConcertTags, EmailVerification, ListenLink, MusicBrainzArtist, SetOrder, UserProfile, Venue, YoutubeLink
+from findshows.models import Ages, Artist, ArtistLinkingInfo, Concert, ConcertTags, Contact, EmailVerification, ListenLink, MusicBrainzArtist, SetOrder, UserProfile, Venue, YoutubeLink
 
 User = get_user_model()
 
@@ -341,6 +341,16 @@ class TestCaseHelpers(TestCase):
             email_verification.save()
 
         return email_verification, invite_code
+
+
+    @classmethod
+    def create_contact(cls,
+                       email="contact@email.com",
+                       subject="email subject!",
+                       message="this is the message",
+                       type=Contact.Types.REPORT_BUG,
+                       pk=None):
+        return Contact.objects.create(email=email, subject=subject, message=message, type=type, pk=pk)
 
 
 def concert_GET_params(date=timezone_today(),

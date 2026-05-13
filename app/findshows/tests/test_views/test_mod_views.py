@@ -8,7 +8,7 @@ from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 
 from findshows.forms import CustomTextFormSet
-from findshows.models import ArtistVerificationStatus, CustomText, CustomTextTypes
+from findshows.models import ArtistVerificationStatus, Contact, CustomText, CustomTextTypes
 from findshows.tests.test_helpers import TestCaseHelpers
 
 
@@ -128,6 +128,17 @@ class VenueVerificationTests(ModTestCaseHelpers):
         venue.refresh_from_db()
         self.assertTrue(venue.is_verified)
         self.assertTrue(venue.declined_listing)
+
+
+class DeleteContactTests(ModTestCaseHelpers):
+    def test_success(self):
+        contact = self.create_contact()
+        self.assert_records_created(Contact, 1)
+        self.login_static_user(self.StaticUsers.MOD_USER)
+        response = self.client.post(reverse("findshows:delete_contact", args=(contact.pk,)))
+        self.assertEqual(200, response.status_code)
+        self.assertIn("Contact deleted", str(response.content))
+        self.assert_records_created(Contact, 0)
 
 
 class ArtistVerificationButtonsTests(ModTestCaseHelpers):

@@ -48,4 +48,35 @@
     <h2 class="my-4"> Venues </h2>
     {% include "findshows/partials/mod_venue_table.html" with empty_message="No venues need verification." %}
 
+
+    <h2 class="my-4"> Contacts </h2>
+    {% if contacts %}
+        {% for contact in contacts %}
+        <div class="flex items-center">
+            <div class="fieldgroup grow max-w-3xl">
+                <div class="font-bold"> [{{ contact.get_type_display }}] {{ contact.subject }} </div>
+                <a class="link" href="mailto:{{ contact.email }}?subject=Re: {{ contact.subject }}&body=> {{ contact.message }}"">{{ contact.email }}</a>
+                <div class="p-4"> {{ contact.message }} </div>
+            </div>
+            <form type="post">
+                {% csrf_token %}
+                <input class="btn"
+                       type="button"
+                       name="resend-invite"
+                       hx-post="{% url 'findshows:delete_contact' contact.id %}"
+                       hx-trigger="click"
+                       value="Delete"
+                       hx-target="next .delete-contact-response"
+                >
+                <div class="delete-contact-response"></div>
+            </form>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="ml-3">
+        No new contacts.
+    </div>
+    {% endif %}
+
+
 </div>

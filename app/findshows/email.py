@@ -12,8 +12,7 @@ from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
 from django.urls import reverse
 
-from findshows.forms import ContactForm
-from findshows.models import Artist, ArtistLinkingInfo, ArtistVerificationStatus, Concert, CustomText, CustomTextTypes, EmailVerification, UserProfile, Venue
+from findshows.models import Artist, ArtistLinkingInfo, ArtistVerificationStatus, Concert, Contact, CustomText, CustomTextTypes, EmailVerification, UserProfile, Venue
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -135,46 +134,25 @@ be publically visible, and any artist invites have been sent.
     return send_simple_email(subject, message_blocks, [userprofile.user.email])
 
 
-def contact_email(cf: ContactForm):
-    try:
-        type = cf.Types(cf.cleaned_data['type'])
-    except ValueError:
-        type = cf.Types.OTHER
-
-    match type:
-        case cf.Types.REPORT_BUG | cf.Types.FEATURE_REQUEST:
-            recipient_list = [admin[1] for admin in settings.ADMINS] # Tuples (Name, email)
-        case cf.Types.CONTACT_MOD | cf.Types.HELP | cf.Types.OTHER:
-            mods = User.objects.filter(is_mod=True)
-            recipient_list = [mod.email for mod in mods]
-
-    logger.info("Sending contact email")
-    return send_simple_email(f"[Contact|{type.label}] {cf.cleaned_data['subject']}",
-                            cf.cleaned_data['message'],
-                            recipient_list,
-                            cf,
-                            reply_to_list=[cf.cleaned_data['email']],
-                            )
-
 def daily_mod_email(date):
-    query_labels = ("New artists", "Actionable artist accounts", "New venues", "Actionable venues", "New concerts")
-    queries = (
-        Artist.objects.filter(created_at=date),
-        UserProfile.objects.filter(artist_verification_status=ArtistVerificationStatus.UNVERIFIED),
-        Venue.objects.filter(created_at=date),
-        Venue.objects.filter(is_verified=False),
-        Concert.objects.filter(created_at=date),
-    )
-    if all(q.count()==0 for q in queries):
+    queries = {
+        "New artists": Artist.objects.filter(created_at=date),
+        "Actionable artist accounts": UserProfile.objects.filter(artist_verification_status=ArtistVerificationStatus.UNVERIFIED),
+        "New venues": Venue.objects.filter(created_at=date),
+        "Actionable venues": Venue.objects.filter(is_verified=False),
+        "New concerts": Concert.objects.filter(created_at=date),
+        "Contacts": Contact.objects.all(),
+    }
+    if all(q.count()==0 for q in queries.values()):
         return True
 
-    records_tuple = ('\n'.join(str(record) for record in q.all())
-                      for q in queries)
+    record_strings = {l: ''.join(f"\n- {str(record)}" for record in q.all())
+                      for l, q in queries.items()}
 
     url = local_url_to_email(reverse('findshows:mod_dashboard', query={'date': date.isoformat()}), "Click here to review")
-    message_blocks = [f"There are new or actionable listings from {str(date)}. {url}."]
+    message_blocks = [f"There are new or actionable records from {str(date)}. {url}."]
     message_blocks.extend(f"## {label}\n{records}"
-                          for label, records in zip(query_labels, records_tuple)
+                          for label, records in record_strings.items()
                           if records)
     recipient_list = [mod.email for mod in User.objects.filter(is_mod=True)]
     logger.info("Sending daily mod email")

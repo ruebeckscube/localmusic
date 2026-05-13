@@ -49,6 +49,7 @@ MOD_URLS_NO_PK = (
 MOD_URLS_WITH_PK = (
     "venue_verification",
     "artist_verification_buttons",
+    "delete_contact",
 )
 
 class PermissionsTests(TestCaseHelpers):
@@ -99,6 +100,7 @@ class PermissionsTests(TestCaseHelpers):
         self.userprofile.managed_artists.add(self.artist)
         self.concert = self.create_concert(pk=self.pk, venue = self.venue, artists = [self.artist], created_by=self.userprofile)
         self.ali = self.create_artist_linking_info(pk=self.pk, created_by=self.userprofile)
+        self.contact = self.create_contact(pk=self.pk)
 
         self.other_pk = 1001
         self.other_email = "has@hidden.rec"
