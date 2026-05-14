@@ -66,6 +66,7 @@ class ModOutstandingInviteTests(ModTestCaseHelpers):
 class TextCustomizationTests(ModTestCaseHelpers):
     def post_data(self):
         num_texts = len(CustomTextTypes.values)
+        ids = [ct.pk for ct in CustomText.objects.all()]
         data = {
          'form-TOTAL_FORMS': [str(num_texts)],
          'form-INITIAL_FORMS': [str(num_texts)],
@@ -73,7 +74,7 @@ class TextCustomizationTests(ModTestCaseHelpers):
          'form-MAX_NUM_FORMS': ['1000'],
         }
         for i in range(num_texts):
-            data.update({f'form-{i}-id': [str(i+1)],
+            data.update({f'form-{i}-id': [ids[i]],
                          f'form-{i}-text': ["this is the text content"]})
         return data
 
@@ -87,9 +88,9 @@ class TextCustomizationTests(ModTestCaseHelpers):
 
     def test_POST_successful(self):
         response = self.client.post(reverse("findshows:mod_text_customization"), data=self.post_data())
-        self.assertTrue(response.context['saved'])
+        self.assertTrue(response.context['saved'], msg=f"Form errors: {response.context['formset'].errors}")
         custom_texts = CustomText.objects.all()
-        self.assertEqual(len(custom_texts), 6) # This will need to be updated as types are added
+        self.assertEqual(len(custom_texts), len(CustomTextTypes.values))
         for custom_text in custom_texts:
             self.assertEqual(custom_text.text, "this is the text content")
 

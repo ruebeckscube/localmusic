@@ -13,6 +13,7 @@ urlpatterns = [
     path('artist_faq/', TemplateView.as_view(template_name='findshows/pages/artist_faq.html'), name="artist_faq"),
     path('contact/', views.contact, name="contact"),
     path('terms_of_service/', TemplateView.as_view(template_name='findshows/pages/terms_of_service.html'), name="terms_of_service"),
+    path('donate/', TemplateView.as_view(template_name='findshows/pages/donate.html'), name="donate"),
 
     path("artist/<int:pk>", views.view_artist, name="view_artist"),
     path("artist/<int:pk>/edit", views.edit_artist, name="edit_artist"),

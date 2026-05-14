@@ -810,6 +810,7 @@ class CustomTextTypes(models.TextChoices):
     WEEKLY_EMAIL_HEADER = "EH", "Header message for weekly recommendation email"
     ARTIST_INVITE_EMAIL = "AI", "Artist invite email"
     TERMS_OF_SERVICE = "TS", "Terms of service"
+    DONATE = "DN", "Donation texts"
 
 
 class CustomText(models.Model):
@@ -829,7 +830,10 @@ class CustomText(models.Model):
             md = cls.objects.get(type=type).text
         except cls.DoesNotExist:
             return ""
-        return mark_safe(nh3.clean(markdown(md)))
+        tags = nh3.ALLOWED_TAGS.union({"iframe"})
+        attrs = nh3.ALLOWED_ATTRIBUTES
+        attrs["iframe"] = {"src", "style", "height", "title"}
+        return mark_safe(nh3.clean(markdown(md), tags=tags, attributes=attrs))
 
     def __str__(self):
         return self.get_type_display()
