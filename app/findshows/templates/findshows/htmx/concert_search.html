@@ -1,3 +1,5 @@
+{% load static %}
+
 <div class="w-full flex max-sidebar-bp:flex-col relative"
      x-data="{'show_end_date': {{ search_form.is_date_range.value|lower }},
               'show_search_form': true}"
@@ -34,7 +36,8 @@
                 </svg>
             </div>
 
-            <div class="flex flex-col fieldgroup min-w-44">
+            <div class="flex flex-col min-w-56">
+              <div class="flex flex-col fieldgroup min-w-44">
                 {{ search_form.date.as_field_group }}
                 <div x-show="show_end_date">
                     {{ search_form.end_date.as_field_group }}
@@ -46,6 +49,15 @@
                     Hide date range
                 </div>
                 <input type='hidden' :value='show_end_date' name='is_date_range'>
+              </div>
+              <div class="fieldgroup">
+                  <label class="fav-checkbox">
+                      {{search_form.sort_followed_to_top}}
+                      <img class="w-8 h-8 img-checked" src="{% static 'findshows/follow-star-filled.svg' %}" />
+                      <img class="w-8 h-8 img-unchecked" src="{% static 'findshows/follow-star-empty.svg' %}" />
+                      Sort followed
+                  </label>
+              </div>
             </div>
             <div class="flex flex-col fieldgroup">
                 {{ search_form.musicbrainz_artists.as_field_group }}
@@ -62,7 +74,7 @@
     {% if not initial %}
         <div class="flex flex-col w-full">
             {% for concert in concerts  %}
-                {% include "../partials/concert_card.html" %}
+                {% include "../partials/concert_card.html" with followed_artists=user.userprofile.followed_artists.all %}
             {% empty %}
                 <div class="flex h-full flex-col justify-around text-center text-gray-800">
                     No results; try modifying your search.

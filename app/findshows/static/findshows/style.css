@@ -146,5 +146,22 @@
     grid-area: select;
   }
 
+  .fav-checkbox {
+    input {
+      display: none;
+    }
+    .img-checked {
+      display: none;
+    }
+    .img-unchecked {
+      display: inline;
+    }
+    input:checked ~ .img-checked {
+      display: inline;
+    }
+    input:checked ~ .img-unchecked {
+      display: none;
+    }
+  }
 
 }

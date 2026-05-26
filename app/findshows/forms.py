@@ -371,15 +371,19 @@ class ShowFinderForm(forms.Form):
         help_text="""We'll recommend some concerts based on the artists you
         select here. Leave blank to get a randomly sorted list.""",
     )
+    ATTRS = {"@click": "$dispatch('widget-update')",
+             "class": "accent-clickable"}
     concert_tags = forms.MultipleChoiceField(
         choices=ConcertTags,
-        widget=forms.CheckboxSelectMultiple(attrs={
-            "@click": "$dispatch('widget-update')",
-            "class": "accent-clickable",
-        }),
+        widget=forms.CheckboxSelectMultiple(attrs=ATTRS),
         required=False,
         label="Categories",
         help_text="Leave blank to include all show categories.",
+    )
+    sort_followed_to_top = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs=ATTRS)
     )
 
     def clean(self):

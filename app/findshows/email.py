@@ -19,16 +19,25 @@ logger = logging.getLogger(__name__)
 
 
 PROTOCOL = "http" if settings.IS_DEV else "https"
+PORT = ":8000" if settings.IS_DEV else ""
+
 def local_url_to_email(local_url, display=""):
     if display:
-        return f"[{display}]({PROTOCOL}://{settings.HOST_NAME}{local_url})"
+        return f"[{display}]({PROTOCOL}://{settings.HOST_NAME}{PORT}{local_url})"
     else:
-        return f"{PROTOCOL}://{settings.HOST_NAME}{local_url}"
+        return f"{PROTOCOL}://{settings.HOST_NAME}{PORT}{local_url}"
 
-EMAIL_CONTEXT = { # render_to_string doesn't use default context processors
-    'SITE_TITLE': settings.SITE_TITLE,
-    'SITE_LINK': local_url_to_email(''),
-}
+
+def render_email_to_string(template_name, context={}, **kwargs):
+    # render_to_string doesn't use default context processors
+    email_context = {
+        'SITE_TITLE': settings.SITE_TITLE,
+        'SITE_LINK': local_url_to_email(''),
+        'bg_section': "#ebe7eb",
+        **context
+    }
+    return render_to_string(template_name, email_context, **kwargs)
+
 
 def send_simple_email(subject, message_blocks, recipient_list, form=None, from_email=None, errorlist=None, reply_to_list=None, cc_list=None):
     """
@@ -45,12 +54,10 @@ def send_simple_email(subject, message_blocks, recipient_list, form=None, from_e
         log_error = "Email failure: no recipients specified for email."
     else:
         try:
-            context = EMAIL_CONTEXT.copy()
-            context.update({
+            html_message = render_email_to_string("findshows/emails/simple_email.html", {
                 'message_blocks': [mark_safe(nh3.clean(markdown(block))) for block in message_blocks],
                 'homepage_link': local_url_to_email(""),
             })
-            html_message = render_to_string("findshows/emails/simple_email.html", context)
             email = EmailMultiAlternatives(
                 subject,
                 ("\n\n".join(block for block in message_blocks)),
@@ -184,61 +191,92 @@ def send_mass_html_mail(datatuples):
     return sent
 
 
-def rec_email_generator():
+def _load_general_recommendation_data():
+    subject = CustomText.get_text(CustomTextTypes.WEEKLY_EMAIL_SUBJECT)
+    email_header = CustomText.get_text(CustomTextTypes.WEEKLY_EMAIL_HEADER)
+
     user_profiles = UserProfile.objects.filter(
         weekly_email=True, email_is_verified=True).select_related(
-            'user').prefetch_related('favorite_musicbrainz_artists').only(
-                'preferred_concert_tags', 'user', 'user__email', 'favorite_musicbrainz_artists', 'favorite_musicbrainz_artists__mbid')
+            'user').prefetch_related('favorite_musicbrainz_artists', 'followed_artists').only(
+                'preferred_concert_tags',
+                'user', 'user__email',
+                'favorite_musicbrainz_artists', 'favorite_musicbrainz_artists__mbid',
+                'followed_artists',
+            )
     today = datetime.date.today()
     week_later = today + datetime.timedelta(6)
     search_params = {'date': today,
                       'end_date': week_later,
                       'is_date_range': True}
-    email_header = CustomText.get_text(CustomTextTypes.WEEKLY_EMAIL_HEADER)
-    next_week_concerts = tuple(Concert.publically_visible().select_related('venue').prefetch_related('artists__similar_musicbrainz_artists').filter(date__gte=today, date__lte=week_later))
+    concerts = Concert.publically_visible().select_related('venue').prefetch_related('artists__similar_musicbrainz_artists')
+    next_week_concerts = tuple(concerts.filter(date__gte=today, date__lte=week_later))
+    unannounced_concerts = tuple(concerts.filter(date__gt=week_later, announced=None))
 
-    if not next_week_concerts:
-        return
+    return subject, user_profiles, search_params, email_header, next_week_concerts, unannounced_concerts
 
-    for user_profile in user_profiles.iterator(chunk_size=1000):
-        search_params['musicbrainz_artists'] = [mb_artist.mbid
-                                                for mb_artist in user_profile.favorite_musicbrainz_artists.all()]
-        search_params['concert_tags'] = set(user_profile.preferred_concert_tags)
-        search_url = local_url_to_email(reverse('findshows:home', query=search_params))
 
-        tag_filtered_concerts = [
-            c for c in next_week_concerts
-            if search_params['concert_tags'].intersection(c.tags)
-        ] if search_params['concert_tags'] else list(next_week_concerts)
-        scored_concerts = ((c.relevance_score(search_params['musicbrainz_artists']), c) for c in tag_filtered_concerts)
-        top_scored_concerts = sorted((s_c for s_c in scored_concerts if s_c[0] != 0), reverse=True)
-
-        has_recs = len(top_scored_concerts) > 0
-        if has_recs:
-            rec_concerts = [s_c[1] for s_c in top_scored_concerts]
+def _get_concerts_for_email(user_profile, search_params, next_week_concerts, unannounced_concerts):
+    followed_artists = set(user_profile.followed_artists.all())
+    followed_artist_concerts, not_followed_artist_concerts = [], []
+    for c in next_week_concerts:
+        if followed_artists.intersection(c.artists.all()):
+            followed_artist_concerts.append(c)
         else:
-            rec_concerts = tag_filtered_concerts if tag_filtered_concerts else list(next_week_concerts)
-            shuffle(rec_concerts)
-        rec_concerts = rec_concerts[:settings.CONCERT_RECS_PER_EMAIL]
+            not_followed_artist_concerts.append(c)
+    concerts_to_announce = [c for c in unannounced_concerts
+                            if followed_artists.intersection(c.artists.all())]
 
-        context = EMAIL_CONTEXT.copy()
-        context.update({
-            'concerts': rec_concerts,
-            'search_url': search_url,
-            'email_header': nh3.clean(markdown(email_header)),
-            'has_recs': has_recs
-        })
-        html_message = render_to_string("findshows/emails/rec_email.html", context)
-        text_message = f'{email_header}\n\nGo to {search_url} to see your weekly concert recommendations.'
+    tag_filtered_concerts = [c for c in not_followed_artist_concerts
+                             if search_params['concert_tags'].intersection(c.tags)
+                             ] if search_params['concert_tags'] else list(not_followed_artist_concerts)
 
-        yield text_message, html_message, user_profile.user.email
+    scored_concerts = ((c.relevance_score(search_params['musicbrainz_artists']), c) for c in tag_filtered_concerts)
+    rec_concerts = [s_c[1] for s_c in sorted((s_c for s_c in scored_concerts if s_c[0] != 0), reverse=True)][:settings.CONCERT_RECS_PER_EMAIL]
 
+    random_concerts = tag_filtered_concerts or not_followed_artist_concerts
+    shuffle(random_concerts)
+    random_concerts = random_concerts[:settings.CONCERT_RECS_PER_EMAIL]
+
+    return followed_artist_concerts, rec_concerts, random_concerts, concerts_to_announce
+
+
+def _one_rec_email(user_profile, search_params, subject, email_header, next_week_concerts, unannounced_concerts):
+    search_params = search_params.copy()
+    search_params['musicbrainz_artists'] = [mb_artist.mbid
+                                            for mb_artist in user_profile.favorite_musicbrainz_artists.all()]
+    search_params['concert_tags'] = set(user_profile.preferred_concert_tags)
+    search_url = local_url_to_email(reverse('findshows:home', query=search_params))
+
+    followed_artist_concerts, rec_concerts, random_concerts, concerts_to_announce = _get_concerts_for_email(user_profile, search_params, next_week_concerts, unannounced_concerts)
+
+    html_message = render_email_to_string("findshows/emails/rec_email.html", {
+        'followed_artist_concerts': followed_artist_concerts,
+        'concerts_to_announce': concerts_to_announce,
+        'rec_concerts': rec_concerts or random_concerts,
+        'search_url': search_url,
+        'email_header': mark_safe(nh3.clean(markdown(email_header))),
+        'has_recs': len(rec_concerts) > 0,
+    })
+    text_message = f'{email_header}\n\nGo to {search_url} to see your weekly concert recommendations.'
+
+    # datatuple expected by send_mass_html_mail
+    return (subject, text_message, html_message, None, (user_profile.user.email,))
 
 
 def send_rec_email():
-    subject = CustomText.get_text(CustomTextTypes.WEEKLY_EMAIL_SUBJECT)
-    datatuple = ( (subject, text_message, html_message, None, [email])
-                  for text_message, html_message, email in rec_email_generator() )
-    sent = send_mass_html_mail(datatuple)
+    subject, user_profiles, search_params, email_header, next_week_concerts, unannounced_concerts = _load_general_recommendation_data()
+    if not next_week_concerts:
+        logger.info(f"There are no concerts listed this week--not sending recommendation emails.")
+        return None
+
+    sent = send_mass_html_mail(_one_rec_email(user_profile, search_params, subject, email_header, next_week_concerts, unannounced_concerts)
+                               for user_profile in user_profiles.iterator(chunk_size=1000))
+
+    if sent:
+        today = datetime.date.today()
+        for c in unannounced_concerts:
+            c.announced = today
+        Concert.objects.bulk_update(unannounced_concerts, ['announced'], 100)
+
     logger.info(f"Sent {sent} recommendation emails")
     return sent

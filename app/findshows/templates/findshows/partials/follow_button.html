@@ -1,0 +1,37 @@
+{% load static %}
+
+{% if in_place %}
+    <form type="post" class="outer-swap min-w-[32px]">
+        {% csrf_token %}
+        <img class="cursor-pointer w-8 h-8 rounded-full hover:bg-highlight-item-light"
+             hx-trigger="click"
+             hx-target="closest .outer-swap"
+             hx-swap="outerHTML"
+          {% if is_followed %}
+             src="{% static 'findshows/follow-star-filled.svg' %}"
+             alt="Unfollow"
+             title="Unfollow"
+             hx-post="{% url 'findshows:unfollow_artist_htmx' artist.pk %}"
+          {% else %}
+             src="{% static 'findshows/follow-star-empty.svg' %}"
+             alt="Follow"
+             title="Follow"
+             hx-post="{% url 'findshows:follow_artist_htmx' artist.pk %}"
+          {% endif %}
+        />
+    </form>
+{% else %}
+    <div class="flex w-fit items-center p-1 min-h-12 relative">
+        <svg class="rough-bg-social-link h-full w-full absolute -z-0" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio='none'></svg>
+          {% if is_followed %}
+            <a class="flex link text-lg text-center m-3 z-10" href={% url 'findshows:unfollow_artist' artist.pk %}>
+                <img title="Unfollow" src="{% static 'findshows/follow-star-filled.svg' %}"/>
+            </a>
+          {% else %}
+            <a class="flex link text-lg text-center m-3 z-10" href={% url 'findshows:follow_artist' artist.pk %}>
+                <img src="{% static 'findshows/follow-star-empty.svg' %}"/>
+                <div class="my-auto">Follow</div>
+            </a>
+          {% endif %}
+    </div>
+{% endif %}

@@ -29,6 +29,7 @@ from multiselectfield import MultiSelectField
 import nh3
 import requests
 
+from findshows import pdfgen
 from findshows import musicbrainz
 
 
@@ -196,6 +197,7 @@ class Artist(CreationTrackingMixin):
                                          upload_to=prof_pic_name_small)
     bio=models.TextField(null=True, max_length=800)
     local=models.BooleanField(help_text="Check if this is a local artist. It will give them permission to list shows and invite other artists.")
+    qr_kit=models.FileField(null=True, editable=False)
 
     is_temp_artist=models.BooleanField()
 
@@ -214,6 +216,14 @@ class Artist(CreationTrackingMixin):
         return mean(mb_artist.similarity_score(mbid)
                    for mb_artist in similar_mb_artists
                    for mbid in searched_mbids)
+
+
+    def generate_qr_kit(self):
+        if not (self.pk and self.name):
+            return
+        self.qr_kit = ContentFile(pdfgen.generate_artist_qr_kit(self.pk, self.name),
+                                  f"{self.name}_qr_kit.pdf")
+        self.save()
 
 
     def __str__(self):
@@ -759,6 +769,7 @@ class Concert(CreationTrackingMixin):
     cancelled=models.BooleanField(blank=True, null=True)
     description=models.CharField(max_length=50, null=True, blank=True,
                                  help_text="A headline-esque description of the concert")
+    announced=models.DateField(null=True, editable=False)
 
     @classmethod
     def publically_visible(cls):
@@ -789,8 +800,11 @@ class Concert(CreationTrackingMixin):
             return self.get_ages_display()
         return self.venue.get_ages_display()
 
+    def display_str(self):
+        return f"{', '.join((str(a) for a in self.artists.all()))} | {self.date.strftime('%a %b %d')} | {str(self.venue)}"
+
     def __str__(self):
-        return ', '.join((str(a) for a in self.artists.all())) + ' at ' + str(self.venue) + ' ' + str(self.date)
+        return f"{', '.join((str(a) for a in self.artists.all()))} at {str(self.venue)} {str(self.date)}"
 
 
 

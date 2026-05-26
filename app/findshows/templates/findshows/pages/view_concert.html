@@ -17,7 +17,7 @@
     <div class="flex max-md:flex-col h-full">
 
         <!-- Poster & info -->
-        <div class="flex flex-col sm:max-md:flex-row items-center w-full md:w-1/3 fieldgroup h-fit">
+        <div class="flex flex-col sm:max-md:flex-row items-center md:w-1/3 fieldgroup h-fit">
             <!-- Concert poster -->
             <div class="flex flex-col sm:max-md:w-1/2 justify-center items-center @max-md:px-9 @max-md:py-4">
                 <a href={% url 'findshows:view_concert' concert.pk %}>
@@ -37,21 +37,30 @@
             {% for artist in concert.sorted_artists %}
                 <div class="flex flex-col items-center fieldgroup @container">
                     <div class="flex @max-md:flex-col w-full justify-between my-1">
-                        <div class="flex flex-col w-full @md:w-1/2 justify-center text-center">
-                            <div><a href="{% url 'findshows:view_artist' artist.pk %}"
-                                    class="text-2xl link">
-                                {{artist.name}}
-                            </a></div>
-                            <div class="flex justify-center items-center p-2">
-                                {% if artist.profile_picture_small %}
-                                    <img class="max-w-full max-h-52 object-contain"
-                                         src="{{ artist.profile_picture_small.url }}">
+                        <div class="flex flex-col w-full @md:w-1/2 ">
+                            <div class="@max-md:self-end">
+                                {% if artist in user.userprofile.followed_artists.all %}
+                                    {% include 'findshows/partials/follow_button.html' with is_followed=True in_place=True%}
+                                {% else %}
+                                    {% include 'findshows/partials/follow_button.html' with is_followed=False in_place=True%}
                                 {% endif %}
                             </div>
-                            <div>
-                                {% for similar_musicbrainz_artist in artist.similar_musicbrainz_artists.all %}
-                                    {% similar_artist_name_with_relevancy similar_musicbrainz_artist forloop.last searched_musicbrainz_artists True user %}
-                                {% endfor %}
+                            <div class="flex flex-col justify-center text-center grow">
+                                <div><a href="{% url 'findshows:view_artist' artist.pk %}"
+                                        class="text-2xl link">
+                                    {{artist.name}}
+                                </a></div>
+                                <div class="flex justify-center items-center p-2">
+                                    {% if artist.profile_picture_small %}
+                                        <img class="max-w-full max-h-52 object-contain"
+                                             src="{{ artist.profile_picture_small.url }}">
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    {% for similar_musicbrainz_artist in artist.similar_musicbrainz_artists.all %}
+                                        {% similar_artist_name_with_relevancy similar_musicbrainz_artist forloop.last searched_musicbrainz_artists True user %}
+                                    {% endfor %}
+                                </div>
                             </div>
                         </div>
                         <div class="flex flex-col justify-center items-center w-full @md:w-1/2">

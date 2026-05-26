@@ -17,6 +17,8 @@ urlpatterns = [
 
     path("artist/<int:pk>", views.view_artist, name="view_artist"),
     path("artist/<int:pk>/edit", views.edit_artist, name="edit_artist"),
+    path("artist/<int:pk>/follow", views.follow_artist, name="follow_artist"),
+    path("artist/<int:pk>/unfollow", partial(views.follow_artist, unfollow=True), name="unfollow_artist"),
     path("artist/create", views.edit_artist, name="create_artist"),
     path("artist_dashboard", views.artist_dashboard, name="artist_dashboard"),
     path("link_artist", views.link_artist, name="link_artist"),
@@ -45,4 +47,6 @@ urlpatterns = [
     path("htmx/create_temp_artist/", views.create_temp_artist, name="create_temp_artist"),
     path("htmx/manage_artist_access/<int:pk>", views.manage_artist_access, name="manage_artist_access"),
     path("htmx/artist_search_results/", views.artist_search_results, name="artist_search_results"),
+    path("htmx/follow/<int:pk>", partial(views.follow_artist, htmx=True), name="follow_artist_htmx"),
+    path("htmx/unfollow/<int:pk>", partial(views.follow_artist, unfollow=True, htmx=True), name="unfollow_artist_htmx"),
 ]

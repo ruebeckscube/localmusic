@@ -1,0 +1,22 @@
+{% load findshows_tags %}
+
+{% for concert in concerts %}
+  {% if forloop.first %}
+    <mj-section background-color="{{ bg_section }}" padding="5px">
+  {% elif forloop.counter0|divisibleby:3 and not forloop.last %}
+    </mj-section><mj-section background-color="{{ bg_section }}" padding="5px">
+  {% endif %}
+        <mj-column vertical-align="middle" width="33%">
+            <mj-image alt="{{concert}}" width="300px"
+                      src="{% email_raw_url  concert.poster_small.url %}"
+                      href="{% email_url 'findshows:view_concert' concert.pk %}"/>
+            <mj-text font-size="12px">
+                <a href="{% email_url 'findshows:view_concert' concert.pk %}" style="font-weight:normal">
+                    {{ concert.display_str }} {% if concert.description %} | {{ concert.description }} {% endif %}
+                </a>
+            </mj-text>
+        </mj-column>
+  {% if forloop.last %}
+    </mj-section>
+  {% endif %}
+{% endfor %}

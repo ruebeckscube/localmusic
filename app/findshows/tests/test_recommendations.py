@@ -30,61 +30,85 @@ class RecommendationTests(TestCaseHelpers):
         MusicBrainzArtist.objects.bulk_create(mb_artists)
 
         # Creating (local) artists that are similar to each cluster
-        artist_0_0 = cls.create_artist("Cluster-0 Artist-0", similar_musicbrainz_artists=[f'{0}-{a}' for a in range(3)])
-        artist_0_1 = cls.create_artist("Cluster-0 Artist-1", similar_musicbrainz_artists=[f'{0}-{a}' for a in range(3)])
-        artist_0_2 = cls.create_artist("Cluster-0 Artist-2", similar_musicbrainz_artists=[f'{0}-{a}' for a in range(3)])
-        artist_1_0 = cls.create_artist("Cluster-1 Artist-0", similar_musicbrainz_artists=[f'{1}-{a}' for a in range(3)])
-        artist_1_1 = cls.create_artist("Cluster-1 Artist-1", similar_musicbrainz_artists=[f'{1}-{a}' for a in range(3)])
-        artist_2_0 = cls.create_artist("Cluster-2 Artist-0", similar_musicbrainz_artists=[f'{2}-{a}' for a in range(3)])
-        artist_2_1 = cls.create_artist("Cluster-2 Artist-1", similar_musicbrainz_artists=[f'{2}-{a}' for a in range(3)])
-        artist_3_0 = cls.create_artist("Cluster-3 Artist-0", similar_musicbrainz_artists=[f'{3}-{a}' for a in range(3)])
+        # e.g. cls.artists[2][0] and cls.artists[2][1] are each similar to cluster 2
+        cls.artists = [[cls.create_artist(f"Cluster-{cluster} Artist-{artist}",
+                                          similar_musicbrainz_artists=[f'{cluster}-{a}' for a in range(3)])
+                        for artist in range(3)]
+                       for cluster in range(4)]
 
-        cls.concert1 = cls.create_concert(artists=[artist_0_0, artist_0_1, artist_0_2])
-        cls.concert2 = cls.create_concert(artists=[artist_0_0, artist_0_1, artist_1_0])
-        cls.concert3 = cls.create_concert(artists=[artist_0_0, artist_1_0, artist_1_1])
-        cls.concert4 = cls.create_concert(artists=[artist_2_0, artist_2_1, artist_3_0])
+        cls.concerts = [
+            cls.create_concert(artists=[cls.artists[0][0], cls.artists[0][1], cls.artists[0][2]]),
+            cls.create_concert(artists=[cls.artists[0][0], cls.artists[0][1], cls.artists[1][0]]),
+            cls.create_concert(artists=[cls.artists[0][0], cls.artists[1][0], cls.artists[1][1]]),
+            cls.create_concert(artists=[cls.artists[2][0], cls.artists[2][1], cls.artists[3][0]]),
+        ]
 
 
-    def test_similarity_sorting(self):
+    def test_concert_search_similarity_sorting(self):
         response = self.client.get(reverse('findshows:concert_search'),
                                    concert_GET_params(musicbrainz_artists=['0-0', '0-1']))
-        self.assertEqual(response.context['concerts'], [self.concert1, self.concert2, self.concert3, self.concert4])
+        self.assertEqual(response.context['concerts'], self.concerts[:4])
 
         response = self.client.get(reverse('findshows:concert_search'),
                                    concert_GET_params(musicbrainz_artists=['1-2']))
-        self.assertEqual(response.context['concerts'][:2], [self.concert3, self.concert2])
+        self.assertEqual(response.context['concerts'][:2], [self.concerts[2], self.concerts[1]])
+        self.assert_equal_as_sets(response.context['concerts'][2:], (self.concerts[0], self.concerts[3]))
 
         response = self.client.get(reverse('findshows:concert_search'),
                                    concert_GET_params(musicbrainz_artists=['2-0']))
-        self.assertEqual(response.context['concerts'][0], self.concert4)
+        self.assertEqual(response.context['concerts'][0], self.concerts[3])
+        self.assert_equal_as_sets(response.context['concerts'][1:], self.concerts[:3])
 
         # Results are random, just checking it doesn't error out
         response = self.client.get(reverse('findshows:concert_search'),
                                    concert_GET_params(musicbrainz_artists=['']))
 
 
-    def test_email_concert_inclusion(self):
+    def test_concert_search_favorite_sorting(self):
+        userprofile = self.create_user_profile(
+            followed_artists=[self.artists[2][0], self.artists[2][1], self.artists[1][1]]
+        )
+        self.client.login(username=userprofile.user.email, password=self.DEFAULT_PASSWORD)
+
+        response = self.client.get(reverse('findshows:concert_search'),
+                                   concert_GET_params(musicbrainz_artists=['0-0', '0-1'], sort_followed_to_top=True))
+        # Order is 2 artists followed, 1 artist followed, higher score, lower score
+        self.assertEqual(response.context['concerts'],
+                         [self.concerts[3], self.concerts[2], self.concerts[0], self.concerts[1]])
+
+
+    def test_rec_email_sorting_and_inclusion(self):
         self.create_user_profile(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user1@em.ail")
         self.create_user_profile(favorite_musicbrainz_artists=['4-0', '4-1', '4-2'], email="user2@em.ail")
         self.create_user_profile(favorite_musicbrainz_artists=[], email="user3@em.ail")
         self.create_user_profile(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user4@em.ail", weekly_email=False)
+        self.create_user_profile(followed_artists=[self.artists[1][0], self.artists[1][1]], email="user5@em.ail")
+        self.create_user_profile(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'],
+                                 followed_artists=[self.artists[1][1]],
+                                 email="user6@em.ail")
+        announced_concert = self.create_concert(artists=[self.artists[1][1]],
+                                                date=datetime.date.today() + datetime.timedelta(20),
+                                                announced=None)
 
         send_rec_email()
-        self.assert_emails_sent(3)
+        self.assert_emails_sent(5)
         for message in mail.outbox:
             match message.recipients():
-                case ['user1@em.ail']: # Gets the two recs
-                    self.assert_concert_link_in_message_html(self.concert1, message)
-                    self.assert_concert_link_in_message_html(self.concert2, message)
-                    self.assert_concert_link_in_message_html(self.concert3, message)
-                    self.assert_concert_link_in_message_html(self.concert4, message, assert_not=True)
+                case ['user1@em.ail']: # Gets concerts 1, 2, 3 in order
+                    self.assert_concert_order(message, self.concerts[:3], excluded_concerts=(self.concerts[3],))
                 case ['user2@em.ail'] | ['user3@em.ail']: # Gets randomized recs
-                    self.assert_concert_link_in_message_html(self.concert1, message)
-                    self.assert_concert_link_in_message_html(self.concert2, message)
-                    self.assert_concert_link_in_message_html(self.concert3, message)
-                    self.assert_concert_link_in_message_html(self.concert4, message)
+                    self.assert_concert_order(message, unordered_concerts=self.concerts[:4])
                 case ['user4@em.ail']:
                     self.assertFalse("User 4 should not receive an email")
+                case ['user5@em.ail']:
+                    self.assert_concert_order(message,
+                                              (self.concerts[1], self.concerts[2]),
+                                              (self.concerts[0], self.concerts[3]))
+                case ['user6@em.ail']:
+                    self.assert_concert_order(message,
+                                              (self.concerts[2], announced_concert, self.concerts[0], self.concerts[1]),
+                                              excluded_concerts=(self.concerts[3],))
+
 
 
     def test_number_database_hits_in_send_rec_email(self):
@@ -92,13 +116,13 @@ class RecommendationTests(TestCaseHelpers):
         self.create_user_profile(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user1@em.ail", preferred_concert_tags=[ConcertTags.ORIGINALS])
         self.create_user_profile(favorite_musicbrainz_artists=['4-0', '4-1', '4-2'], email="user2@em.ail")
 
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(9):
             send_rec_email()
         self.assert_emails_sent(2)
 
         self.create_user_profile(favorite_musicbrainz_artists=[], email="user3@em.ail")
         self.create_user_profile(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user4@em.ail")
 
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(9):
             send_rec_email()
         self.assert_emails_sent(6)

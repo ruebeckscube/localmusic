@@ -21,10 +21,16 @@ PUBLIC_URLS_WITH_PK = (
     "view_artist",
     "view_concert",
 )
-LOGGED_IN_URLS = (
+LOGGED_IN_URLS_NO_PK = (
     "user_settings",
     "link_artist",
     "create_artist",
+)
+LOGGED_IN_URLS_WITH_PK = (
+    "follow_artist",
+    "unfollow_artist",
+    "follow_artist_htmx",
+    "unfollow_artist_htmx",
 )
 ARTIST_URLS_NO_PK = (
     "artist_dashboard",
@@ -60,8 +66,17 @@ class PermissionsTests(TestCaseHelpers):
             response = self.client.get(url)
 
             if expected_to_have_permission:
-                self.assertEqual(response.status_code, 200, msg=url_name)
-                self.assertTemplateNotUsed('findshows/htmx/modal_error_msg.html', msg_prefix=url_name)
+                self.assertIn(response.status_code, (200, 302), msg=url_name)
+                match response.status_code:
+                    case 200:
+                        self.assertTemplateNotUsed('findshows/htmx/modal_error_msg.html', msg_prefix=url_name)
+                    case 302:
+                        try:
+                            self.assertRedirects(response, reverse('login', query={'next': url}), msg_prefix=url_name)
+                        except AssertionError:
+                            pass
+                        else:
+                            raise AssertionError(f'{url_name}: a valid redirect should not go to login')
             else:
                 self.assertIn(response.status_code, (200, 302, 403), msg=url_name)
                 match response.status_code:
@@ -118,16 +133,16 @@ class PermissionsTests(TestCaseHelpers):
         self.assert_generic_permissions(
             PUBLIC_URLS_NO_PK,
             PUBLIC_URLS_WITH_PK,
-            chain(LOGGED_IN_URLS, ARTIST_URLS_NO_PK, MOD_URLS_NO_PK),
-            chain(ARTIST_URLS_WITH_PK, MOD_URLS_WITH_PK))
+            chain(LOGGED_IN_URLS_NO_PK, ARTIST_URLS_NO_PK, MOD_URLS_NO_PK),
+            chain(LOGGED_IN_URLS_WITH_PK, ARTIST_URLS_WITH_PK, MOD_URLS_WITH_PK))
         self.assert_permissions_for_hidden_records((), PUBLIC_URLS_WITH_PK)
 
 
     def test_non_artist(self):
         self.login_static_user(self.StaticUsers.NON_ARTIST)
         self.assert_generic_permissions(
-            chain(PUBLIC_URLS_NO_PK, LOGGED_IN_URLS),
-            PUBLIC_URLS_WITH_PK,
+            chain(PUBLIC_URLS_NO_PK, LOGGED_IN_URLS_NO_PK),
+            chain(PUBLIC_URLS_WITH_PK, LOGGED_IN_URLS_WITH_PK),
             chain(ARTIST_URLS_NO_PK, MOD_URLS_NO_PK),
             chain(ARTIST_URLS_WITH_PK, MOD_URLS_WITH_PK))
         self.assert_permissions_for_hidden_records((), PUBLIC_URLS_WITH_PK)
@@ -136,19 +151,19 @@ class PermissionsTests(TestCaseHelpers):
         self.login_with_status(ArtistVerificationStatus.DEVERIFIED)
 
         deverified_exceptions = ("create_artist",)
-        logged_in_besides_deverified = (url for url in LOGGED_IN_URLS if url not in deverified_exceptions)
+        logged_in_besides_deverified = (url for url in LOGGED_IN_URLS_NO_PK if url not in deverified_exceptions)
 
         self.assert_generic_permissions(
             chain(PUBLIC_URLS_NO_PK, logged_in_besides_deverified),
-            PUBLIC_URLS_WITH_PK,
+            chain(PUBLIC_URLS_WITH_PK, LOGGED_IN_URLS_WITH_PK),
             chain(ARTIST_URLS_NO_PK, MOD_URLS_NO_PK, deverified_exceptions),
             chain(ARTIST_URLS_WITH_PK, MOD_URLS_WITH_PK))
         self.assert_permissions_for_hidden_records((), PUBLIC_URLS_WITH_PK)
 
     def assert_verified_equiv_permissions(self):
         self.assert_generic_permissions(
-            chain(PUBLIC_URLS_NO_PK, LOGGED_IN_URLS, ARTIST_URLS_NO_PK),
-            chain(PUBLIC_URLS_WITH_PK, ARTIST_URLS_WITH_PK),
+            chain(PUBLIC_URLS_NO_PK, LOGGED_IN_URLS_NO_PK, ARTIST_URLS_NO_PK),
+            chain(PUBLIC_URLS_WITH_PK, LOGGED_IN_URLS_WITH_PK, ARTIST_URLS_WITH_PK),
             chain(MOD_URLS_NO_PK),
             chain(MOD_URLS_WITH_PK))
         self.assert_permissions_for_hidden_records((), PUBLIC_URLS_WITH_PK)
@@ -186,8 +201,8 @@ class PermissionsTests(TestCaseHelpers):
         allowed_artist_with_pk = ("edit_artist", "manage_artist_access")
         disallowed_artist_with_pk = (url for url in ARTIST_URLS_WITH_PK if url not in allowed_artist_with_pk)
         self.assert_generic_permissions(
-            chain(PUBLIC_URLS_NO_PK, LOGGED_IN_URLS, allowed_artist_no_pk),
-            chain(PUBLIC_URLS_WITH_PK, allowed_artist_with_pk),
+            chain(PUBLIC_URLS_NO_PK, LOGGED_IN_URLS_NO_PK, allowed_artist_no_pk),
+            chain(PUBLIC_URLS_WITH_PK, LOGGED_IN_URLS_WITH_PK, allowed_artist_with_pk),
             chain(MOD_URLS_NO_PK, disallowed_artist_no_pk),
             chain(MOD_URLS_WITH_PK, disallowed_artist_with_pk))
         self.assert_permissions_for_hidden_records((), PUBLIC_URLS_WITH_PK)
@@ -196,8 +211,8 @@ class PermissionsTests(TestCaseHelpers):
         self.login_static_user(self.StaticUsers.MOD_USER)
 
         self.assert_generic_permissions(
-            chain(PUBLIC_URLS_NO_PK, LOGGED_IN_URLS, MOD_URLS_NO_PK),
-            chain(PUBLIC_URLS_WITH_PK, MOD_URLS_WITH_PK),
+            chain(PUBLIC_URLS_NO_PK, LOGGED_IN_URLS_NO_PK, MOD_URLS_NO_PK),
+            chain(PUBLIC_URLS_WITH_PK, LOGGED_IN_URLS_WITH_PK, MOD_URLS_WITH_PK),
             ARTIST_URLS_NO_PK,
             ARTIST_URLS_WITH_PK)
         self.assert_permissions_for_hidden_records(PUBLIC_URLS_WITH_PK, ())
@@ -209,8 +224,8 @@ class PermissionsTests(TestCaseHelpers):
         # Critically this includes yes permissions for editing artists/concrets not belonging to this user
         artist_urls_besides_dashboard = (url for url in ARTIST_URLS_NO_PK if url != "artist_dashboard")
         self.assert_generic_permissions(
-            chain(PUBLIC_URLS_NO_PK, LOGGED_IN_URLS, artist_urls_besides_dashboard, MOD_URLS_NO_PK),
-            chain(PUBLIC_URLS_WITH_PK, ARTIST_URLS_WITH_PK, MOD_URLS_WITH_PK),
+            chain(PUBLIC_URLS_NO_PK, LOGGED_IN_URLS_NO_PK, artist_urls_besides_dashboard, MOD_URLS_NO_PK),
+            chain(PUBLIC_URLS_WITH_PK, LOGGED_IN_URLS_WITH_PK, ARTIST_URLS_WITH_PK, MOD_URLS_WITH_PK),
             ("artist_dashboard",),
             ())
         self.assert_permissions_for_hidden_records(PUBLIC_URLS_WITH_PK, ())
@@ -227,7 +242,7 @@ class PermissionsTests(TestCaseHelpers):
         self.create_user_profile(email="admin@admin.net", password='12345', is_staff=True)
         self.client.login(email="admin@admin.net", password='12345')
 
-        self.assert_404s(chain(PUBLIC_URLS_WITH_PK, ARTIST_URLS_WITH_PK, MOD_URLS_WITH_PK), self.pk*3)
+        self.assert_404s(chain(PUBLIC_URLS_WITH_PK, LOGGED_IN_URLS_WITH_PK, ARTIST_URLS_WITH_PK, MOD_URLS_WITH_PK), self.pk*3)
 
 
     def all_url_patterns(self, url_patterns=None, namespace=""):
@@ -256,7 +271,8 @@ class PermissionsTests(TestCaseHelpers):
         all_here = chain(
             PUBLIC_URLS_NO_PK,
             PUBLIC_URLS_WITH_PK,
-            LOGGED_IN_URLS,
+            LOGGED_IN_URLS_NO_PK,
+            LOGGED_IN_URLS_WITH_PK,
             ARTIST_URLS_NO_PK,
             ARTIST_URLS_WITH_PK,
             MOD_URLS_NO_PK,

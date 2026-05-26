@@ -184,7 +184,9 @@ def view_artist(request, pk):
     return render(request, "findshows/pages/view_artist.html", context={
         'artist': artist,
         'can_edit': can_edit,
-        'upcoming_concerts': upcoming_concerts
+        'upcoming_concerts': upcoming_concerts,
+        'query': request.GET if request.GET else None,
+        'is_followed': False if request.user.is_anonymous else request.user.userprofile.followed_artists.filter(pk=artist.pk).count() > 0,
     })
 
 
@@ -244,6 +246,7 @@ def edit_artist(request, pk=None):
         elif form.is_valid():
             try:
                 saved_artist = form.save()
+                saved_artist.generate_qr_kit()
                 if not pk:
                     profile.managed_artists.add(saved_artist)
                 if not profile.artist_verification_status:
@@ -441,6 +444,31 @@ def link_artist(request):
         return redirect(reverse('findshows:view_artist', args=(artist.pk,)))
 
 
+def follow_artist(request, pk, unfollow=False, htmx=False):
+    if request.user.is_anonymous:  # can't use login_required bc htmx
+        next = reverse('findshows:unfollow_artist' if unfollow else 'findshows:follow_artist', args=(pk,))
+        url = reverse('login', query={'next': next})
+        return HttpResponse('', headers={"HX-Redirect": url}) if htmx else redirect(url)
+
+    artist = get_object_or_404(Artist, pk=pk)
+
+    if unfollow:
+        request.user.userprofile.followed_artists.remove(artist)
+    else:
+        request.user.userprofile.followed_artists.add(artist)
+
+    if htmx:
+        return render(request, 'findshows/partials/follow_button.html', context={
+            'artist': artist,
+            'is_followed': not unfollow,
+            'in_place': True,
+        })
+    else:
+        return redirect(reverse('findshows:view_artist', args=(artist.pk,), query={
+            'from': 'unfollow_artist' if unfollow else 'follow_artist'
+        }))
+
+
 #####################
 ## Concert Views ####
 #####################
@@ -636,12 +664,19 @@ def concert_search(request):
         searched_musicbrainz_artists = search_form.cleaned_data.get('musicbrainz_artists', [])
         concerts = list(concerts)
         searched_mbids = [mb_artist.mbid for mb_artist in search_form.cleaned_data['musicbrainz_artists']]
-        if len(searched_mbids) > 0:
+        if searched_mbids:
             concerts = sorted(concerts,
                               key=lambda c: (c.relevance_score(searched_mbids), random()),
                               reverse=True)
         else:
             shuffle(concerts)
+
+        if request.user.is_authenticated and search_form.cleaned_data['sort_followed_to_top']:
+            followed_artists = set(request.user.userprofile.followed_artists.all())
+            concerts = sorted(concerts,
+                              key=lambda c: len(followed_artists.intersection(c.artists.all())),
+                              reverse=True)
+
 
         search_form = ShowFinderForm(initial=search_form.cleaned_data)
 

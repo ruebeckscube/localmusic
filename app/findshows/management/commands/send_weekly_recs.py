@@ -7,8 +7,5 @@ class Command(BaseCommand):
     help = "Sends the weekly rec email with subject/message specified in Custom Texts (set thru site admin)."
 
     def handle(self, *args, **options):
-        if not send_rec_email():
-            raise CommandError("Something went wrong delivering emails.")
-        self.stdout.write(
-            self.style.SUCCESS('Delivered emails.')
-        )
+        if send_rec_email():
+            self.stdout.write(self.style.SUCCESS('Delivered emails.'))

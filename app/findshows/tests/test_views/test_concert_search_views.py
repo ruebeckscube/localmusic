@@ -46,7 +46,7 @@ class ConcertSearchTests(TestCaseHelpers):
         self.create_musicbrainz_artist('35', 'Jimmy Buffet')
         tomorrow = timezone_today() + timedelta(1)
         get_params = concert_GET_params(tomorrow, tomorrow, False,
-                                        ['22','35'], [ConcertTags.ORIGINALS])
+                                        ['22','35'], [ConcertTags.ORIGINALS], False)
         response = self.client.get(reverse('findshows:concert_search'), get_params)
         data = response.context['search_form'].initial
 
@@ -57,6 +57,7 @@ class ConcertSearchTests(TestCaseHelpers):
             'end_date': tomorrow,
             'is_date_range': False,
             'concert_tags': [ConcertTags.ORIGINALS.value],
+            'sort_followed_to_top': False,
         })
 
 

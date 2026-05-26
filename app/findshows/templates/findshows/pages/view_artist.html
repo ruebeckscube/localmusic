@@ -2,22 +2,48 @@
 {% load findshows_tags %}
 
 {% block content %}
+    {% if query and query.from %}
+        {% if query.from == 'follow_artist' %}
+            <div class="banner">
+                You have followed {{ artist.name }}. If this was in error, you can
+                <a href={% url 'findshows:unfollow_artist' artist.pk %} class="link">click here to unfollow</a>.
+                Or <a href={% url 'findshows:home' %} class="link">return home</a>.
+            </div>
+        {% elif query.from == 'unfollow_artist' %}
+            <div class="banner">
+                You have unfollowed {{ artist.name }}. If this was in error, you can
+                <a href={% url 'findshows:follow_artist' artist.pk %} class="link">click here to follow</a>.
+                Or <a href={% url 'findshows:home' %} class="link">return home</a>.
+            </div>
+        {% endif %}
+
+        {% if user.is_authenticated and not user.userprofile.email_is_verified %}
+            {% include "findshows/htmx/email_verification_banner.html" %}
+        {% endif %}
+    {% endif %}
+
     {% if can_edit %}
         <div class="flex justify-center mx-auto w-fit">
             <a class="block btn w-30 m-2" href="{% url 'findshows:edit_artist' artist.pk %}?from=view_artist"> Edit </a>
+          {% if artist.qr_kit %}
+            <a class="block btn w-30 m-2" href="{{ artist.qr_kit.url }}" target="_blank"> QR kit </a>
+          {% endif %}
             <a class="block btn w-60 m-2" href="{% url 'findshows:artist_dashboard' %}"> Artist dashboard </a>
         </div>
     {% endif %}
+
     <div class="flex max-md:flex-col w-full">
-        {# Name and socials #}
+        {# Name, follow button, and socials #}
         <div class="md:w-3/5 m-2 flex flex-col content-center justify-around bg-sub-background">
                 <h1 class="text-[10vw] md:text-[7vw] text-center font-extralight mt-8 md:my-auto">
                     {{artist.name}}
                 </h1>
-
-                <div class="flex flex-row w-fit mx-auto mb-4 self-end flex-wrap justify-around">
+                <div class="flex flex-row w-full mb-4 self-end flex-wrap justify-around items-center">
+                    <div class="self-start">
+                        {% include 'findshows/partials/follow_button.html' %}
+                    </div>
                     {% for link in artist.socials_links %}
-                        <div class="flex items-center p-1 min-h-12 relative">
+                        <div class="flex items-center p-1 min-h-12 h-fit relative">
                             <svg class="rough-bg-social-link h-full w-full absolute -z-0" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio='none'></svg>
                             <a class="link text-lg text-center m-3 z-10" href="{{link.1}}" target="_blank">{{link.0}}</a>
                         </div>
@@ -40,7 +66,7 @@
             {% preview_player artist %}
         </div>
         {# Bio and similar artists #}
-        <div class="md:w-2/3 m-2 bg-sub-background">
+        <div class="flex flex-col justify-around md:w-2/3 m-2 bg-sub-background">
             <p class="p-10 w-full max-w-[50em] mx-auto text-justify">
                 {{artist.bio}}
             </p>

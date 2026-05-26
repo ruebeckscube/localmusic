@@ -1,9 +1,9 @@
 import datetime
 from enum import Enum
+from itertools import chain, pairwise
 from uuid import uuid4
 import tempfile
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -13,6 +13,7 @@ from django.utils.datastructures import MultiValueDict
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 
+from findshows.email import local_url_to_email
 from findshows.models import Ages, Artist, ArtistLinkingInfo, Concert, ConcertTags, Contact, EmailVerification, ListenLink, MusicBrainzArtist, SetOrder, UserProfile, Venue, YoutubeLink
 
 User = get_user_model()
@@ -107,12 +108,41 @@ class TestCaseHelpers(TestCase):
 
 
     def assert_concert_link_in_message_html(self, concert, message, assert_not = False):
-        needle = f"{settings.HOST_NAME}{reverse('findshows:view_concert', args=(concert.pk,))}"
+        needle = local_url_to_email(reverse('findshows:view_concert', args=(concert.pk,)))
         haystack = message.alternatives[0][0]
         if assert_not:
             self.assertNotIn(needle, haystack)
         else:
             self.assertIn(needle, haystack)
+
+
+    def assert_concert_order(self, message, ordered_concerts=list(), unordered_concerts=list(), excluded_concerts=list()):
+        haystack = message.alternatives[0][0]
+        for concert in chain(ordered_concerts, unordered_concerts, excluded_concerts):
+            concert.url_cache = reverse('findshows:view_concert', args=(concert.pk,))
+            concert.position_cache = haystack.find(concert.url_cache)
+
+        missing_concerts = [c.url_cache for c in chain(ordered_concerts, unordered_concerts)
+                            if c.position_cache == -1]
+        if missing_concerts:
+            raise AssertionError(f'{missing_concerts} not found in message')
+
+        for c1, c2 in pairwise(ordered_concerts):
+            if c2.position_cache <= c1.position_cache:
+                raise AssertionError(f'{c2.url_cache} found unexpectedly before {c1.url_cache} in message')
+
+        # enforces all unordered to be after all ordered (just structure of the email)
+        if ordered_concerts and unordered_concerts:
+            last_ordered = ordered_concerts[-1]
+            early_unordered = [c.url_cache for c in unordered_concerts
+                               if c.position_cache <= last_ordered.position_cache]
+            if early_unordered:
+                raise AssertionError(f'{early_unordered} found unexpectedly before ordered concerts in message')
+
+        present_excluded = [c.url_cache for c in excluded_concerts
+                            if c.position_cache != -1]
+        if present_excluded:
+            raise AssertionError(f'{present_excluded} found unexpectedly in message')
 
 
     @classmethod
@@ -125,12 +155,13 @@ class TestCaseHelpers(TestCase):
         return SimpleUploadedFile(name='small.jpg', content=small_gif, content_type='image/jpg')
 
 
+    DEFAULT_PASSWORD = '12345'
     @classmethod
     def create_user_profile(cls,
                             email=None,
-                            password='12345',
-                            favorite_musicbrainz_artists=[],
-                            preferred_concert_tags=[],
+                            password=None,
+                            favorite_musicbrainz_artists=list(),
+                            preferred_concert_tags=list(),
                             weekly_email=True,
                             is_mod=False,
                             given_artist_access_by=None,
@@ -139,11 +170,14 @@ class TestCaseHelpers(TestCase):
                             artist_verification_status=None,
                             pk=None,
                             is_staff=False,
+                            followed_artists=list(),
                             ):
         while email is None:
             email = f"{str(uuid4())}@test.com"
             if User.objects.filter(email=email).exists():
                 email = None
+        password = password or cls.DEFAULT_PASSWORD
+
         user = User.objects.create_user(email=email,
                                         password=password,
                                         is_mod=is_mod,
@@ -156,12 +190,13 @@ class TestCaseHelpers(TestCase):
                                                   weekly_email=weekly_email,
                                                   email_is_verified=email_is_verified,
                                                   artist_verification_status=artist_verification_status,
-                                                  pk=pk
+                                                  pk=pk,
                                                   )
         if given_artist_access_by:
             user_profile.given_artist_access_by = given_artist_access_by
             user_profile.given_artist_access_datetime = given_artist_access_datetime or now()
         user_profile.favorite_musicbrainz_artists.set(favorite_musicbrainz_artists)
+        user_profile.followed_artists.set(followed_artists)
         return user_profile
 
 
@@ -256,6 +291,7 @@ class TestCaseHelpers(TestCase):
                        tags=[ConcertTags.ORIGINALS],
                        cancelled=False,
                        pk=None,
+                       announced=None,
                        ) -> Concert:
         date = date or timezone_today()
         start_time = start_time or datetime.time(19,0)
@@ -269,6 +305,7 @@ class TestCaseHelpers(TestCase):
             start_time=start_time,
             ticket_description=ticket_description,
             tags=tags,
+            announced=announced,
         )
         if created_by is None:
             concert.created_by_id = cls.StaticUsers.DEFAULT_CREATOR.value
@@ -355,13 +392,16 @@ class TestCaseHelpers(TestCase):
 
 def concert_GET_params(date=timezone_today(),
                        end_date=timezone_today(),
-                       is_date_range=False,
+                            is_date_range=False,
                        musicbrainz_artists=[],
-                       concert_tags=[t.value for t in ConcertTags]):
+                       concert_tags=[t.value for t in ConcertTags],
+                       sort_followed_to_top=False,
+                       ):
     return {
         'date': date.isoformat(),
         'end_date': end_date.isoformat(),
         'is_date_range': 'true' if is_date_range else 'false',
         'musicbrainz_artists': musicbrainz_artists,
-        'concert_tags': concert_tags
+        'concert_tags': concert_tags,
+        'sort_followed_to_top': sort_followed_to_top,
     }

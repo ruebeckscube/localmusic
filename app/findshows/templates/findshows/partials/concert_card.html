@@ -34,10 +34,23 @@
                      :class="show_details ? '' : '@max-md:hidden'">
                     {% for artist in concert.sorted_artists %}
                         <div class="text-center pb-2 @md:text-right @md:mr-4">
-                            <div><a href="{% url 'findshows:view_artist' artist.pk %}"
-                                    class="text-[6vw] @md:text-xl link">
+                            <div class="flex justify-center @md:justify-between">
+                                {# Only show star if we're in a context that's providing followed_artists (incl. empty list) #}
+                                {% if followed_artists is None %}
+                                    <div></div>
+                                {% else %}
+                                    {% if artist in followed_artists %}
+                                        {% include 'findshows/partials/follow_button.html' with is_followed=True in_place=True%}
+                                    {% else %}
+                                        {% include 'findshows/partials/follow_button.html' with is_followed=False in_place=True%}
+                                    {% endif %}
+                                {% endif %}
+
+                                <a href="{% url 'findshows:view_artist' artist.pk %}"
+                                    class="text-[6vw] @md:text-xl link @max-md:pl-1 w-fit">
                                 {{artist.name}}
-                            </a></div>
+                                </a>
+                            </div>
                             <div>
                                 {% for similar_musicbrainz_artist in artist.similar_musicbrainz_artists.all %}
                                     {% similar_artist_name_with_relevancy similar_musicbrainz_artist forloop.last searched_musicbrainz_artists %}

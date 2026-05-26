@@ -14,6 +14,15 @@
               text-decoration: inherit;
               font-weight: bold;
             }
+            a:hover {
+              color: #ea19af;
+            }
+            h2 {
+              margin: 10px 0;
+            }
+            h3 {
+              margin: 0;
+            }
         </mj-style>
         <mj-raw>
             <meta name="color-scheme" content="light">
@@ -23,7 +32,8 @@
 
     <mj-body width="800px" background-color="#F9F9ED">
         {# Header #}
-        <mj-section>
+        <mj-section padding="10px"></mj-section>
+        <mj-section background-color="{{ bg_section }}">
             <mj-column>
                 <mj-text align="center" font-size="26px">
                     <a href={{ SITE_LINK }}>{{ SITE_TITLE }}</a>
@@ -33,10 +43,8 @@
         </mj-section>
 
         {# Content #}
-        {% with "#ebe7eb" as bg_section %}
-            {% block content %}
-            {% endblock %}
-        {% endwith %}
+        {% block content %}
+        {% endblock %}
 
     </mj-body>
 </mjml>

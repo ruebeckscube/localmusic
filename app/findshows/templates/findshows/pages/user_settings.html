@@ -6,7 +6,7 @@
     <form method="post" action="{% url 'findshows:user_settings' %}">
         {% csrf_token %}
         <div class="max-w-2xl mx-auto">
-        <div class="flex flex-col items-center w-full">
+          <div class="flex flex-col items-center w-full bg-highlight-item-light/40 p-4">
             <h1> User Settings </h1>
             <div class="fieldgroup px-6">
                 {{ user.email }}
@@ -19,8 +19,26 @@
                 Create artist page
             </a>
             {% endif %}
+          </div>
         </div>
-        </div>
+        <div class="max-w-2xl mx-auto my-4"><div class="flex flex-col items-center w-full bg-highlight-item-light/40 p-4">
+            <h1> Following </h1>
+            <p class="helptext text-left">
+                These artists will filter to the top of your weekly email/search
+                results so you never miss a show. To unfollow, click the star next
+                to the artist's name. To find more artists to follow, browse shows!
+            </p>
+          {% for artist in user.userprofile.followed_artists.all %}
+            <div class="flex items-center justify-start ml-8 w-full">
+                <div class="w-[32px]">
+                    {% include "findshows/partials/follow_button.html" with in_place=True is_followed=True %}
+                </div>
+                <div class="grow ml-3">
+                    <a class="link" href={% url "findshows:view_artist" artist.pk %}>{{ artist.name }}</a>
+                </div>
+            </div>
+          {% endfor %}
+        </div></div>
     </form>
 </div>
 {% endblock %}

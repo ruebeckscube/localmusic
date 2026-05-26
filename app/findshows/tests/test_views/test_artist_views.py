@@ -304,16 +304,19 @@ class EditArtistTests(ArtistViewTestHelpers):
         user_profile = self.login_static_user(self.StaticUsers.TEMP_ARTIST)
         post_request = self.artist_post_request()
         managed_artists_before = user_profile.managed_artists.all()
+        artist = self.get_static_instance(self.StaticArtists.TEMP_ARTIST)
+        self.assertFalse(artist.qr_kit)
 
-        response = self.client.post(reverse("findshows:edit_artist", args=(self.StaticArtists.TEMP_ARTIST.value,)), data=post_request)
-        self.assertRedirects(response, reverse('findshows:view_artist', args=(self.StaticArtists.TEMP_ARTIST.value,)))
+        response = self.client.post(reverse("findshows:edit_artist", args=(artist.pk,)), data=post_request)
+        self.assertRedirects(response, reverse('findshows:view_artist', args=(artist.pk,)))
 
         user_profile.refresh_from_db()
-        artist_after = Artist.objects.get(pk=self.StaticArtists.TEMP_ARTIST.value)
-        self.assertEqual(artist_after.name, post_request['name'])
-        self.assertFalse(artist_after.is_temp_artist)
+        artist.refresh_from_db()
+        self.assertEqual(artist.name, post_request['name'])
+        self.assertFalse(artist.is_temp_artist)
         managed_artists_after = user_profile.managed_artists.all()
         self.assert_equal_as_sets(managed_artists_before, managed_artists_after)
+        self.assertTrue(artist.qr_kit)
 
 
     def test_temp_artist_shows_banner(self, *args):
@@ -896,3 +899,36 @@ class ManageArtistAccessTests(TestCaseHelpers):
         self.assertIn(f"Unable to send email to {other_user_profile.user.email}",
                       partial_errors[0])
         self.assertFalse('HX-Trigger' in response.headers)
+
+
+class FollowArtistTests(TestCaseHelpers):
+    def setUp(self):
+        self.userprofile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        self.artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        return super().setUp()
+
+
+    def test_follow(self):
+        self.assertNotIn(self.artist, self.userprofile.followed_artists.all())
+
+        response = self.client.get(reverse("findshows:follow_artist", args=(self.artist.pk,)))
+        self.assertRedirects(response, reverse("findshows:view_artist", args=(self.artist.pk,), query={'from': 'follow_artist'}))
+        self.assertIn(self.artist, self.userprofile.followed_artists.all())
+
+        response = self.client.get(reverse("findshows:unfollow_artist", args=(self.artist.pk,)))
+        self.assertRedirects(response, reverse("findshows:view_artist", args=(self.artist.pk,), query={'from': 'unfollow_artist'}))
+        self.assertNotIn(self.artist, self.userprofile.followed_artists.all())
+
+
+    def test_follow_htmx(self):
+        self.assertNotIn(self.artist, self.userprofile.followed_artists.all())
+
+        response = self.client.get(reverse("findshows:follow_artist_htmx", args=(self.artist.pk,)))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('follow-star-filled.svg', response.text)
+        self.assertIn(self.artist, self.userprofile.followed_artists.all())
+
+        response = self.client.get(reverse("findshows:unfollow_artist_htmx", args=(self.artist.pk,)))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('follow-star-empty.svg', response.text)
+        self.assertNotIn(self.artist, self.userprofile.followed_artists.all())

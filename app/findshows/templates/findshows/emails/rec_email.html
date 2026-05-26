@@ -2,57 +2,51 @@
 {% load findshows_tags %}
 
 {% block content %}
-        <mj-section background-color="{{ bg_section }}">
-            <mj-column>
-                <mj-text>
-                    {% if has_recs %}
-                        Here are our top show recommendations for you this week!
-                    {% else %}
-                        We don't have any specific show recommendations for you
-                        this week, so we've included some random shows. Try adding
-                        some more artists you like on your
-                        <a href="{% email_url 'findshows:user_settings' %}">settings page</a>
-                        for more personalized recommendations!
-                    {% endif %}
-                    Click a concert poster to view details and listen to previews,
-                    or <a href='{{search_url}}' target="_blank">view them all on the website</a>.
-                </mj-text>
-            </mj-column>
-        </mj-section>
+    <mj-section background-color="{{ bg_section }}" padding="0"><mj-column><mj-text>
+        Click a concert poster to view details and listen to previews,
+        or <a href='{{search_url}}' target="_blank">view them all on the website</a>.
+    </mj-text></mj-column></mj-section>
 
-        {% for concert in concerts %}
-            {% if forloop.first %}
-                <mj-section>
-            {% elif forloop.counter0|divisibleby:3 %}
-                </mj-section><mj-section>
-            {% endif %}
+    {# Followed artists #}
+  {% if followed_artist_concerts or concerts_to_announce %}
+    <mj-section padding="10px"></mj-section>
+    <mj-section background-color="{{ bg_section }}" padding="0"><mj-column><mj-text>
+        <h2>Following</h2>
+    </mj-text></mj-column></mj-section>
+  {% endif %}
+  {% if followed_artist_concerts %}
+    <mj-section background-color="{{ bg_section }}" padding="0"><mj-column><mj-text>
+        <h3>This week</h3>
+    </mj-text></mj-column></mj-section>
+    {% include 'findshows/emails/partials/posters.html' with concerts=followed_artist_concerts %}
+  {% endif %}
+  {% if concerts_to_announce %}
+    <mj-section background-color="{{ bg_section }}" padding="0"><mj-column><mj-text>
+        <h3>Recently announced</h3>
+    </mj-text></mj-column></mj-section>
+    {% include 'findshows/emails/partials/posters.html' with concerts=concerts_to_announce %}
+  {% endif %}
 
-            <mj-column vertical-align="middle" width="33%">
-                <mj-image alt="{{concert}}" width="300px"
-                          src="{% email_raw_url  concert.poster_small.url %}"
-                          href="{% email_url 'findshows:view_concert' concert.pk %}"/>
-            </mj-column>
+    {# Recommended concerts #}
+  {% if rec_concerts %}
+    <mj-section padding="10px"></mj-section>
+    <mj-section background-color="{{ bg_section }}" padding="0"><mj-column><mj-text>
+        <h2>Recommended</h2>
+      {% if not has_recs %}
+        No specific recommendations this week; here are some random shows.
+        Try adding some artists on your
+        <a href="{% email_url 'findshows:user_settings' %}">settings page</a>
+        for more personalized recommendations!
+      {% endif %}
+    </mj-text></mj-column></mj-section>
+    {% include 'findshows/emails/partials/posters.html' with concerts=rec_concerts %}
+  {% endif %}
 
-            {% if forloop.last %}
-                </mj-section>
-            {% endif %}
-        {% empty %}
-            <mj-section>
-                <mj-column>
-                    <mj-text>
-                        No shows listed for this week!
-                    </mj-text>
-                </mj-column>
-            </mj-section>
-        {% endfor %}
-
-        <mj-section background-color="{{ bg_section }}">
-            <mj-column>
-                <mj-text>
-                    To unsubscribe, please visit your
-                    <a href="{% email_url 'findshows:user_settings' %}">settings page</a>
-                    and uncheck the "Weekly Email" option.
-                </mj-text>
-            </mj-column>
-        </mj-section>
+    {# Footer #}
+    <mj-section padding="10px"></mj-section>
+    <mj-section background-color="{{ bg_section }}"><mj-column><mj-text>
+        To unsubscribe, please visit your
+        <a href="{% email_url 'findshows:user_settings' %}">settings page</a>
+        and uncheck the "Weekly Email" option.
+    </mj-text></mj-column></mj-section>
 {% endblock %}
