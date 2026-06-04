@@ -5,6 +5,7 @@ from uuid import uuid4
 import tempfile
 
 from django.contrib.auth import get_user_model
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
@@ -12,15 +13,37 @@ from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
+from django.conf import settings
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
 
 from findshows.email import local_url_to_email
 from findshows.models import Ages, Artist, ArtistLinkingInfo, Concert, ConcertTags, Contact, EmailVerification, ListenLink, MusicBrainzArtist, SetOrder, UserProfile, Venue, YoutubeLink
 
 User = get_user_model()
 
-@override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
-class TestCaseHelpers(TestCase):
-    fixtures = ["findshows/test-fixture.json"]
+
+def concert_GET_params(date=timezone_today(),
+                       end_date=timezone_today(),
+                            is_date_range=False,
+                       musicbrainz_artists=[],
+                       concert_tags=[t.value for t in ConcertTags],
+                       sort_followed_to_top=False,
+                       ):
+    return {
+        'date': date.isoformat(),
+        'end_date': end_date.isoformat(),
+        'is_date_range': 'true' if is_date_range else 'false',
+        'musicbrainz_artists': musicbrainz_artists,
+        'concert_tags': concert_tags,
+        'sort_followed_to_top': sort_followed_to_top,
+    }
+
+
+class MixinForAllTestCases():
+    DEFAULT_PASSWORD = '12345'
 
     class StaticUsers(Enum):
         # These must match ID/pk from the fixture listed above
@@ -57,94 +80,6 @@ class TestCaseHelpers(TestCase):
         model = static.model()
         return model.objects.get(pk=static.value)
 
-    def login_static_user(self, static_user: StaticUsers) -> UserProfile:
-        # must match order of users in fixture
-        emails_list = (
-            "default@creator.net",
-            "local@artist.net",
-            "nonlocal@artist.net",
-            "non@artist.net",
-            "temp@artist.net",
-            "mod@localmusic.net",
-        )
-        self.client.login(username=emails_list[static_user.value - 1], password='1234')
-        return UserProfile.objects.get(id=static_user.value)  # this doesn't add a database call unless it's referred to in consuming code
-
-
-    def assert_redirects_to_login(self, url):
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 302) # HTTP redirect
-        self.assertRedirects(response, reverse('login', query={'next': url}))
-
-
-    def assert_blank_form(self, form, form_class):
-        self.assertIsInstance(form, form_class)
-        self.assertEqual(form.data, MultiValueDict({}))
-
-
-    def assert_not_blank_form(self, form, form_class):
-        self.assertIsInstance(form, form_class)
-        self.assertNotEqual(form.data, MultiValueDict({}))
-
-
-    def assert_emails_sent(self, number):
-        self.assertEqual(len(mail.outbox), number)
-
-
-    def assert_records_created(self, model_class, number):
-        existing = model_class.objects.all().count()
-        # we have some static records in the database we don't want to worry about (from migration 0019)
-        if model_class is Artist:
-            existing -= len(self.StaticArtists)
-        if model_class in (User, UserProfile):
-            existing -= len(self.StaticUsers)
-        if model_class is Venue:
-            existing -= len(self.StaticVenues)
-        self.assertEqual(existing, number)
-
-
-    def assert_equal_as_sets(self, iterable1, iterable2):
-        self.assertEqual(set(iterable1), set(iterable2))
-
-
-    def assert_concert_link_in_message_html(self, concert, message, assert_not = False):
-        needle = local_url_to_email(reverse('findshows:view_concert', args=(concert.pk,)))
-        haystack = message.alternatives[0][0]
-        if assert_not:
-            self.assertNotIn(needle, haystack)
-        else:
-            self.assertIn(needle, haystack)
-
-
-    def assert_concert_order(self, message, ordered_concerts=list(), unordered_concerts=list(), excluded_concerts=list()):
-        haystack = message.alternatives[0][0]
-        for concert in chain(ordered_concerts, unordered_concerts, excluded_concerts):
-            concert.url_cache = reverse('findshows:view_concert', args=(concert.pk,))
-            concert.position_cache = haystack.find(concert.url_cache)
-
-        missing_concerts = [c.url_cache for c in chain(ordered_concerts, unordered_concerts)
-                            if c.position_cache == -1]
-        if missing_concerts:
-            raise AssertionError(f'{missing_concerts} not found in message')
-
-        for c1, c2 in pairwise(ordered_concerts):
-            if c2.position_cache <= c1.position_cache:
-                raise AssertionError(f'{c2.url_cache} found unexpectedly before {c1.url_cache} in message')
-
-        # enforces all unordered to be after all ordered (just structure of the email)
-        if ordered_concerts and unordered_concerts:
-            last_ordered = ordered_concerts[-1]
-            early_unordered = [c.url_cache for c in unordered_concerts
-                               if c.position_cache <= last_ordered.position_cache]
-            if early_unordered:
-                raise AssertionError(f'{early_unordered} found unexpectedly before ordered concerts in message')
-
-        present_excluded = [c.url_cache for c in excluded_concerts
-                            if c.position_cache != -1]
-        if present_excluded:
-            raise AssertionError(f'{present_excluded} found unexpectedly in message')
-
-
     @classmethod
     def image_file(cls):
         small_gif = (
@@ -155,7 +90,6 @@ class TestCaseHelpers(TestCase):
         return SimpleUploadedFile(name='small.jpg', content=small_gif, content_type='image/jpg')
 
 
-    DEFAULT_PASSWORD = '12345'
     @classmethod
     def create_user_profile(cls,
                             email=None,
@@ -390,18 +324,121 @@ class TestCaseHelpers(TestCase):
         return Contact.objects.create(email=email, subject=subject, message=message, type=type, pk=pk)
 
 
-def concert_GET_params(date=timezone_today(),
-                       end_date=timezone_today(),
-                            is_date_range=False,
-                       musicbrainz_artists=[],
-                       concert_tags=[t.value for t in ConcertTags],
-                       sort_followed_to_top=False,
-                       ):
-    return {
-        'date': date.isoformat(),
-        'end_date': end_date.isoformat(),
-        'is_date_range': 'true' if is_date_range else 'false',
-        'musicbrainz_artists': musicbrainz_artists,
-        'concert_tags': concert_tags,
-        'sort_followed_to_top': sort_followed_to_top,
-    }
+@override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
+class TestCaseHelpers(TestCase, MixinForAllTestCases):
+    fixtures = ["findshows/test-fixture.json"]
+
+    def login_static_user(self, static_user: MixinForAllTestCases.StaticUsers) -> UserProfile:
+        # must match order of users in fixture
+        emails_list = (
+            "default@creator.net",
+            "local@artist.net",
+            "nonlocal@artist.net",
+            "non@artist.net",
+            "temp@artist.net",
+            "mod@localmusic.net",
+        )
+        self.client.login(username=emails_list[static_user.value - 1], password='1234')
+        return UserProfile.objects.get(id=static_user.value)  # this doesn't add a database call unless it's referred to in consuming code
+
+
+    def assert_redirects_to_login(self, url):
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302) # HTTP redirect
+        self.assertRedirects(response, reverse('login', query={'next': url}))
+
+
+    def assert_blank_form(self, form, form_class):
+        self.assertIsInstance(form, form_class)
+        self.assertEqual(form.data, MultiValueDict({}))
+
+
+    def assert_not_blank_form(self, form, form_class):
+        self.assertIsInstance(form, form_class)
+        self.assertNotEqual(form.data, MultiValueDict({}))
+
+
+    def assert_emails_sent(self, number):
+        self.assertEqual(len(mail.outbox), number)
+
+
+    def assert_records_created(self, model_class, number):
+        existing = model_class.objects.all().count()
+        # we have some static records in the database we don't want to worry about (from migration 0019)
+        if model_class is Artist:
+            existing -= len(self.StaticArtists)
+        if model_class in (User, UserProfile):
+            existing -= len(self.StaticUsers)
+        if model_class is Venue:
+            existing -= len(self.StaticVenues)
+        self.assertEqual(existing, number)
+
+
+    def assert_equal_as_sets(self, iterable1, iterable2):
+        self.assertEqual(set(iterable1), set(iterable2))
+
+
+    def assert_concert_link_in_message_html(self, concert, message, assert_not = False):
+        needle = local_url_to_email(reverse('findshows:view_concert', args=(concert.pk,)))
+        haystack = message.alternatives[0][0]
+        if assert_not:
+            self.assertNotIn(needle, haystack)
+        else:
+            self.assertIn(needle, haystack)
+
+
+    def assert_concert_order(self, message, ordered_concerts=list(), unordered_concerts=list(), excluded_concerts=list()):
+        haystack = message.alternatives[0][0]
+        for concert in chain(ordered_concerts, unordered_concerts, excluded_concerts):
+            concert.url_cache = reverse('findshows:view_concert', args=(concert.pk,))
+            concert.position_cache = haystack.find(concert.url_cache)
+
+        missing_concerts = [c.url_cache for c in chain(ordered_concerts, unordered_concerts)
+                            if c.position_cache == -1]
+        if missing_concerts:
+            raise AssertionError(f'{missing_concerts} not found in message')
+
+        for c1, c2 in pairwise(ordered_concerts):
+            if c2.position_cache <= c1.position_cache:
+                raise AssertionError(f'{c2.url_cache} found unexpectedly before {c1.url_cache} in message')
+
+        # enforces all unordered to be after all ordered (just structure of the email)
+        if ordered_concerts and unordered_concerts:
+            last_ordered = ordered_concerts[-1]
+            early_unordered = [c.url_cache for c in unordered_concerts
+                               if c.position_cache <= last_ordered.position_cache]
+            if early_unordered:
+                raise AssertionError(f'{early_unordered} found unexpectedly before ordered concerts in message')
+
+        present_excluded = [c.url_cache for c in excluded_concerts
+                            if c.position_cache != -1]
+        if present_excluded:
+            raise AssertionError(f'{present_excluded} found unexpectedly in message')
+
+
+@override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
+class SeleniumTestCaseHelpers(StaticLiveServerTestCase, MixinForAllTestCases):
+    fixtures = ["findshows/test-fixture.json"]
+    host = settings.DJANGO_HOST_NAME
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.selenium = webdriver.Remote(
+            command_executor=f"http://{settings.SELENIUM_HOST_NAME}:4444/wd/hub",
+            options=webdriver.FirefoxOptions(),
+        )
+        cls.selenium.implicitly_wait(10)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.selenium.quit()
+        super().tearDownClass()
+
+    def live_reverse(self, *args, **kwargs):
+        return(f"{self.live_server_url}{reverse(*args, **kwargs)}")
+
+    def wait_for_page_load(self, timeout=2):
+        WebDriverWait(self.selenium, timeout).until(
+            lambda driver: driver.find_element(By.TAG_NAME, "body")
+        )

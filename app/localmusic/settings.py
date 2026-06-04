@@ -39,6 +39,11 @@ CSRF_COOKIE_SECURE = not IS_DEV
 SESSION_COOKIE_SECURE = not IS_DEV
 SESSION_ENGINE = 'django.contrib.sessions.backends.db' if IS_DEV else "django.contrib.sessions.backends.cached_db"
 SESSION_COOKIE_AGE = 1209600 * 2  # 4 weeks total
+
+# Docker container info, only used in running tests
+DJANGO_HOST_NAME=os.getenv("DJANGO_HOST_NAME", "")
+SELENIUM_HOST_NAME=os.getenv("SELENIUM_HOST_NAME", "")
+
 # Application definition
 
 INSTALLED_APPS = [

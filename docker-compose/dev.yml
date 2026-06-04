@@ -12,6 +12,14 @@ services:
     ports:
       - "8000:8000"
     restart: always
+    depends_on:
+      - selenium
+    environment:
+      - DJANGO_HOST_NAME=web
+      - SELENIUM_HOST_NAME=selenium
+
+  selenium:
+    image: selenium/standalone-firefox
 
   db:
     extends:
