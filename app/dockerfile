@@ -1,6 +1,6 @@
 #####################
 # 1: Base build stage
-ARG PYTHON_VERSION
+ARG PYTHON_VERSION="latest"
 
 FROM python:${PYTHON_VERSION}-slim AS builder
 
@@ -16,7 +16,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --upgrade pip
 
 # Install Python dependencies
-ARG PIP_REQUIREMENTS
+ARG PIP_REQUIREMENTS="requirements/prod.txt"
 COPY requirements/ ./requirements/
 RUN pip install -r $PIP_REQUIREMENTS
 
