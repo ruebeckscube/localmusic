@@ -60,7 +60,7 @@
 {
     "model": "findshows.user",
     "fields": {
-        "password": "pbkdf2_sha256$1000000$abcdef$i0WPAoDcupY2j/jqSxHexQfU//LxwZ+0nraTIWkhbjU=",
+        "password": "md5$atoFx5OaeRKeGJ1rIMojoN$7bbe01d47dc1bbcfc6a342b564b6adc9",
         "last_login": null,
         "is_superuser": false,
         "email": "default@creator.net",
@@ -75,7 +75,7 @@
 {
     "model": "findshows.user",
     "fields": {
-        "password": "pbkdf2_sha256$1000000$abcdef$i0WPAoDcupY2j/jqSxHexQfU//LxwZ+0nraTIWkhbjU=",
+        "password": "md5$atoFx5OaeRKeGJ1rIMojoN$7bbe01d47dc1bbcfc6a342b564b6adc9",
         "last_login": null,
         "is_superuser": false,
         "email": "local@artist.net",
@@ -90,7 +90,7 @@
 {
     "model": "findshows.user",
     "fields": {
-        "password": "pbkdf2_sha256$1000000$abcdef$i0WPAoDcupY2j/jqSxHexQfU//LxwZ+0nraTIWkhbjU=",
+        "password": "md5$atoFx5OaeRKeGJ1rIMojoN$7bbe01d47dc1bbcfc6a342b564b6adc9",
         "last_login": null,
         "is_superuser": false,
         "email": "nonlocal@artist.net",
@@ -105,7 +105,7 @@
 {
     "model": "findshows.user",
     "fields": {
-        "password": "pbkdf2_sha256$1000000$abcdef$i0WPAoDcupY2j/jqSxHexQfU//LxwZ+0nraTIWkhbjU=",
+        "password": "md5$atoFx5OaeRKeGJ1rIMojoN$7bbe01d47dc1bbcfc6a342b564b6adc9",
         "last_login": null,
         "is_superuser": false,
         "email": "non@artist.net",
@@ -120,7 +120,7 @@
 {
     "model": "findshows.user",
     "fields": {
-        "password": "pbkdf2_sha256$1000000$abcdef$i0WPAoDcupY2j/jqSxHexQfU//LxwZ+0nraTIWkhbjU=",
+        "password": "md5$atoFx5OaeRKeGJ1rIMojoN$7bbe01d47dc1bbcfc6a342b564b6adc9",
         "last_login": null,
         "is_superuser": false,
         "email": "temp@artist.net",
@@ -135,7 +135,7 @@
 {
     "model": "findshows.user",
     "fields": {
-        "password": "pbkdf2_sha256$1000000$abcdef$i0WPAoDcupY2j/jqSxHexQfU//LxwZ+0nraTIWkhbjU=",
+        "password": "md5$atoFx5OaeRKeGJ1rIMojoN$7bbe01d47dc1bbcfc6a342b564b6adc9",
         "last_login": null,
         "is_superuser": false,
         "email": "mod@localmusic.net",

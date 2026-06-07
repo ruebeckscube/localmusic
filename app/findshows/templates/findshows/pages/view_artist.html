@@ -15,6 +15,12 @@
                 <a href={% url 'findshows:follow_artist' artist.pk %} class="link">click here to follow</a>.
                 Or <a href={% url 'findshows:home' %} class="link">return home</a>.
             </div>
+        {% elif query.from == 'link_artist' %}
+            <div class="banner">
+                Artist linked successfully! Return to your
+                <a class="link" href={% url 'findshows:artist_dashboard' %}>Artist Dashboard</a>
+                to see all of the artists you manage.
+            </div>
         {% endif %}
 
         {% if user.is_authenticated and not user.userprofile.email_is_verified %}

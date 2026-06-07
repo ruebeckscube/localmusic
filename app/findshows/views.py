@@ -9,7 +9,7 @@ from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
 from django.urls import NoReverseMatch, reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, QueryDict
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.postgres.search import TrigramSimilarity
@@ -56,58 +56,70 @@ def contact(request):
     })
 
 
+def url_with_next(to, next=None, from_view=None):
+    # `to` is a fully spelled out URL; we just append the 'next' query
+    query = QueryDict(mutable=True)
+    if from_view:
+        query['from'] = from_view
+
+    if to:
+        if next:
+            query['next'] = next
+        url = to
+    elif next:
+        url = next
+    else:
+        url = reverse('findshows:home')
+
+    if query:
+        url = f"{url}{'&' if '?' in url else '?'}{query.urlencode(safe='/')}"
+
+    return url
+
+
 @login_required
 def user_settings(request):
     if request.POST:
         form = UserProfileForm(request.POST, instance=request.user.userprofile)
         if form.is_valid():
             form.save()
-            return redirect('findshows:home')
+            next = request.POST.get('next')
+            return redirect(next) if next else redirect('findshows:home')
     else:
         form = UserProfileForm(instance=request.user.userprofile)
 
     return render(request, "findshows/pages/user_settings.html", context={
         "form": form,
+        "query": request.GET if request.GET else {},
     })
 
 
 def create_account(request):
     if request.method != 'POST':
         user_form = UserCreationFormE()
-        profile_form = UserProfileForm()
-        next = request.GET.get('next')
+        next = request.GET.get('next') if request.GET else None
     else:
         user_form = UserCreationFormE(request.POST)
-        profile_form = UserProfileForm(request.POST)
         next = request.POST.get('next')
 
-        if user_form.is_valid() and profile_form.is_valid():
+        if user_form.is_valid():
             user = user_form.save()
-            profile = profile_form.save(commit=False)
-            profile.user = user
-            profile.save()
+            UserProfile.objects.create(user=user)
 
             email_verification, invite_code = EmailVerification.create_and_get_invite_code(user.email)
-            if not send_verify_email(email_verification, invite_code, profile_form):
+            if not send_verify_email(email_verification, invite_code, user_form):
                 # Info about verification (failure or otherwise) will be shown
                 # to the user in a banner on the home search page
                 email_verification.delete()
 
             login(request, user)
+            return redirect(url_with_next(next, next=reverse('findshows:user_settings',
+                                                             query={'from': 'create_account'})))
 
-            if next:
-                return redirect(next)
-            elif "create_artist" in request.POST:
-                return redirect('findshows:create_artist')
-            else:
-                return redirect('findshows:home')
-
-    context = {'user_form': user_form,
-               'profile_form': profile_form,
-               'next': next,
-               }
-
-    return render(request, 'registration/create_account.html', context)
+    return render(request, 'registration/create_account.html', {
+        'user_form': user_form,
+        'next': next,
+    })
 
 
 @login_required
@@ -262,6 +274,7 @@ def edit_artist(request, pk=None):
 
     context = {'form': form,
                'pk': artist.pk,
+               'query': request.GET if request.GET else {},
                'cancel_link': from_link(request, artist.pk),
                'is_temp_artist': artist.is_temp_artist}
 
@@ -439,15 +452,19 @@ def link_artist(request):
     if artist.is_temp_artist:
         artist.created_by = up
         artist.save()
-        return redirect(reverse('findshows:edit_artist', args=(artist.pk,)))
-    else:
-        return redirect(reverse('findshows:view_artist', args=(artist.pk,)))
+
+    return redirect(url_with_next(
+        request.GET.get('next') if request.GET else None,
+        next=reverse('findshows:edit_artist' if artist.is_temp_artist else 'findshows:view_artist',
+                     args=(artist.pk,),
+                     query={'from': 'link_artist'})
+    ))
 
 
 def follow_artist(request, pk, unfollow=False, htmx=False):
     if request.user.is_anonymous:  # can't use login_required bc htmx
         next = reverse('findshows:unfollow_artist' if unfollow else 'findshows:follow_artist', args=(pk,))
-        url = reverse('login', query={'next': next})
+        url = url_with_next(reverse('login'), next)
         return HttpResponse('', headers={"HX-Redirect": url}) if htmx else redirect(url)
 
     artist = get_object_or_404(Artist, pk=pk)
@@ -464,9 +481,12 @@ def follow_artist(request, pk, unfollow=False, htmx=False):
             'in_place': True,
         })
     else:
-        return redirect(reverse('findshows:view_artist', args=(artist.pk,), query={
-            'from': 'unfollow_artist' if unfollow else 'follow_artist'
-        }))
+        return redirect(url_with_next(
+            request.GET.get('next') if request.GET else None,
+            next=reverse('findshows:view_artist', args=(artist.pk,), query={
+                'from': 'unfollow_artist' if unfollow else 'follow_artist'
+            })
+        ))
 
 
 #####################

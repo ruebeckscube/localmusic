@@ -1,33 +1,19 @@
-{% extends "localmusic/base.html" %}
+{% extends "localmusic/small_page.html" %}
 
-{% block content %}
+{% block small_content %}
     <div class="p-3">
         <h1>Create an account</h1>
         <form method="post" action="{% url 'create_account' %}">
             {% csrf_token %}
-
-            <div class="flex max-md:flex-col">
-                <div class="flex flex-col md:w-1/2">
-                    {% for field in user_form %}
-                        <div class="fieldgroup">
-                            {{ field.as_field_group }}
-                        </div>
-                    {% endfor %}
+            <div class="flex flex-col">
+                <div class="errorlist">
+                    {{ user_form.non_field_errors }}
                 </div>
-
-                <div class="flex flex-col md:w-1/2">
-                    {% include "findshows/partials/user_settings_form.html" with form=profile_form %}
-                    <div class="fieldgroup">
-                        <label>
-                            <input type="checkbox" name="create_artist" class="accent-clickable">
-                            Create an artist page
-                        </label>
-                        <p class="helptext">
-                            Check this box to create an artist account for posting shows. If you don't
-                            do it now, it'll be available later on your Settings page.
-                        </p>
+                {% for field in user_form %}
+                    <div class="fieldgroup flex flex-col">
+                        {{ field.as_field_group }}
                     </div>
-                </div>
+                {% endfor %}
             </div>
             <div>
                 <input class="btn block w-50 mx-auto mt-5" type="submit" value="Create account">

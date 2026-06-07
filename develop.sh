@@ -152,7 +152,7 @@ load_backup() {
 
 coverage_report() {
     if [ "$IS_DEV" = "True" ]; then
-        invoke_docker_compose run --rm web sh -c "coverage run ./manage.py test && coverage html"
+        invoke_docker_compose exec web sh -c "coverage run ./manage.py test && coverage html"
         open app/htmlcov/index.html
     else
         echo "Don't run coverage/tests in prod."

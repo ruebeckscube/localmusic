@@ -2,7 +2,13 @@
 
 {% block content %}
     <h1 class="pl-3 mb-1"> {{ pk | yesno:"Edit,Create"}} Artist </h1>
-    {% if is_temp_artist %}
+    {% if query.from == "link_artist" %}
+        <div class="banner my-0">
+            Artist linked successfully! You can now fill out your profile;
+            any concerts that include this artist will be listed publically
+            once your profile is complete.
+        </div>
+    {% elif is_temp_artist %}
         <div class="banner my-0">
             NOTE: This artist listing has not been filled out; Any concerts
             that include this artist will not be displayed publically
@@ -11,11 +17,10 @@
     {% endif %}
     {% if not user.userprofile.email_is_verified %}
         <div class="banner my-0">
-            NOTE: Please verify your email before submitting the form; this
+            Please verify your email before submitting the form; this
             this is to help prevent spam, thanks for understanding!
         </div>
     {% endif %}
-
     <form method="post" enctype="multipart/form-data"
           {% if pk %}
           action="{% url 'findshows:edit_artist' pk %}"

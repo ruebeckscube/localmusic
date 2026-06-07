@@ -15,11 +15,6 @@ def form_data(email='test@em.ail',
 
 
 class UserCreationFormETests(TestCase):
-    def setUp(self):
-        from captcha.conf import settings as captcha_settings
-        captcha_settings.CAPTCHA_TEST_MODE = True
-
-
     def test_email_handling(self):
         form = UserCreationFormE(data=form_data(email='myunique@em.ail'))
         user1 = form.save()

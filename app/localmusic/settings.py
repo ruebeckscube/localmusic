@@ -217,6 +217,8 @@ MJML_TCPSERVERS = [
 
 # Captcha
 CAPTCHA_FONT_SIZE = 44
+if IS_DEV:
+    CAPTCHA_TEST_MODE = True
 
 # Misc
 MAX_DATE_RANGE = int(os.getenv("MAX_DATE_RANGE", '7'))

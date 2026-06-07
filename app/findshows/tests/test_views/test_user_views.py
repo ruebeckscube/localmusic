@@ -29,9 +29,6 @@ def contact_post_request():
 
 class ContactTests(TestCaseHelpers):
     def setUp(self):
-        from captcha.conf import settings as captcha_settings
-        captcha_settings.CAPTCHA_TEST_MODE = True
-
         memcache_client = Client(settings.MEMCACHE_LOCATION, timeout=3, connect_timeout=3)
         memcache_client.delete('num_recent_contacts')
 
@@ -121,19 +118,19 @@ class UserSettingsTests(TestCaseHelpers):
     def test_artist_user_cant_request(self):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         response = self.client.get(reverse("findshows:user_settings"))
-        self.assertNotIn('Create artist page', str(response.content))
+        self.assertNotIn('Create artist profile', str(response.content))
 
 
     def test_non_artist_user_can_request(self):
         self.login_static_user(self.StaticUsers.NON_ARTIST)
         response = self.client.get(reverse("findshows:user_settings"))
-        self.assertIn('Create artist page', str(response.content))
+        self.assertIn('Create artist profile', str(response.content))
 
 
     def test_nonlocal_artist_user_can_request(self):
         self.login_static_user(self.StaticUsers.NONLOCAL_ARTIST)
         response = self.client.get(reverse("findshows:user_settings"))
-        self.assertIn('Create artist page', str(response.content))
+        self.assertIn('Create artist profile', str(response.content))
 
 
     # # Not currently any way to make this form invalid
@@ -160,11 +157,6 @@ def create_account_post_request():
 
 
 class CreateAccountTests(TestCaseHelpers):
-    def setUp(self):
-        from captcha.conf import settings as captcha_settings
-        captcha_settings.CAPTCHA_TEST_MODE = True
-
-
     def test_create_account_GET(self):
         response = self.client.get(reverse("create_account"))
         self.assertTemplateUsed('create_account.html')
@@ -176,16 +168,7 @@ class CreateAccountTests(TestCaseHelpers):
     def test_create_account_POST_success(self):
         data = create_account_post_request()
         response = self.client.post(reverse("create_account"), data)
-        self.assertRedirects(response, reverse("findshows:home"))
-        self.assert_records_created(User, 1)
-        self.assert_records_created(UserProfile, 1)
-
-
-    def test_create_artist_checkbox(self):
-        data = create_account_post_request()
-        data['create_artist'] = ['']
-        response = self.client.post(reverse("create_account"), data)
-        self.assertRedirects(response, reverse("findshows:create_artist"))
+        self.assertRedirects(response, reverse("findshows:user_settings", query={'from': 'create_account'}))
         self.assert_records_created(User, 1)
         self.assert_records_created(UserProfile, 1)
 

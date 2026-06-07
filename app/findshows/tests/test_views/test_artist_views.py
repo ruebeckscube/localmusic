@@ -525,7 +525,7 @@ class LinkArtistTests(TestCaseHelpers):
 
         user_profile.refresh_from_db()
         artist.refresh_from_db()
-        self.assertRedirects(response, reverse('findshows:edit_artist', args=(artist.pk,)))
+        self.assertRedirects(response, reverse('findshows:edit_artist', args=(artist.pk,), query={'from': 'link_artist'}))
         self.assertIn(artist, user_profile.managed_artists.all())
         self.assertEqual(0, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())
         self.assertEqual(user_profile.given_artist_access_by, self.get_static_instance(self.StaticUsers.LOCAL_ARTIST))
@@ -545,7 +545,7 @@ class LinkArtistTests(TestCaseHelpers):
 
         user_profile.refresh_from_db()
         artist.refresh_from_db()
-        self.assertRedirects(response, reverse('findshows:view_artist', args=(artist.pk,)))
+        self.assertRedirects(response, reverse('findshows:view_artist', args=(artist.pk,), query={'from': 'link_artist'}))
         self.assertIn(artist, user_profile.managed_artists.all())
         self.assertEqual(0, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())
         self.assertEqual(user_profile.given_artist_access_by, self.get_static_instance(self.StaticUsers.LOCAL_ARTIST))
@@ -625,7 +625,7 @@ class LinkArtistTests(TestCaseHelpers):
         user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
         ali, invite_code = self.create_artist_linking_info(user_profile.user.email.upper(), artist)
         response = self.client.get(ali.get_url(invite_code))
-        self.assertRedirects(response, reverse('findshows:edit_artist', args=(artist.pk,)))
+        self.assertRedirects(response, reverse('findshows:edit_artist', args=(artist.pk,), query={'from': 'link_artist'}))
         user_profile.refresh_from_db()
         self.assertIn(artist, user_profile.managed_artists.all())
         self.assertEqual(0, ArtistLinkingInfo.objects.filter(pk=ali.pk).count())

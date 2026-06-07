@@ -11,8 +11,17 @@
     {% if next %}
         {% if '/follow' in next %}
             <p class="p-3">
-                Please log in or create an account to follow this artist and receive a weekly email
+                Please log in or
+                <a class="link" href="{% url 'create_account' %}?next={{ next | urlencode}}">create an account</a>
+                to follow this artist and receive a weekly email
                 with updates about their shows, and recommendations for other shows.
+            </p>
+        {% elif '/link_artist' in next %}
+            <p class="p-3">
+                Please log in or
+                <a class="link" href="{% url 'create_account' %}?next={{ next | urlencode}}">create an account</a>
+                to edit your artist profile. Your account
+                email should match the one that the invite link was sent to.
             </p>
         {% elif user.is_authenticated %}
             <p class="errorlist">Your account doesn't have access to this page. To proceed,

@@ -1,44 +1,73 @@
-{% extends "localmusic/base.html" %}
+{% extends "localmusic/small_page.html" %}
 
-{% block content %}
+{% block small_content %}
 <div class="p-3">
-
-    <form method="post" action="{% url 'findshows:user_settings' %}">
+  {% if query.from or query.next %}
+    <div class="banner w-full mb-3">
+      {% if 'link_artist' in query.next %}
+          <p>
+              Account created successfully! Fill out the form below to customize your weekly
+              email, or do it later and
+              <a class="link" href="{{ query.next }}">fill out your artist profile now</a>.
+          </p>
+      {% elif query.from == 'create_account' %}
+          <p>
+              Account created successfully! If you're an artist you can now
+              <a class="link" href="{% url 'findshows:create_artist' %}">create an artist profile</a>.
+          </p><p>
+              Fill out the form below to customize your weekly email, or do it later and
+              <a class="link" href="{% url 'findshows:home' %}">start browsing shows</a>.
+          </p>
+      {% endif %}
+    </div>
+  {% endif %}
+    <h1> User Settings </h1>
+    <form class="flex flex-col"
+          method="post" action="{% url 'findshows:user_settings' %}">
         {% csrf_token %}
-        <div class="max-w-2xl mx-auto">
-          <div class="flex flex-col items-center w-full bg-highlight-item-light/40 p-4">
-            <h1> User Settings </h1>
-            <div class="fieldgroup px-6">
-                {{ user.email }}
-            </div>
-            {% include "findshows/partials/user_settings_form.html" with wfull=True%}
-            <input class="btn" type="submit" value="Save">
-
-            {% if not user.is_local_artist_account %}
-            <a class="btn block w-80 mx-auto my-8" href="{% url 'findshows:create_artist' %}">
-                Create artist page
-            </a>
-            {% endif %}
-          </div>
+        <div class="fieldgroup">
+            Email: {{ user.email }}
         </div>
-        <div class="max-w-2xl mx-auto my-4"><div class="flex flex-col items-center w-full bg-highlight-item-light/40 p-4">
-            <h1> Following </h1>
-            <p class="helptext text-left">
-                These artists will filter to the top of your weekly email/search
-                results so you never miss a show. To unfollow, click the star next
-                to the artist's name. To find more artists to follow, browse shows!
-            </p>
-          {% for artist in user.userprofile.followed_artists.all %}
-            <div class="flex items-center justify-start ml-8 w-full">
-                <div class="w-[32px]">
-                    {% include "findshows/partials/follow_button.html" with in_place=True is_followed=True %}
-                </div>
-                <div class="grow ml-3">
-                    <a class="link" href={% url "findshows:view_artist" artist.pk %}>{{ artist.name }}</a>
-                </div>
-            </div>
-          {% endfor %}
-        </div></div>
+        <div class="fieldgroup">
+            {{form.favorite_musicbrainz_artists.as_field_group}}
+        </div>
+        <div class="fieldgroup">
+            {{form.preferred_concert_tags.as_field_group}}
+        </div>
+        <div class="fieldgroup">
+            {{form.weekly_email}}
+            <label for="{{form.weekly_email.id_for_label}}">
+                {{form.weekly_email.label}}
+            </label>
+            <div class="helptext">{{form.weekly_email.help_text}}</div>
+        </div>
+        <input type="hidden" name="next" value="{{ query.next }}">
+        <input class="btn mx-auto" type="submit" value="Save">
     </form>
+
+    <h1> Following </h1>
+    <div class="flex flex-col fieldgroup">
+        <p class="helptext text-left">
+            These artists will filter to the top of your weekly email/search
+            results so you never miss a show. To unfollow, click the star next
+            to the artist's name. To find more artists to follow, browse shows!
+        </p>
+      {% for artist in user.userprofile.followed_artists.all %}
+        <div class="flex items-center justify-start ml-8 w-full">
+            <div class="w-[32px]">
+                {% include "findshows/partials/follow_button.html" with in_place=True is_followed=True %}
+            </div>
+            <div class="grow ml-3">
+                <a class="link" href={% url "findshows:view_artist" artist.pk %}>{{ artist.name }}</a>
+            </div>
+        </div>
+      {% endfor %}
+    </div>
+
+  {% if not user.is_local_artist_account %}
+    <a class="btn block w-80 mx-auto my-8" href="{% url 'findshows:create_artist' %}">
+        Create artist profile
+    </a>
+  {% endif %}
 </div>
 {% endblock %}

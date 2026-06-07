@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
 from django.utils.timezone import now
@@ -42,8 +42,10 @@ def concert_GET_params(date=timezone_today(),
     }
 
 
-class MixinForAllTestCases():
-    DEFAULT_PASSWORD = '12345'
+@override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
+@override_settings(PASSWORD_HASHERS = ("django.contrib.auth.hashers.MD5PasswordHasher",))
+class MixinForAllTestCases(SimpleTestCase):
+    DEFAULT_PASSWORD = '1234'
 
     class StaticUsers(Enum):
         # These must match ID/pk from the fixture listed above
@@ -88,6 +90,26 @@ class MixinForAllTestCases():
             b'\x02\x4c\x01\x00\x3b'
         )
         return SimpleUploadedFile(name='small.jpg', content=small_gif, content_type='image/jpg')
+
+
+    def assert_emails_sent(self, number):
+        self.assertEqual(len(mail.outbox), number)
+
+
+    def assert_records_created(self, model_class, number):
+        existing = model_class.objects.all().count()
+        # we have some static records in the database we don't want to worry about (from migration 0019)
+        if model_class is Artist:
+            existing -= len(self.StaticArtists)
+        if model_class in (User, UserProfile):
+            existing -= len(self.StaticUsers)
+        if model_class is Venue:
+            existing -= len(self.StaticVenues)
+        self.assertEqual(existing, number)
+
+
+    def assert_equal_as_sets(self, iterable1, iterable2):
+        self.assertEqual(set(iterable1), set(iterable2))
 
 
     @classmethod
@@ -324,7 +346,6 @@ class MixinForAllTestCases():
         return Contact.objects.create(email=email, subject=subject, message=message, type=type, pk=pk)
 
 
-@override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
 class TestCaseHelpers(TestCase, MixinForAllTestCases):
     fixtures = ["findshows/test-fixture.json"]
 
@@ -338,7 +359,7 @@ class TestCaseHelpers(TestCase, MixinForAllTestCases):
             "temp@artist.net",
             "mod@localmusic.net",
         )
-        self.client.login(username=emails_list[static_user.value - 1], password='1234')
+        self.client.login(username=emails_list[static_user.value - 1], password=self.DEFAULT_PASSWORD)
         return UserProfile.objects.get(id=static_user.value)  # this doesn't add a database call unless it's referred to in consuming code
 
 
@@ -356,26 +377,6 @@ class TestCaseHelpers(TestCase, MixinForAllTestCases):
     def assert_not_blank_form(self, form, form_class):
         self.assertIsInstance(form, form_class)
         self.assertNotEqual(form.data, MultiValueDict({}))
-
-
-    def assert_emails_sent(self, number):
-        self.assertEqual(len(mail.outbox), number)
-
-
-    def assert_records_created(self, model_class, number):
-        existing = model_class.objects.all().count()
-        # we have some static records in the database we don't want to worry about (from migration 0019)
-        if model_class is Artist:
-            existing -= len(self.StaticArtists)
-        if model_class in (User, UserProfile):
-            existing -= len(self.StaticUsers)
-        if model_class is Venue:
-            existing -= len(self.StaticVenues)
-        self.assertEqual(existing, number)
-
-
-    def assert_equal_as_sets(self, iterable1, iterable2):
-        self.assertEqual(set(iterable1), set(iterable2))
 
 
     def assert_concert_link_in_message_html(self, concert, message, assert_not = False):
@@ -416,7 +417,6 @@ class TestCaseHelpers(TestCase, MixinForAllTestCases):
             raise AssertionError(f'{present_excluded} found unexpectedly in message')
 
 
-@override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
 class SeleniumTestCaseHelpers(StaticLiveServerTestCase, MixinForAllTestCases):
     fixtures = ["findshows/test-fixture.json"]
     host = settings.DJANGO_HOST_NAME
@@ -435,10 +435,27 @@ class SeleniumTestCaseHelpers(StaticLiveServerTestCase, MixinForAllTestCases):
         cls.selenium.quit()
         super().tearDownClass()
 
+    def tearDown(self):
+        self.selenium.delete_all_cookies()
+
     def live_reverse(self, *args, **kwargs):
+        """Takes the same args as reverse"""
         return(f"{self.live_server_url}{reverse(*args, **kwargs)}")
 
     def wait_for_page_load(self, timeout=2):
         WebDriverWait(self.selenium, timeout).until(
             lambda driver: driver.find_element(By.TAG_NAME, "body")
         )
+
+    def assert_current_url(self, *args, disregard_query=False, **kwargs):
+        """Takes the same args as reverse, plus 'next'"""
+        expected_url = reverse(*args, **kwargs)
+        current_url = self.selenium.current_url.removeprefix(self.live_server_url)
+        if disregard_query:
+            current_url, _, _ = current_url.partition('?')
+            expected_url, _, _ = expected_url.partition('?')
+        self.assertEqual(current_url, expected_url, f"Expected {expected_url}, found {current_url}.")
+
+    def enter_input(self, name, text):
+        input = self.selenium.find_element(By.NAME, name)
+        input.send_keys(text)
