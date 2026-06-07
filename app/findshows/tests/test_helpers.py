@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings, tag
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
 from django.utils.timezone import now
@@ -417,6 +417,7 @@ class TestCaseHelpers(TestCase, MixinForAllTestCases):
             raise AssertionError(f'{present_excluded} found unexpectedly in message')
 
 
+@tag("selenium")
 class SeleniumTestCaseHelpers(StaticLiveServerTestCase, MixinForAllTestCases):
     fixtures = ["findshows/test-fixture.json"]
     host = settings.DJANGO_HOST_NAME

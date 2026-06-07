@@ -1,3 +1,5 @@
+import datetime
+from django.views.generic.dates import timezone_today
 from findshows.models import Ages
 
 from findshows.tests.test_helpers import TestCaseHelpers
@@ -32,3 +34,11 @@ class ConcertTests(TestCaseHelpers):
         self.assertEqual(concert.ages_with_default, Ages.ALL_AGES.label)
         concert.ages = Ages.TWENTYONE
         self.assertEqual(concert.ages_with_default, Ages.TWENTYONE.label)
+
+    def test_conflicts(self):
+        venue = self.create_venue()
+        tomorrow = timezone_today() + datetime.timedelta(1)
+        concert1 = self.create_concert(date=tomorrow, venue=venue)
+        concert2 = self.create_concert(date=tomorrow, venue=venue)
+        self.assert_equal_as_sets([concert1], concert2.conflicts)
+        self.assert_equal_as_sets([concert2], concert1.conflicts)

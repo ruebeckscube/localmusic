@@ -800,6 +800,15 @@ class Concert(CreationTrackingMixin):
             return self.get_ages_display()
         return self.venue.get_ages_display()
 
+    @property
+    def conflicts(self):
+        if self.venue and self.date:
+            conflict_concerts = Concert.objects.filter(venue=self.venue, date=self.date).exclude(cancelled=True)
+            if self.pk:
+                conflict_concerts = conflict_concerts.exclude(pk=self.pk)
+            return list(conflict_concerts)
+        return []
+
     def display_str(self):
         return f"{', '.join((str(a) for a in self.artists.all()))} | {self.date.strftime('%a %b %d')} | {str(self.venue)}"
 

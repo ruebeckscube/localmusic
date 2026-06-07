@@ -242,21 +242,6 @@ class ConcertForm(DefaultStylingModelForm):
             artists that your account manages.""")
 
 
-    def check_venue_date_unique(self, cleaned_data):
-        venue = cleaned_data.get("venue")
-        date = cleaned_data.get("date")
-        if venue and date:
-            conflict_concerts = Concert.objects.filter(venue=venue, date=date).exclude(cancelled=True)
-            if self.instance:
-                conflict_concerts = conflict_concerts.exclude(pk=self.instance.pk)
-            if conflict_concerts.count():
-                self.add_error(None, """There is already a show in the database
-                               for the specified venue and date. If you think
-                               this is in error, or there are in fact two events
-                               on the same date, please contact site admins for
-                               an override.""")
-
-
     def check_time_ordering(self, cleaned_data):
         # Not checking end time because it could be, say, 1am which is before, say, a 9pm start.
         # But doors/start shouldn't cross midnight.
@@ -269,7 +254,6 @@ class ConcertForm(DefaultStylingModelForm):
     def clean(self):
         cleaned_data = super().clean() or {}
         self.check_artist_on_bill(cleaned_data)
-        self.check_venue_date_unique(cleaned_data)
         self.check_time_ordering(cleaned_data)
         return cleaned_data
 

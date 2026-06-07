@@ -175,6 +175,7 @@ def artist_dashboard(request):
         "artists": artists,
         "concerts": concerts,
         "outstanding_invites": outstanding_invites,
+        "show_conflicts": True,
     })
 
 
@@ -744,6 +745,7 @@ def mod_daily_digest(request):
         'artists': Artist.objects.filter(created_at=date),
         'concerts': Concert.objects.filter(created_at=date),
         'venues': Venue.objects.filter(created_at=date),
+        'show_conflicts': True,
     })
 
 

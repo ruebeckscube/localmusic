@@ -62,13 +62,12 @@ class ValidationTests(ConcertFormTestHelpers):
         form = self.make_form()
         self.assertTrue(form.is_valid())
 
-    def test_unique_venue_and_date(self):
+    def test_duplicated_venue_and_date_allowed(self):
         venue = self.create_venue()
         tomorrow = timezone_today() + datetime.timedelta(1)
         self.create_concert(date=tomorrow, venue=venue)
         form = self.make_form(date=tomorrow, venue=venue)
-        self.assertFalse(form.is_valid())
-        self.assertIn("There is already a show", form.errors['__all__'][0])
+        self.assertTrue(form.is_valid())
 
 
     def test_venue_declined_listing(self):
