@@ -4,8 +4,8 @@
 {% block content %}
     {% if not user.is_authenticated %}
         <div class="banner">
-            <a class="link" href="{% url 'create_account' %}">Create an account</a> to save your search terms
-            and get a weekly email of personalized show recommendations!
+            <a class="link" href="{% url 'create_account' %}">Create an account</a>
+            to follow artists, sign up for a weekly email, or post shows!
         </div>
     {% elif not user.userprofile.email_is_verified %}
         {% include "findshows/htmx/email_verification_banner.html" %}
