@@ -167,12 +167,14 @@ class MixinForAllTestCases(SimpleTestCase):
                       created_by=None,
                       pk=None,
                       created_at=None,
+                      socials_links=[],
                       profile_picture=None
                       ):
         artist = Artist(name=name,
                         pk=pk,
                         local=local,
                         is_temp_artist=is_temp_artist,
+                        socials_links=socials_links,
                         profile_picture=profile_picture,
                         profile_picture_small=profile_picture,
                         )

@@ -17,3 +17,27 @@ class SimilarityScoreTests(TestCaseHelpers):
         self.create_musicbrainz_artist('789', 'mb 789' , {'888': .9})
         artist = self.create_artist(similar_musicbrainz_artists=['123', '456'])
         self.assertEqual(artist.similarity_score(['999', '888']), .275) # (.2+.5+.4+0)/4
+
+
+class SaveTests(TestCaseHelpers):
+    def test_social_links_url_massaging(self):
+        artist = self.create_artist(socials_links=[
+            ['HTTPS', 'https://this.shouldnt.change'],
+            ['HTTP', 'http://nor.this'],
+            ['No protocol', 'this.should.get/an/http/on/the/front'],
+        ])
+        self.assertEqual(artist.socials_links, [
+            ['HTTPS', 'https://this.shouldnt.change'],
+            ['HTTP', 'http://nor.this'],
+            ['No protocol', 'http://this.should.get/an/http/on/the/front'],
+        ])
+
+    def test_social_links_email_massaging(self):
+        artist = self.create_artist(socials_links=[
+            ['With protocol', 'mailto:my@email.com'],
+            ['Without protocol', 'another@test.email'],
+        ])
+        self.assertEqual(artist.socials_links, [
+            ['With protocol', 'mailto:my@email.com'],
+            ['Without protocol', 'mailto:another@test.email'],
+        ])

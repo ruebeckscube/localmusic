@@ -125,6 +125,24 @@ class JPEGImageField(models.ImageField):
 
 
 class LabeledURLsValidator(URLValidator):
+    @classmethod
+    def massage_url(cls, uri):
+        return uri if uri[:4] =="http" else f"http://{uri}"
+
+    @classmethod
+    def massage_email(cls, uri):
+        return uri if uri[:7] == "mailto:" else f"mailto:{uri}"
+
+
+    @classmethod
+    def is_valid_email(cls, uri):
+        try:
+            EmailValidator()(cls.massage_email(uri)[7:])
+        except ValidationError:
+            return False
+        return True
+
+
     def __call__(self, value):
         if type(value) is not list:
             raise ValidationError("Internal parsing error. Please report.", code=self.code, params={"value": value})
@@ -133,10 +151,10 @@ class LabeledURLsValidator(URLValidator):
                 raise ValidationError("Internal parsing error. Please report.", code=self.code, params={"value": value})
             if not tup[0]:
                 raise ValidationError("Display name is required.", code=self.code, params={"value": value})
-            if tup[1][:7] == "mailto:":
-                EmailValidator(tup[1][7:])
-            else:
-                URLValidator(schemes=('http', 'https'))(tup[1])
+            if self.is_valid_email(tup[1]):
+                continue
+            URLValidator(schemes=('http', 'https'))(self.massage_url(tup[1]))
+
 
 
 class MusicBrainzArtist(models.Model):
@@ -202,8 +220,7 @@ class Artist(CreationTrackingMixin):
     is_temp_artist=models.BooleanField()
 
     # List of tuples [ (display_name, url), ... ]
-    socials_links=models.JSONField(default=list, blank=True,
-                                   help_text="Enter links to socials, website, email, etc. Include protocol (https://, http://, or mailto:)")
+    socials_links=models.JSONField(default=list, blank=True)
 
     similar_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist, verbose_name="Sounds like",
                                                        help_text="Select 3 artists whose fans might also like to listen to this artist. If an artist doesn't appear on the list, it means MusicBrainz doesn't have any similarity data on them; please pick another while their database grows!")
@@ -224,6 +241,13 @@ class Artist(CreationTrackingMixin):
         self.qr_kit = ContentFile(pdfgen.generate_artist_qr_kit(self.pk, self.name),
                                   f"{self.name}_qr_kit.pdf")
         self.save()
+
+
+    def save(self, *args, **kwargs):
+        LUV = LabeledURLsValidator
+        for tup in self.socials_links:
+            tup[1] = LUV.massage_email(tup[1]) if LUV.is_valid_email(tup[1]) else LUV.massage_url(tup[1])
+        return super().save(*args, **kwargs)
 
 
     def __str__(self):

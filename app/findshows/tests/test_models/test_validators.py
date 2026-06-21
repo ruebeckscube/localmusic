@@ -28,3 +28,9 @@ class LabeledURLsValidatorTests(TestCase):
     def test_not_a_tuple(self):
         with self.assertRaises(ValidationError):
             LabeledURLsValidator()([('Label', 'http://www.testurl.com'), 'http://www.testurl.com'])
+
+    def test_no_protocol_site(self):
+        LabeledURLsValidator()([('Label', 'www.mysite.edu')])
+
+    def test_no_protocol_email(self):
+        LabeledURLsValidator()([('Label 1', 'user@email.com')])
