@@ -35,7 +35,7 @@
         <!-- Artists -->
         <div class="flex flex-col w-full md:w-2/3">
             {% for artist in concert.sorted_artists %}
-                <div class="flex flex-col items-center fieldgroup @container">
+                <article class="flex flex-col items-center fieldgroup @container" aria-label="{{ artist.name }}">
                     <div class="flex @max-md:flex-col w-full justify-between my-1">
                         <div class="flex flex-col w-full @md:w-1/2 ">
                             <div class="@max-md:self-end">
@@ -70,7 +70,7 @@
                     <div class="text-xs @md:text-sm m-2">
                         {{ artist.bio|default:"" }}
                     </div>
-                </div>
+                </article>
             {% endfor %}
         </div>
     </div>

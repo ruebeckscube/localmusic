@@ -7,23 +7,24 @@
                 sm:text-center sm:font-stretch-100% sm:font-extralight">
         <a href="{% url 'findshows:home' %}">{{ SITE_TITLE }}</a>
     </div>
-    <div class="grow flex justify-end min-w-0">
+    <div class="grow flex justify-end min-w-0"
+         x-data="{'show_menu': false}">
+        <nav>
         {% if user.is_authenticated %}
             {# Dropdown menu #}
-            <div class=""
-                 x-data="{'show_menu': false}">
-                <svg class="clickable-svg h-8 p-1 stroke-3" {# h-full breaks on mobile #}
-                     viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
-                     @click="show_menu = true">
-                    <line x1="0" y1="4" x2="24" y2="4" stroke="currentColor"/>
-                    <line x1="0" y1="12" x2="24" y2="12" stroke="currentColor"/>
-                    <line x1="0" y1="20" x2="24" y2="20" stroke="currentColor"/>
-                </svg>
-                <ul class="absolute right-2 top-10 popup-menu w-48 text-right"
-                    x-show="show_menu"
-                    @click.away="show_menu = false"
-                    @keydown.escape.window="show_menu = false"
-                >
+                <button @click="show_menu = true" title="Menu" :aria-expanded="show_menu">
+                    <svg class="clickable-svg h-8 p-1 stroke-3" {# h-full breaks on mobile #}
+                         aria-hidden="true"
+                         viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="0" y1="4" x2="24" y2="4" stroke="currentColor"/>
+                        <line x1="0" y1="12" x2="24" y2="12" stroke="currentColor"/>
+                        <line x1="0" y1="20" x2="24" y2="20" stroke="currentColor"/>
+                    </svg>
+                </button>
+                <menu class="absolute right-2 top-10 popup-menu w-48 text-right"
+                      x-show="show_menu"
+                      @click.away="show_menu = false"
+                      @keydown.escape.window="show_menu = false">
                     {% if user.can_see_artist_dashboard %}
                         <li class="even:bg-sub-background">
                             <a class="block link py-1 px-2" href="{% url 'findshows:artist_dashboard' %}">Artist dashboard</a>
@@ -48,11 +49,11 @@
                             <button class="block link py-1 px-2 w-full h-full text-right" type="submit">Log out</button>
                         </form>
                     </li>
-                </ul>
-            </div>
+                </menu>
         {% else %}
             <a class="link h-fit" href="{% url 'login' %}">Log in</a>
         {% endif %}
+        </nav>
     </div>
 </div>
 
