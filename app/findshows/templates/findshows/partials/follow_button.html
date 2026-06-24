@@ -28,7 +28,8 @@
     </form>
 {% else %}
     <div class="flex w-fit items-center p-1 min-h-12 relative">
-        <svg class="rough-bg-social-link h-full w-full absolute -z-0" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio='none'></svg>
+        <svg class="rough-bg-social-link h-full w-full absolute -z-0" xmlns="http://www.w3.org/2000/svg"
+             preserveAspectRatio='none' aria-hidden="true"></svg>
           {% if is_followed %}
             <a class="flex link text-lg text-center m-3 z-10" href={% url 'findshows:unfollow_artist' artist.pk %}>
                 <img title="Unfollow" src="{% static 'findshows/follow-star-filled.svg' %}"/>

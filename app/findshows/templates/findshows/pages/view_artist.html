@@ -47,7 +47,8 @@
                     </div>
                     {% for link in artist.socials_links %}
                         <div class="flex items-center p-1 min-h-12 h-fit relative">
-                            <svg class="rough-bg-social-link h-full w-full absolute -z-0" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio='none'></svg>
+                            <svg class="rough-bg-social-link h-full w-full absolute -z-0" xmlns="http://www.w3.org/2000/svg"
+                                 preserveAspectRatio='none' aria-hidden="true"></svg>
                             <a class="link text-lg text-center m-3 z-10" href="{{link.1}}" target="_blank">{{link.0}}</a>
                         </div>
                     {% endfor %}
