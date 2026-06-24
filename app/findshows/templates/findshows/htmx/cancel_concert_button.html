@@ -1,31 +1,26 @@
-<div class="cancel-concert-button">
-    {% if error %}
-        <div>
-            {{ error }}
-        </div>
-    {% endif %}
+<div class="cancel-concert-button"
+     hx-on::after-settle="event.detail.elt.getElementsByTagName('button')[0].focus()"
+>
     <form type="post">
         {% csrf_token %}
         {% if concert.cancelled %}
-            <input class="btn m-2"
-                   type="button"
+            <button class="btn m-2"
                    name="uncancel-concert"
                    hx-post="{% url 'findshows:uncancel_concert' concert.pk %}"
                    hx-trigger="click"
                    value="Uncancel concert"
                    hx-target="closest .cancel-concert-button"
                    hx-swap="outerHTML"
-            >
+            >Uncancel concert</button>
         {% else %}
-            <input class="btn m-2"
-                   type="button"
+            <button class="btn m-2"
                    name="cancel-concert"
                    hx-post="{% url 'findshows:cancel_concert' concert.pk %}"
                    hx-trigger="click"
                    value="Cancel concert"
                    hx-target="closest .cancel-concert-button"
                    hx-swap="outerHTML"
-            >
+            >Cancel concert</button>
         {% endif %}
     </form>
 </div>
