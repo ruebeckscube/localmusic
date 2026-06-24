@@ -1,10 +1,11 @@
 {% load findshows_tags %}
 
-<div class="text-center p-2">
+<div class="text-center p-2" aria-label="Concert details">
     <div class="py-3">
         <div>
             {% if concert.venue.website %}
-                <a class="link" href="{{ concert.venue.website }}" target="_blank">{{concert.venue.name}}</a> ({{concert.ages_with_default}})
+                <a class="link" href="{{ concert.venue.website }}" title="Venue site" target="_blank">{{concert.venue.name}}</a>
+                ({{concert.ages_with_default}})
             {% else %}
                 {{concert.venue.name}} ({{concert.ages_with_default}})
             {% endif %}
