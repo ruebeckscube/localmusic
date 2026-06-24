@@ -37,7 +37,7 @@ modal based on https://alpinetoolbox.com/examples/modal
      x-cloak
 >
 
-    <button type="button" class="btn w-full" @click="open_modal()">
+    <button type="button" class="{{ class|default:'btn w-full' }}" @click="open_modal()">
         {{ title_text }}
     </button>
     <div x-text="success_text">

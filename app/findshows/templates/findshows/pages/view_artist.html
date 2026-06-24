@@ -29,12 +29,9 @@
     {% endif %}
 
     {% if can_edit %}
-        <div class="flex justify-center mx-auto w-fit">
-            <a class="block btn w-30 m-2" href="{% url 'findshows:edit_artist' artist.pk %}?from=view_artist"> Edit </a>
-          {% if artist.qr_kit %}
-            <a class="block btn w-30 m-2" href="{{ artist.qr_kit.url }}" target="_blank"> QR kit </a>
-          {% endif %}
-            <a class="block btn w-60 m-2" href="{% url 'findshows:artist_dashboard' %}"> Artist dashboard </a>
+        <div class="flex flex-wrap justify-center w-fit mx-auto">
+            {% include "findshows/partials/artist_buttons.html" with class="block btn px-5 m-2"%}
+            <a class="block btn px-5 m-2" href="{% url 'findshows:artist_dashboard' %}"> Artist dashboard </a>
         </div>
     {% endif %}
 
