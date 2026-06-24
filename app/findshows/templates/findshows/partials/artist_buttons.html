@@ -1,0 +1,22 @@
+{% load findshows_tags %}
+
+<a class="{{ class }}" href="{% url 'findshows:edit_artist' artist.pk %}?from=artist_dashboard">
+    Edit
+</a>
+
+{% if artist.qr_kit %}
+<a class="{{ class }}" target="_blank" href="{{ artist.qr_kit.url }}">QR kit</a>
+{% endif %}
+
+<form>
+    {% csrf_token %}
+    {% with title_text="Manage access" form_html="findshows/htmx/artist_access_form.html" htmx_url="findshows:manage_artist_access" htmx_param=artist.pk %}
+    {% include "findshows/partials/modal_form.html" %}
+    {% endwith %}
+</form>
+
+<button class="{{ class }}"
+        x-data="{copied: false}"
+        @click="copied=true;navigator.clipboard.writeText('{% email_url 'findshows:follow_artist' artist.pk %}')"
+        x-text="copied ? 'Follow link copied!' : 'Copy follow link'">
+</button>

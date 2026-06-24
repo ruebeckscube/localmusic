@@ -47,7 +47,12 @@
 
     <div class="bg-highlight-item-light/40 p-3 m-3">
         <h2>Artist pages</h2>
-        <p class="pl-4">Manage your artist profiles, and who can access them. Follower counts are not displayed publically.</p>
+        <p class="pl-4">
+            Manage your artist profiles, and who can access them.
+            Follower counts are not displayed publically.
+            Followers will always get your shows at the top of their weekly email
+            (both the week you announce it, and the week of the show).
+        </p>
         <div class="flex flex-wrap align-middle items-center justify-center">
             {% for artist in artists %}
             <div class="flex flex-col items-center m-5 bg-sub-background p-4">
@@ -56,7 +61,10 @@
                 </div>
                 <div class="w-60 h-60 m-2 flex justify-center items-center">
                     {% if artist.profile_picture_small %}
-                    <img class="max-h-60 max-w-60 object-contain" src="{{ artist.profile_picture_small.url }}">
+                    <a href="{% url 'findshows:view_artist' artist.pk %}">
+                        <img class="max-h-60 max-w-60 object-contain p-1 hover:bg-highlight-item-light"
+                             src="{{ artist.profile_picture_small.url }}">
+                    </a>
                     {% else %}
                     <p class="text-red-700">
                         This artist profile is incomplete! Please edit it so your shows can be listed publically.
@@ -64,17 +72,7 @@
                     {% endif %}
                 </div>
                 <div class="flex justify-center flex-wrap w-60">
-                    <a class="btn block" href="{% url 'findshows:view_artist' artist.pk %}">View</a>
-                    <a class="btn block" href="{% url 'findshows:edit_artist' artist.pk %}?from=artist_dashboard">Edit</a>
-                      {% if artist.qr_kit %}
-                        <a class="btn block" target="_blank" href="{{ artist.qr_kit.url }}">QR kit</a>
-                      {% endif %}
-                    <form class="mx-auto">
-                        {% csrf_token %}
-                        {% with title_text="Manage access" form_html="findshows/htmx/artist_access_form.html" htmx_url="findshows:manage_artist_access" htmx_param=artist.pk %}
-                            {% include "findshows/partials/modal_form.html"%}
-                        {% endwith %}
-                    </form>
+                    {% include "findshows/partials/artist_buttons.html" with class="btn block" %}
                 </div>
                 <div class="mt-3">
                     {{ artist.followers.count }} followers
