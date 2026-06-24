@@ -1,24 +1,30 @@
 {% load static %}
 
 {% if in_place %}
-    <form type="post" class="outer-swap min-w-[32px]">
+    <form type="post" class="outer-swap min-w-[32px]"
+          hx-on::after-settle="event.detail.elt.getElementsByTagName('button')[0].focus()">
         {% csrf_token %}
-        <img class="cursor-pointer w-8 h-8 rounded-full hover:bg-highlight-item-light"
+        <button
              hx-trigger="click"
              hx-target="closest .outer-swap"
              hx-swap="outerHTML"
           {% if is_followed %}
-             src="{% static 'findshows/follow-star-filled.svg' %}"
-             alt="Unfollow"
+             aria-label="Unfollow {{ artist.name }}"
              title="Unfollow"
              hx-post="{% url 'findshows:unfollow_artist_htmx' artist.pk %}"
           {% else %}
-             src="{% static 'findshows/follow-star-empty.svg' %}"
-             alt="Follow"
+             aria-label="Follow {{ artist.name }}"
              title="Follow"
              hx-post="{% url 'findshows:follow_artist_htmx' artist.pk %}"
-          {% endif %}
-        />
+          {% endif %}>
+            <img aria-hidden="true"
+                 class="cursor-pointer w-8 h-8 rounded-full hover:bg-highlight-item-light"
+              {% if is_followed %}
+                 src="{% static 'findshows/follow-star-filled.svg' %}"
+              {% else %}
+                 src="{% static 'findshows/follow-star-empty.svg' %}"
+              {% endif %}/>
+        </button>
     </form>
 {% else %}
     <div class="flex w-fit items-center p-1 min-h-12 relative">
