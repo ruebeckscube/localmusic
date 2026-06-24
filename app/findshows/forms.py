@@ -328,7 +328,7 @@ class TempArtistForm(DefaultStylingModelForm):
     prefix = "temp_artist"
     use_required_attribute = False
     email=forms.EmailField(required=True, help_text="""Please check with the
-    artist you're inviting and and use a personal email rather than a band
+    artist you're inviting and use a personal email rather than a band
     email. This address must match the one on their account.""")
 
     class Meta:
