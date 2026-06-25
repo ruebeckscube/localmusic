@@ -1,3 +1,4 @@
+{% load static %}
 {% load findshows_tags %}
 
 <div class="flex h-8 mt-2 px-3 justify-between">
@@ -8,8 +9,10 @@
         <a href="{% url 'findshows:home' %}">{{ SITE_TITLE }}</a>
     </div>
     <div class="grow flex justify-end min-w-0"
-         x-data="{'show_menu': false}">
-        <nav>
+         x-data="nav_data()">
+        <nav @focusout.stop="if (!$el.contains($event.relatedTarget)) show_menu = false"
+             @keydown.arrow-up.prevent="arrowPress($event, 'up')"
+             @keydown.arrow-down.prevent="arrowPress($event, 'down')">
         {% if user.is_authenticated %}
             {# Dropdown menu #}
                 <button @click="show_menu = true" title="Menu" :aria-expanded="show_menu">
@@ -22,8 +25,9 @@
                     </svg>
                 </button>
                 <menu class="absolute right-2 top-10 popup-menu w-48 text-right"
+                      aria-orientation="vertical"
                       x-show="show_menu"
-                      @click.away="show_menu = false"
+                      @click.outside="show_menu = false"
                       @keydown.escape.window="show_menu = false">
                     {% if user.can_see_artist_dashboard %}
                         <li class="even:bg-sub-background">
@@ -46,7 +50,7 @@
                     <li class="even:bg-sub-background">
                         <form id="logout-form" method="post" action="{% url 'logout' %}">
                             {% csrf_token %}
-                            <button class="block link py-1 px-2 w-full h-full text-right" type="submit">Log out</button>
+                            <button role="link" class="block link py-1 px-2 w-full h-full text-right" type="submit">Log out</button>
                         </form>
                     </li>
                 </menu>
@@ -63,3 +67,5 @@
         {{ banner_text }}
     </div>
 {% endif %}
+
+<script src='{% static "findshows/js/nav_data.js" %}'></script>
