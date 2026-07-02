@@ -20,13 +20,15 @@ function musicbrainz_artist_search_data(selected_musicbrainz_artists, max_artist
         this.selected_musicbrainz_artists.push({'mbid':mbid, 'name':name});
         this.search_text = '';
         this.$dispatch('widget-update');
-        this.$dispatch('add-musicbrainz-card', { id: mbid })
+        this.$dispatch('add-musicbrainz-card', { id: mbid });
+        this.$refs.mb_search.focus();
       }
     },
 
     remove_artist(index) {
       this.selected_musicbrainz_artists.splice(index, 1);
       this.$dispatch('widget-update');
+      this.$refs.mb_search.focus();
     }
   }
 }

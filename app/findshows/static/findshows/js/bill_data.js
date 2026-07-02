@@ -24,11 +24,11 @@ function bill_data() {
 
     close_dropdown(artist, focusAfter) {
       if (! artist.show_search) return;
+      focusAfter && focusAfter.focus();
       artist.show_search = false;
       if (artist.name) {
         artist.search_text = artist.name;
       }
-      focusAfter && focusAfter.focus();
     },
 
     select_artist(idx, selected_name, selected_id) {

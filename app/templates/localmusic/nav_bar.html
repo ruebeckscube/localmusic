@@ -9,8 +9,9 @@
         <a href="{% url 'findshows:home' %}">{{ SITE_TITLE }}</a>
     </div>
     <div class="grow flex justify-end min-w-0"
-         x-data="nav_data()">
-        <nav @focusout.stop="if (!$el.contains($event.relatedTarget)) show_menu = false"
+         x-data="{show_menu: false}">
+        <nav class="dropdown-container"
+             @focusout.stop="if (!$el.contains($event.relatedTarget)) show_menu = false"
              @keydown.arrow-up.prevent="arrowPress($event, 'up')"
              @keydown.arrow-down.prevent="arrowPress($event, 'down')">
         {% if user.is_authenticated %}
@@ -67,5 +68,3 @@
         {{ banner_text }}
     </div>
 {% endif %}
-
-<script src='{% static "findshows/js/nav_data.js" %}'></script>
