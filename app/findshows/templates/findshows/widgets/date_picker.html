@@ -68,7 +68,12 @@
 
         {# Grid of dates #}
         <div class="grid grid-cols-7 grid-flow-row -mx-1"
-             role="grid" :aria-label="`${currentMonthName()} ${focusedDate.getFullYear()}`">
+             role="grid" :aria-label="`${currentMonthName()} ${focusedDate.getFullYear()}`"
+             @keydown.up.prevent="onArrowPress($event)"
+             @keydown.down.prevent="onArrowPress($event)"
+             @keydown.left.prevent="onArrowPress($event)"
+             @keydown.right.prevent="onArrowPress($event)"
+        >
             <template x-for="day in DAYS">
                 <div x-text="day" class="text-gray-800 font-medium text-center text-xs mb-1" aria-disabled="true"></div>
             </template>
@@ -77,10 +82,6 @@
             </template>
             <template x-for="day in numDaysInMonth()">
                 <button type="button"
-                        @keydown.up.prevent="onArrowPress($event)"
-                        @keydown.down.prevent="onArrowPress($event)"
-                        @keydown.left.prevent="onArrowPress($event)"
-                        @keydown.right.prevent="onArrowPress($event)"
                         :id="$id('date', day)"
                         :tabindex="day == focusedDate.getDate() ? 0 : -1"
                         @click="onDateClick(day)"
