@@ -315,6 +315,9 @@
   .-mx-1 {
     margin-inline: calc(var(--spacing) * -1);
   }
+  .mx-1 {
+    margin-inline: calc(var(--spacing) * 1);
+  }
   .mx-3 {
     margin-inline: calc(var(--spacing) * 3);
   }
@@ -706,6 +709,9 @@
     border-style: var(--tw-border-style);
     border-width: 6px;
   }
+  .border-black {
+    border-color: var(--color-black);
+  }
   .border-clickable {
     border-color: var(--color-clickable);
   }
@@ -967,6 +973,16 @@
     &:hover {
       @media (hover: hover) {
         border-color: var(--color-clickable-h);
+      }
+    }
+  }
+  .hover\:bg-clickable-h\/5 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: color-mix(in srgb, #ea19af 5%, transparent);
+        @supports (color: color-mix(in lab, red, red)) {
+          background-color: color-mix(in oklab, var(--color-clickable-h) 5%, transparent);
+        }
       }
     }
   }

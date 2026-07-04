@@ -2,44 +2,64 @@
 
 <div class="max-w-48 container py-1 relative"
      x-data="datePickerData({{ widget.allow_past_or_future }})"
-     x-init="[initDate('{{ widget.value }}'), incrementCalDisplay(0)]"
+     x-init="initDate('{{ widget.value }}')"
+     x-id="['date']"
+     @keydown.escape="closeDatePicker()"
+     @focusout.stop="if (!$el.contains($event.relatedTarget)) closeDatePicker()"
      x-cloak
 >
-    <input type="hidden" name={{ widget.name }} :value="getWidgetReturnVal()">
-    <input
-        type="text"
-        @click="showDatepicker = !showDatepicker"
-        :value="getDisplayDate()"
-        @keydown.escape="showDatepicker = false"
-        class="textinput w-full cursor-pointer"
-        placeholder="Select date"
-        readonly>
+    <input type="hidden" name={{ widget.name }} :value="selectedDate ? localISO(selectedDate) : ''">
+    <button
+        id="{{ widget.attrs.id }}"
+        x-ref="datepicker"
+        type="button"
+        @click="showDatePicker ? closeDatePicker() : openDatePicker()"
+        @keydown.down.prevent="document.getElementById($id('date', focusedDate.getDate())).focus();"
+        @keydown.right.prevent="$refs.prevMonthButton.focus()"
+        x-text="selectedDate ? selectedDate.toDateString() : 'Select Date'"
+        :aria-label="buttonAriaLabel()"
+        class="textinput w-full cursor-pointer hover:bg-clickable-h/5"
+        :class="{'text-gray-400 border-black': !selectedDate}"
+        :aria-expanded="showDatePicker"
+        readonly></button>
 
     {# Popup menu #}
     <div class="popup-menu mt-12 w-64 p-4 absolute top-0 left-0"
-         x-show.transition="showDatepicker"
-         @click.away="showDatepicker = false">
+         x-show.transition="showDatePicker"
+         @click.outside="closeDatePicker()">
 
         {# Header of date form #}
         <div class="flex justify-between items-center mb-2">
             <div class="flex justify-between items-center grow mr-2">
-                <div x-text="MONTH_NAMES[calMonth-1]" class="text-lg font-semibold"></div>
-                <div x-text="calYear" class="ml-1 text-lg text-gray-600 font-normal"></div>
+                <div x-text="currentMonthName()" class="text-lg font-semibold" aria-live="polite"></div>
+                <div x-text="focusedDate.getFullYear()" class="ml-1 text-lg text-gray-600 font-normal"></div>
             </div>
             <div class="flex justify-between">
                 <button
                     type="button"
+                    aria-label="Previous month"
+                    x-ref="prevMonthButton"
                     class="clickable-svg transition ease-in-out duration-100 p-1"
-                    @click="incrementCalDisplay(-1)">
-                    <svg class="h-6 w-6"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    @keydown.up.prevent="$refs.datepicker.focus()"
+                    @keydown.down.prevent="document.getElementById($id('date', focusedDate.getDate())).focus();"
+                    @keydown.left.prevent="$refs.datepicker.focus()"
+                    @keydown.right.prevent="$refs.nextMonthButton.focus()"
+                    @click="incrementDisplayMonth(-1)">
+                    <svg class="h-6 w-6"  fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
                 </button>
                 <button
                     type="button"
+                    aria-label="Next month"
+                    x-ref="nextMonthButton"
                     class="clickable-svg transition ease-in-out duration-100 p-1"
-                    @click="incrementCalDisplay(1)">
-                    <svg class="h-6 w-6"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    @keydown.up.prevent="$refs.datepicker.focus()"
+                    @keydown.down.prevent="document.getElementById($id('date', focusedDate.getDate())).focus();"
+                    @keydown.left.prevent="$refs.prevMonthButton.focus()"
+                    @keydown.right.prevent="document.getElementById($id('date', focusedDate.getDate())).focus();"
+                    @click="incrementDisplayMonth(1)">
+                    <svg class="h-6 w-6"  fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
                 </button>
@@ -47,27 +67,30 @@
         </div>
 
         {# Grid of dates #}
-        <div class="grid grid-cols-7 grid-flow-row -mx-1">
+        <div class="grid grid-cols-7 grid-flow-row -mx-1"
+             role="grid" :aria-label="`${currentMonthName()} ${focusedDate.getFullYear()}`">
             <template x-for="day in DAYS">
-                <div class="mb-1">
-                    <div x-text="day" class="text-gray-800 font-medium text-center text-xs"></div>
-                </div>
+                <div x-text="day" class="text-gray-800 font-medium text-center text-xs mb-1" aria-disabled="true"></div>
             </template>
-            <template x-for="i in NumSpacesBeforeDays">
+            <template x-for="i in numSpacesBeforeDays()">
                 <div ></div>
             </template>
-            <template x-for="date in numDaysInMonth">
-                <div class="px-1 mb-1">
-                    <div
-                        @click="onDateClick(date)"
-                        x-text="date"
-                        class="text-center text-sm leading-loose transition ease-in-out duration-100"
-                        :class="{'text-gray-400': !isSelectable(date),
-                                'bg-highlight-item-light cursor-pointer': isSelected(date),
-                                'clickable-svg': isSelectable(date)&&(!isSelected(date)),
-                                'font-bold': isToday(date)}"
-                    ></div>
-                </div>
+            <template x-for="day in numDaysInMonth()">
+                <button type="button"
+                        @keydown.up.prevent="onArrowPress($event)"
+                        @keydown.down.prevent="onArrowPress($event)"
+                        @keydown.left.prevent="onArrowPress($event)"
+                        @keydown.right.prevent="onArrowPress($event)"
+                        :id="$id('date', day)"
+                        :tabindex="day == focusedDate.getDate() ? 0 : -1"
+                        @click="onDateClick(day)"
+                        x-text="day"
+                        class="text-center text-sm leading-loose transition ease-in-out duration-100 mx-1 mb-1"
+                        :class="{'text-gray-400': !isSelectable(day),
+                              'bg-highlight-item-light cursor-pointer': isSelected(day),
+                              'clickable-svg': isSelectable(day)&&(!isSelected(day)),
+                              'font-bold': isToday(day)}"
+                ></button>
             </template>
         </div>
     </div>
