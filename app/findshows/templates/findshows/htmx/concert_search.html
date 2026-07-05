@@ -1,8 +1,7 @@
 {% load static %}
 
 <div class="w-full flex max-sidebar-bp:flex-col relative"
-     x-data="{'show_end_date': {{ search_form.is_date_range.value|lower }},
-              'show_search_form': true}"
+     x-data="concertSearchData({{ search_form.is_date_range.value|lower }})"
      hx-get="{% url 'findshows:concert_search' %}"
      hx-trigger="load,widget-update from:body delay:.1s"
      hx-include="#search-form"
@@ -46,13 +45,13 @@
                 <button type="button"
                         class="link text-xs w-fit px-1"
                         x-show="!show_end_date"
-                        @click="show_end_date=true;$dispatch('widget-update')">
+                        @click="show_hide_date_range('show', '{{ search_form.end_date.auto_id }}')">
                     Date range
                 </button>
                 <button type="button"
                         class="link text-xs w-fit px-1"
                         x-show="show_end_date"
-                        @click="show_end_date=false;$dispatch('widget-update')">
+                        @click="show_hide_date_range('hide', '{{ search_form.date.auto_id }}')">
                     Hide date range
                 </button>
                 <input type='hidden' :value='show_end_date' name='is_date_range'>
@@ -84,3 +83,4 @@
 </div>
 
 <script src="{% static 'findshows/js/update_url.js' %}"></script>
+<script src="{% static 'findshows/js/concert_search_data.js' %}"></script>

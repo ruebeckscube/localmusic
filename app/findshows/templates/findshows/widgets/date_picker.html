@@ -4,20 +4,22 @@
      x-data="datePickerData({{ widget.allow_past_or_future }})"
      x-init="initDate('{{ widget.value }}')"
      x-id="['date']"
-     @keydown.escape="closeDatePicker()"
+     @keydown.escape="closeDatePicker($refs.datepicker)"
      @focusout.stop="if (!$el.contains($event.relatedTarget)) closeDatePicker()"
      @concert-search-form-updates.document="initDate($event.detail.data['{{ widget.name }}'])"
      x-cloak
 >
     <input type="hidden" name={{ widget.name }} :value="selectedDate ? localISO(selectedDate) : ''">
-    <button
+    <button id="{{ widget.attrs.id }}"
         x-ref="datepicker"
         type="button"
         @click="showDatePicker ? closeDatePicker() : openDatePicker()"
-        @keydown.down.prevent="document.getElementById($id('date', focusedDate.getDate())).focus();"
-        @keydown.right.prevent="$refs.prevMonthButton.focus()"
+        @keydown.up.prevent="focusFocusedDate()"
+        @keydown.down.prevent="focusFocusedDate()"
+        @keydown.left.prevent="focusFocusedDate()"
+        @keydown.right.prevent="focusFocusedDate()"
         x-text="selectedDate ? selectedDate.toDateString() : 'Select Date'"
-        :aria-label="buttonAriaLabel()"
+        :aria-description="buttonAriaDescription()"
         class="textinput w-full cursor-pointer hover:bg-clickable-h/5"
         :class="{'text-gray-400 border-black': !selectedDate}"
         :aria-expanded="showDatePicker"
@@ -41,7 +43,7 @@
                     x-ref="prevMonthButton"
                     class="clickable-svg transition ease-in-out duration-100 p-1"
                     @keydown.up.prevent="$refs.datepicker.focus()"
-                    @keydown.down.prevent="document.getElementById($id('date', focusedDate.getDate())).focus();"
+                    @keydown.down.prevent="focusFocusedDate()"
                     @keydown.left.prevent="$refs.datepicker.focus()"
                     @keydown.right.prevent="$refs.nextMonthButton.focus()"
                     @click="incrementDisplayMonth(-1)">
@@ -55,9 +57,9 @@
                     x-ref="nextMonthButton"
                     class="clickable-svg transition ease-in-out duration-100 p-1"
                     @keydown.up.prevent="$refs.datepicker.focus()"
-                    @keydown.down.prevent="document.getElementById($id('date', focusedDate.getDate())).focus();"
+                    @keydown.down.prevent="focusFocusedDate()"
                     @keydown.left.prevent="$refs.prevMonthButton.focus()"
-                    @keydown.right.prevent="document.getElementById($id('date', focusedDate.getDate())).focus();"
+                    @keydown.right.prevent="focusFocusedDate()"
                     @click="incrementDisplayMonth(1)">
                     <svg class="h-6 w-6"  fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-width="2" d="M9 5l7 7-7 7"/>

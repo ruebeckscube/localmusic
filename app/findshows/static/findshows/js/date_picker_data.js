@@ -22,17 +22,14 @@ function datePickerData(allowPastOrFuture) {
         }
     },
 
-    buttonAriaLabel() {
-        if (this.showDatePicker) {
-            var detail = "Navigate with arrow keys"
-        } else {
-            var detail = this.selectedDate ? this.selectedDate.toDateString() : 'No date selected'
-        }
-        return `Select date. ${detail}`;
+    buttonAriaDescription() {
+        if (this.showDatePicker) return "Navigate with arrow keys";
+        return this.selectedDate ? this.selectedDate.toDateString() : 'No date selected';
     },
 
-    closeDatePicker() {
+    closeDatePicker(focusAfter) {
         this.showDatePicker = false;
+        focusAfter && focusAfter.focus();
     },
 
     currentMonthName() {
@@ -67,6 +64,10 @@ function datePickerData(allowPastOrFuture) {
         return justDate(this.focusedDate.getFullYear(), this.focusedDate.getMonth(), 1).getDay();
     },
 
+    focusFocusedDate() {
+        document.getElementById(this.$id('date', this.focusedDate.getDate())).focus();
+    },
+
     onArrowPress(event) {
         let incr = 0;
         switch (event.key) {
@@ -76,7 +77,7 @@ function datePickerData(allowPastOrFuture) {
           case "ArrowRight": incr = 1; break;
         }
         this.incrementFocusedDate(incr);
-        document.getElementById(this.$id('date', this.focusedDate.getDate())).focus();
+        this.focusFocusedDate();
     },
 
     incrementFocusedDate(incrDays) {
@@ -98,13 +99,12 @@ function datePickerData(allowPastOrFuture) {
     onDateClick(day) {
         if (!this.isSelectable(day)) return;
 
-        this.closeDatePicker();
+        this.closeDatePicker(this.$refs.datepicker);
         clickedDate = this.displayDayToDate(day);
 
         if (datesAreEqual(clickedDate, this.selectedDate)) return;
 
         this.selectedDate = clickedDate;
-        this.$refs.datepicker.focus();
         this.$dispatch('widget-update');
     }
 
