@@ -344,8 +344,8 @@ class TempArtistForm(DefaultStylingModelForm):
 
 
 class ShowFinderForm(forms.Form):
-    date = DatePickerField(required=False)
-    end_date = DatePickerField(required=False)
+    date = DatePickerField(required=False, template_name="findshows/widgets/date_picker_field_group.html")
+    end_date = DatePickerField(required=False, template_name="findshows/widgets/date_picker_field_group.html")
     is_date_range = forms.BooleanField(required=False)
     musicbrainz_artists = forms.ModelMultipleChoiceField(
         queryset=MusicBrainzArtist.objects.all(),

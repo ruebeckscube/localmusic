@@ -6,11 +6,11 @@
      x-id="['date']"
      @keydown.escape="closeDatePicker()"
      @focusout.stop="if (!$el.contains($event.relatedTarget)) closeDatePicker()"
+     @concert-search-form-updates.document="initDate($event.detail.data['{{ widget.name }}'])"
      x-cloak
 >
     <input type="hidden" name={{ widget.name }} :value="selectedDate ? localISO(selectedDate) : ''">
     <button
-        id="{{ widget.attrs.id }}"
         x-ref="datepicker"
         type="button"
         @click="showDatePicker ? closeDatePicker() : openDatePicker()"

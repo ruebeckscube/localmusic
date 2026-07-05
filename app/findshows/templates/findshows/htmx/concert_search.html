@@ -6,8 +6,8 @@
      hx-get="{% url 'findshows:concert_search' %}"
      hx-trigger="widget-update from:body delay:.1s"
      hx-include="#search-form"
-     hx-target="this"
-     hx-swap="outerHTML"
+     hx-target="#concert-search-results"
+     hx-swap="innerHTML"
     >
     <button type="button"
             class="btn sm:hidden w-1/2 min-w-60 mx-auto my-4"
@@ -71,16 +71,7 @@
     </div>
 
     {# Search results #}
-    {% if not initial %}
-        <div class="flex flex-col w-full">
-            {% for concert in concerts  %}
-                {% include "../partials/concert_card.html" with followed_artists=user.userprofile.followed_artists.all %}
-            {% empty %}
-                <div class="flex h-full flex-col justify-around text-center text-gray-800">
-                    No results; try modifying your search.
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
+    <div id="concert-search-results" class="flex flex-col w-full">
+    </div>
 
 </div>

@@ -12,7 +12,7 @@ function justDate(year, month, day) {
 }
 
 function justDateISO(isoDateString) {
-    return new Date(`${isoDateString}T12:00:00`);
+    return isoDateString ? new Date(`${isoDateString}T12:00:00`) : null;
 }
 
 function justDateToday() {

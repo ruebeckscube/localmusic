@@ -696,11 +696,20 @@ def concert_search(request):
         concerts = []
         searched_musicbrainz_artists = []
 
-    return render(request, "findshows/htmx/concert_search.html", context={
+    response = render(request, "findshows/htmx/concert_search_results.html", context={
         "concerts": concerts,
         "search_form": search_form,
         "searched_musicbrainz_artists": searched_musicbrainz_artists,
     })
+    headers = {
+        "concert-search-form-updates": {
+            "data": search_form.data or search_form.initial,
+            "errors": search_form.errors,
+        }
+    }
+    response.headers['HX-Trigger'] = json.dumps(headers, default=str)
+
+    return response
 
 
 #######################

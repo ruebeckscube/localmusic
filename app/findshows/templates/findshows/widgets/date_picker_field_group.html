@@ -1,0 +1,11 @@
+{% if field.label %}{{ field.label_tag }}{% endif %}
+{% if field.help_text %}<div class="helptext"{% if field.auto_id %} id="{{ field.auto_id }}_helptext"{% endif %}>{{ field.help_text|safe }}</div>{% endif %}
+<ul class="errorlist"
+    aria-live="polite"
+    x-data="{'errorlist': []}"
+    @concert-search-form-updates.document="console.log('HERE'), errorlist=$event.detail.errors['{{ field.name }}']">
+    <template x-for="error of errorlist">
+        <li x-text="error">
+    </template>
+</ul>
+{{ field }}
