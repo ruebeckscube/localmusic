@@ -16,9 +16,9 @@
             <div class="bg-highlight-item-light/40 p-3 m-3 min-w-80 flex-grow">
                 <h2> Actions </h2>
                 <div class="mx-auto w-72">
-                    <a role="button" class="btn block w-full" href="{% url 'findshows:create_concert' %}?from=artist_dashboard">
+                    <button class="btn block w-full" onclick="location.href='{% url 'findshows:create_concert' %}?from=artist_dashboard'">
                         Create new show listing
-                    </a>
+                    </button>
                 </div>
 
                 <div class="mx-auto w-72">
@@ -30,9 +30,9 @@
                     </form>
                 </div>
                 <div class="mx-auto w-72">
-                    <a role="button" class="btn block w-full" href="{% url 'findshows:create_artist' %}">
+                    <button class="btn block w-full" onclick="location.href='{% url 'findshows:create_artist' %}'">
                         Create new artist page
-                    </a>
+                    </button>
                 </div>
             </div>
         {% endif %}
@@ -61,11 +61,11 @@
                 </div>
                 <div class="w-60 h-60 m-2 flex justify-center items-center">
                     {% if artist.profile_picture_small %}
-                    <a href="{% url 'findshows:view_artist' artist.pk %}">
+                    <button onclick="location.href='{% url 'findshows:view_artist' artist.pk %}'">
                         <img class="max-h-60 max-w-60 object-contain p-1 hover:bg-highlight-item-light"
                              alt="Artist photo"
                              src="{{ artist.profile_picture_small.url }}">
-                    </a>
+                    </button>
                     {% else %}
                     <p class="text-red-700">
                         This artist profile is incomplete! Please edit it so your shows can be listed publically.
@@ -97,7 +97,9 @@
                 </div>
                 {% if concert.created_by == user.userprofile %}
                 <div class="w-60 flex sm:flex-col justify-center items-center mx-auto my-2">
-                    <a class="btn" href="{% url 'findshows:edit_concert' concert.pk %}?from=artist_dashboard"> Edit </a>
+                    <button type="button" class="btn" onclick="location.href='{% url 'findshows:edit_concert' concert.pk %}?from=artist_dashboard'">
+                        Edit
+                    </button>
                     {% include "findshows/htmx/cancel_concert_button.html" %}
                 </div>
                 {% endif %}

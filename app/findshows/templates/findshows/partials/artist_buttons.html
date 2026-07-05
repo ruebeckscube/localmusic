@@ -1,11 +1,11 @@
 {% load findshows_tags %}
 
-<a class="{{ class }}" href="{% url 'findshows:edit_artist' artist.pk %}?from=artist_dashboard">
+<button type="button" class="{{ class }}" onclick="location.href='{% url 'findshows:edit_artist' artist.pk %}?from=artist_dashboard'">
     Edit
-</a>
+</button>
 
 {% if artist.qr_kit %}
-<a class="{{ class }}" target="_blank" href="{{ artist.qr_kit.url }}">QR kit</a>
+<button type="button" class="{{ class }}" onclick="window.open('{{ artist.qr_kit.url }}', '_blank');">QR kit</button>
 {% endif %}
 
 <form>
