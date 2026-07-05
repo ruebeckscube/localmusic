@@ -585,8 +585,8 @@
   .min-w-48 {
     min-width: calc(var(--spacing) * 48);
   }
-  .min-w-56 {
-    min-width: calc(var(--spacing) * 56);
+  .min-w-58 {
+    min-width: calc(var(--spacing) * 58);
   }
   .min-w-60 {
     min-width: calc(var(--spacing) * 60);
@@ -1595,6 +1595,17 @@
     grid-area: select;
   }
   .fav-checkbox {
+    cursor: pointer;
+    border-style: var(--tw-border-style);
+    border-width: 2px;
+    border-color: transparent;
+    padding-block: calc(var(--spacing) * 2);
+    padding-right: calc(var(--spacing) * 3);
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-clickable-h);
+      }
+    }
     input {
       position: absolute;
       width: 1px;
@@ -1618,6 +1629,9 @@
     input:checked ~ .img-unchecked {
       display: none;
     }
+  }
+  .fav-checkbox:has(:focus-visible) {
+    border-color: var(--color-clickable);
   }
   #concert-search-results {
     transition: visibility 0s linear 0.5s, opacity 0.1s ease-in;

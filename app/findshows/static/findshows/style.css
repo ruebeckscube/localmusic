@@ -147,6 +147,8 @@
   }
 
   .fav-checkbox {
+    @apply py-2 pr-3 border-2 border-transparent cursor-pointer hover:text-clickable-h;
+
     input {
       @apply sr-only;
     }
@@ -162,6 +164,10 @@
     input:checked ~ .img-unchecked {
       display: none;
     }
+  }
+
+  .fav-checkbox:has(:focus-visible) {
+      @apply border-clickable;
   }
 
   #concert-search-results {
