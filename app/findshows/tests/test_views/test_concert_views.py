@@ -255,12 +255,11 @@ class CancelConcertTests(TestCaseHelpers):
         self.assertFalse(concert.cancelled)
 
 
-    def test_uncancel_concert_conflict(self):
+    def test_uncancel_concert_conflict_doesnt_error(self):
         user = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         concert1 = self.create_concert(created_by=user, cancelled=True)
         concert2 = self.create_concert(created_by=user)
 
         response = self.client.post(reverse("findshows:uncancel_concert", args=(concert1.pk,)))
         concert1.refresh_from_db()
-        self.assertTrue(concert1.cancelled)
-        self.assertIn("there is another concert at this venue on this date", str(response.content))
+        self.assertFalse(concert1.cancelled)

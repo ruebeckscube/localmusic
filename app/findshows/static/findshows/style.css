@@ -148,7 +148,7 @@
 
   .fav-checkbox {
     input {
-      display: none;
+      @apply sr-only;
     }
     .img-checked {
       display: none;

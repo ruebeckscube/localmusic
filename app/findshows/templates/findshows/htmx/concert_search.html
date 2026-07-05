@@ -26,7 +26,7 @@
               class="flex sidebar-bp:flex-col z-20 bg-background relative max-sm:min-w-80
                       max-sm:flex-col max-sm:shadow-xl max-sm:w-2/3 max-sm:mx-auto max-sm:p-5 max-sm:border-2 border-highlight-item"
               :class="show_search_form ? '' : 'max-sm:hidden'"
-              @click.away="show_search_form = false"
+              @click.outside="show_search_form = false"
               @keydown.escape.window="show_search_form = false"
         >
             <div class="clickable-svg absolute top-1 right-1 z-50 sm:hidden"
@@ -42,19 +42,19 @@
                 <div x-show="show_end_date">
                     {{ search_form.end_date.as_field_group }}
                 </div>
-                <div x-show="!show_end_date" @click="show_end_date=true" class="link text-xs">
+                <button x-show="!show_end_date" @click="show_end_date=true;" class="link text-xs w-fit px-1">
                     Date range
-                </div>
-                <div x-show="show_end_date" @click="show_end_date=false;$dispatch('widget-update')" class="link text-xs">
+                </button>
+                <button x-show="show_end_date" @click="show_end_date=false;$dispatch('widget-update')" class="link text-xs w-fit px-1">
                     Hide date range
-                </div>
+                </button>
                 <input type='hidden' :value='show_end_date' name='is_date_range'>
               </div>
               <div class="fieldgroup">
                   <label class="fav-checkbox">
                       {{search_form.sort_followed_to_top}}
-                      <img class="w-8 h-8 img-checked" src="{% static 'findshows/follow-star-filled.svg' %}" />
-                      <img class="w-8 h-8 img-unchecked" src="{% static 'findshows/follow-star-empty.svg' %}" />
+                      <img aria-hidden="true" class="w-8 h-8 img-checked" src="{% static 'findshows/follow-star-filled.svg' %}" />
+                      <img aria-hidden="true" class="w-8 h-8 img-unchecked" src="{% static 'findshows/follow-star-empty.svg' %}" />
                       Sort followed
                   </label>
               </div>

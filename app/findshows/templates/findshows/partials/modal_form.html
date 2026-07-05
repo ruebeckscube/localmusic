@@ -52,7 +52,7 @@ modal based on https://alpinetoolbox.com/examples/modal
         <div class="modalform bg-background w-11/12 md:max-w-xl mx-auto shadow-lg py-4 text-left px-6"
              x-show="show_modal"
              x-trap.inert.noscroll="show_modal"
-             @click.away="close_modal()"
+             @click.outside="close_modal()"
         >
 
             <!--Title-->
