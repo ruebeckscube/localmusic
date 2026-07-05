@@ -78,7 +78,7 @@ modal based on https://alpinetoolbox.com/examples/modal
                         {% else %}
                             hx-post="{% url htmx_url %}"
                         {% endif %}
-                        hx-trigger="click,load,keyup[keyCode==13] from:closest .modalform"
+                        hx-trigger="click,load,keydown[keyCode==13] from:closest .modalform"
                         hx-target="previous .modal-form"
                         @modal-form-success="on_successful_create"
                 >Submit</button>
