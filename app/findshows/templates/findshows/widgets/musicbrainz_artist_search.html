@@ -13,10 +13,11 @@
          @keydown.arrow-up.prevent="arrowPress($event, 'up')"
          @keydown.arrow-down.prevent="arrowPress($event, 'down')"
     >
-            <input class="textinput" type="search"
+            <input class="textinput w-full max-w-48" type="search"
                    name="mb_search" placeholder="Search artists..."
                    x-model="search_text"
-                   x-ref="mb_search" id="mb_search"
+                   x-ref="mb_search" id="{{ widget.attrs.id }}"
+                   aria-describedby="{{ widget.attrs.id }}_helptext" {# hackier than i'd like; ideally would read aria_describedby from Field properties #}
                    hx-get="{% url 'findshows:musicbrainz_artist_search_results' %}"
                    hx-trigger="keyup changed delay:500ms, click from:#search-results"
                    hx-target="#musicbrainz-search-results"
