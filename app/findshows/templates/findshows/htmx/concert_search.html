@@ -4,11 +4,12 @@
      x-data="{'show_end_date': {{ search_form.is_date_range.value|lower }},
               'show_search_form': true}"
      hx-get="{% url 'findshows:concert_search' %}"
-     hx-trigger="widget-update from:body delay:.1s"
+     hx-trigger="load,widget-update from:body delay:.1s"
      hx-include="#search-form"
      hx-target="#concert-search-results"
-     hx-swap="innerHTML"
-    >
+     hx-swap="innerHTML swap:.2s"
+     hx-on::after-request="update_url(event.detail.pathInfo, '{% url 'findshows:concert_search' %}', '{% url 'findshows:home' %}')"
+>
     <button type="button"
             class="btn sm:hidden w-1/2 min-w-60 mx-auto my-4"
             @click="show_search_form = true;"
@@ -42,10 +43,16 @@
                 <div x-show="show_end_date">
                     {{ search_form.end_date.as_field_group }}
                 </div>
-                <button x-show="!show_end_date" @click="show_end_date=true;" class="link text-xs w-fit px-1">
+                <button type="button"
+                        class="link text-xs w-fit px-1"
+                        x-show="!show_end_date"
+                        @click="show_end_date=true;$dispatch('widget-update')">
                     Date range
                 </button>
-                <button x-show="show_end_date" @click="show_end_date=false;$dispatch('widget-update')" class="link text-xs w-fit px-1">
+                <button type="button"
+                        class="link text-xs w-fit px-1"
+                        x-show="show_end_date"
+                        @click="show_end_date=false;$dispatch('widget-update')">
                     Hide date range
                 </button>
                 <input type='hidden' :value='show_end_date' name='is_date_range'>
@@ -75,3 +82,5 @@
     </div>
 
 </div>
+
+<script src="{% static 'findshows/js/update_url.js' %}"></script>

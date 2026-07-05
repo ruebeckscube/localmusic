@@ -1619,6 +1619,18 @@
       display: none;
     }
   }
+  #concert-search-results {
+    transition: visibility 0s linear 0.5s, opacity 0.1s ease-in;
+  }
+  #concert-search-results.show {
+    visibility: visible;
+    opacity: 1;
+    transition-delay: 0s;
+  }
+  #concert-search-results.htmx-swapping {
+    opacity: 0;
+    transition: opacity 0.1s ease-out;
+  }
 }
 @property --tw-space-x-reverse {
   syntax: "*";

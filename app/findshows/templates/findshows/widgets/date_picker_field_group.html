@@ -3,7 +3,7 @@
 <ul class="errorlist"
     aria-live="polite"
     x-data="{'errorlist': []}"
-    @concert-search-form-updates.document="console.log('HERE'), errorlist=$event.detail.errors['{{ field.name }}']">
+    @concert-search-form-updates.document="errorlist=$event.detail.errors['{{ field.name }}']">
     <template x-for="error of errorlist">
         <li x-text="error">
     </template>
