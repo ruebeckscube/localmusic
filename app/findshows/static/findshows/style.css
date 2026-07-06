@@ -52,7 +52,7 @@
     @apply text-red-700;
   }
 
-  label.required:before {
+  label.required:before, legend.required:before {
     content:"*";
     @apply text-highlight-item;
   }
@@ -130,12 +130,16 @@
   }
 
   .select-wrapper {
-    @apply w-full border bg-white grid items-center pr-2 z-0;
+    @apply w-full border bg-white grid items-center pr-[8px] z-0 mx-[1px] my-[12px];
     grid-template-areas: "select";
   }
 
+  .select-wrapper:has(:focus-visible) {
+      @apply border-clickable border-2 mx-0 my-[11px] pr-[7px];
+  }
+
   .select-wrapper::after {
-    @apply w-3 h-2 bg-clickable justify-self-end;
+    @apply w-[12px] h-[8px] bg-clickable justify-self-end;
     content: "";
     grid-area: select;
     clip-path: polygon(100% 0%, 0 0%, 50% 100%);

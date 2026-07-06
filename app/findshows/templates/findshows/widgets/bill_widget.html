@@ -22,6 +22,8 @@
                     >
                         <input class="textinput w-full" type="search"
                                name="artist-search" placeholder="Select an artist..."
+                               :title="`Artist ${bill_order.length - idx}`"
+                               aria-describedby="{{ widget.attrs.id }}_helptext"
                                x-model="artist.search_text"
                                hx-get="{% url 'findshows:artist_search_results' %}"
                                :hx-vals="JSON.stringify({'idx': idx})"
@@ -41,7 +43,7 @@
                     <div class="flex justify-around w-21 ml-2">
                         {# Up arrow #}
                         <button type="button"
-                                :aria-label="`Move ${artist.name || 'blank slot'} up on the bill`"
+                                :title="`Move ${artist.name || 'blank slot'} up on the bill`"
                                 @click="move_artist(idx, -1)"
                                 @keydown.enter.prevent="move_artist(idx, -1)">
                             <svg class="clickable-svg fill-current w-7"
@@ -52,7 +54,7 @@
                         </button>
                         {# Down arrow #}
                         <button type="button"
-                                :aria-label="`Move ${artist.name || 'blank slot'} down on the bill`"
+                                :title="`Move ${artist.name || 'blank slot'} down on the bill`"
                                 @click="move_artist(idx, 1)"
                                 @keydown.enter.prevent="move_artist(idx, 1)">
                             <svg class="clickable-svg fill-current w-7"
@@ -63,7 +65,7 @@
                         </button>
                                 {# Remove button #}
                         <button type="button"
-                                :aria-label="`Remove ${artist.name || 'blank slot'} from the bill`"
+                                :title="`Remove ${artist.name || 'blank slot'} from the bill`"
                                 @click="remove_artist(idx)"
                                 @keydown.enter.prevent="remove_artist(idx)">
                             <svg class="clickable-svg fill-current w-7 stroke-3"
@@ -75,16 +77,26 @@
                     </div>
                 </li>
             </template>
-            <li class="btn" @click="add_artist()"> Add set</li>
         </ol>
     </div>
 
+    <div class="flex">
+    <button type="button" class="btn" x-ref="add-set"
+            @click="add_artist()">
+        <svg class="fill-current w-5 stroke-3 inline"
+             aria-hidden="true"
+             viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+            <path d="M213.333333,1.42108547e-14 L213.333,170.666 L384,170.666667 L384,213.333333 L213.333,213.333 L213.333333,384 L170.666667,384 L170.666,213.333 L1.42108547e-14,213.333333 L1.42108547e-14,170.666667 L170.666,170.666 L170.666667,1.42108547e-14 L213.333333,1.42108547e-14 Z"></path>
+        </svg>
+        Add set
+    </button>
+
     <div @modal-form-success="on_temp_artist_create">
-        {% with title_text="Invite Artist" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
+        {% with title_text="Invite artist" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
             {% include "findshows/partials/modal_form.html" %}
         {% endwith %}
     </div>
-
+    </div>
 </div>
 
 <script src='{% static "findshows/js/bill_data.js" %}'></script>

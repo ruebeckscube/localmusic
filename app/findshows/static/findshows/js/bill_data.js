@@ -58,6 +58,7 @@ function bill_data() {
 
     remove_artist(idx) {
       this.bill_order.splice(idx, 1);
+      this.$refs['add-set'].focus();
     },
 
     on_temp_artist_create(event) {

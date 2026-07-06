@@ -823,6 +823,9 @@
   .pl-4 {
     padding-left: calc(var(--spacing) * 4);
   }
+  .pl-6 {
+    padding-left: calc(var(--spacing) * 6);
+  }
   .text-center {
     text-align: center;
   }
@@ -1215,14 +1218,14 @@
       font-size: 7vw;
     }
   }
-  .xl\:w-1\/4 {
+  .xl\:w-2\/7 {
     @media (width >= 80rem) {
-      width: calc(1/4 * 100%);
+      width: calc(2/7 * 100%);
     }
   }
-  .xl\:w-3\/4 {
+  .xl\:w-5\/7 {
     @media (width >= 80rem) {
-      width: calc(3/4 * 100%);
+      width: calc(5/7 * 100%);
     }
   }
   .\@max-4xl\:w-fit {
@@ -1430,7 +1433,7 @@
   .errorlist {
     color: var(--color-red-700);
   }
-  label.required:before {
+  label.required:before, legend.required:before {
     content: "*";
     color: var(--color-highlight-item);
   }
@@ -1564,18 +1567,28 @@
   }
   .select-wrapper {
     z-index: 0;
+    margin-inline: 1px;
+    margin-block: 12px;
     display: grid;
     width: 100%;
     align-items: center;
     border-style: var(--tw-border-style);
     border-width: 1px;
     background-color: var(--color-white);
-    padding-right: calc(var(--spacing) * 2);
+    padding-right: 8px;
     grid-template-areas: "select";
   }
+  .select-wrapper:has(:focus-visible) {
+    margin-inline: calc(var(--spacing) * 0);
+    margin-block: 11px;
+    border-style: var(--tw-border-style);
+    border-width: 2px;
+    border-color: var(--color-clickable);
+    padding-right: 7px;
+  }
   .select-wrapper::after {
-    height: calc(var(--spacing) * 2);
-    width: calc(var(--spacing) * 3);
+    height: 8px;
+    width: 12px;
     justify-self: flex-end;
     background-color: var(--color-clickable);
     content: "";
