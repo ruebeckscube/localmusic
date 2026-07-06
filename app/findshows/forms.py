@@ -396,8 +396,6 @@ class ContactForm(DefaultStylingModelForm):
         widgets = {'type': StyledSelect}
         fields = ('email', 'type', 'subject', 'message')
 
-    captcha = CaptchaField()
-
     def clean_subject(self):
         data = self.cleaned_data["subject"]
         return ' '.join(data.splitlines()) # Email subjects can't have \n or \r

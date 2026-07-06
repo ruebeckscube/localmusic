@@ -22,8 +22,6 @@ def contact_post_request():
         'subject': ['bad'],
         'message': ["wow this website sucks"],
         'type': [Contact.Types.OTHER.value],
-        'captcha_0': ['this_doesnt_matter'],
-        'captcha_1': ['PASSED'],
     }
 
 
@@ -52,16 +50,6 @@ class ContactTests(TestCaseHelpers):
     def test_contact_POST_fail(self):
         data = contact_post_request()
         data['email'] = ['notanemail']
-        response = self.client.post(reverse("findshows:contact"), data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'findshows/pages/contact.html')
-        self.assert_records_created(Contact, 0)
-        self.assert_not_blank_form(response.context['form'], ContactForm)
-
-
-    def test_contact_captcha_fail(self):
-        data = contact_post_request()
-        data['captcha_1'] = ['NOT_PASSED']
         response = self.client.post(reverse("findshows:contact"), data)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/contact.html')
