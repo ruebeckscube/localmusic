@@ -2,6 +2,13 @@
 {% load findshows_tags %}
 {% block content %}
 
+{% if not user.is_authenticated %}
+    <div class="banner">
+        <a class="link" href="{% url 'create_account' %}">Create an account</a>
+        to follow artists, sign up for a weekly email, or post shows!
+    </div>
+{% endif %}
+
 <div class="p-3">
     <h1> Features </h1>
 {% custom_text 'AI' as features_text %}
