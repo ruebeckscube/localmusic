@@ -95,17 +95,18 @@ Please click the following link to verify your email address:
 def invite_artist(link_info: ArtistLinkingInfo, invite_code, form=None, errorlist=None):
     subject = "Artist profile invite"
     message_blocks = [f"""
-{link_info.created_by.user.email} has invited you to create an artist profile
-on {settings.SITE_TITLE}. {local_url_to_email(link_info.get_url(invite_code), "Click here")}
-to make an account and fill out your profile. If they've added you to a show, it will not be
-publically visible until you do so. This link expires in {settings.INVITE_CODE_EXPIRATION_DAYS} days.
+{link_info.created_by.user.email} has invited you to create an artist profile for **{link_info.artist.name}**
+on {settings.SITE_TITLE}.
+{local_url_to_email(link_info.get_url(invite_code), "Make an account and fill out your profile here")}.
+\n\nIf they've added you to a show, it will not be publically visible until you make a profile.
+    This link expires in {settings.INVITE_CODE_EXPIRATION_DAYS} days.
     """]
     if link_info.artist.local:
         message_blocks.append(CustomText.get_text(CustomTextTypes.ARTIST_INVITE_EMAIL))
     else:
         message_blocks.append(f"""
 Hello & welcome! This site is an instance of the [localmusic](https://github.com/ruebeckscube/localmusic)
-project, an online bulletin board for keeping up with your local music scene. It's a free & open source
+project, an online media-rich bulletin board for your local music scene. It's a free & open source
 project, and if you like the idea you can set it up for your city by
 following [these instructions](https://github.com/ruebeckscube/localmusic/blob/master/docs/self-hosting.md).
 It's still under development, so you need to have some technical know-how (or know somebody), but we'll

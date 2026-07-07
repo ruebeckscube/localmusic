@@ -16,6 +16,7 @@ PUBLIC_URLS_NO_PK = (
     "artist_search_results",
     "terms_of_service",
     "donate",
+    "features",
 )
 PUBLIC_URLS_WITH_PK = (
     "view_artist",

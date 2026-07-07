@@ -56,7 +56,7 @@ class InviteArtistTests(TestCaseHelpers):
 
         self.assert_emails_sent(2)
         self.assert_equal_as_sets(('local@artist.net',),  # From migration 0005 default CustomText
-                                  (msg.to[0] for msg in mail.outbox if "For more information, read on!" in msg.body))
+                                  (msg.to[0] for msg in mail.outbox if "Features for listeners" in msg.body))
         self.assert_equal_as_sets(("nonlocal@artist.net",),  # From email.py
                                   (msg.to[0] for msg in mail.outbox if "Hello & welcome!" in msg.body))
 

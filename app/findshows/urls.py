@@ -14,6 +14,7 @@ urlpatterns = [
     path('contact/', views.contact, name="contact"),
     path('terms_of_service/', TemplateView.as_view(template_name='findshows/pages/terms_of_service.html'), name="terms_of_service"),
     path('donate/', TemplateView.as_view(template_name='findshows/pages/donate.html'), name="donate"),
+    path('features/', TemplateView.as_view(template_name='findshows/pages/features.html'), name="features"),
 
     path("artist/<int:pk>", views.view_artist, name="view_artist"),
     path("artist/<int:pk>/edit", views.edit_artist, name="edit_artist"),

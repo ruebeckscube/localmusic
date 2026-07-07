@@ -7,10 +7,11 @@
 >
     <h1> Artist FAQ </h1>
 
-    <h2 class="ml-2"> How do I&hellip; </h2>
 
-    <div class="mx-4">
-        {% accordion_element title="&hellip;create an artist profile/get access to post shows?" %}
+    <div class="p-4">
+
+        <h2>Posting shows</h2>
+        {% accordion_element title="How do I create an artist profile/get access to post shows?" %}
         There are two ways to get artist access! If you know somebody who already has artist access, they
         can invite you via their Settings page (or via the concert creation page if
         you have a show coming up together). If not, go to your
@@ -19,13 +20,15 @@
         as soon as possible.
         {% endaccordion_element %}
 
-        {% accordion_element title="&hellip;post a show?" %}
+        {% accordion_element title="How do I post a show?" %}
         Log in; from the menu, go to your
         <a class="link" href="{% url 'findshows:artist_dashboard' %}">artist dashboard</a>
-        and click <em>Create new show listing</em>.
+        and click <em>Create new show listing</em>. Fill out all of the information about
+        the show. Content from your artist profile and the profiles of other artists on the
+        bill will be automatically populated in the concert listing.
         {% endaccordion_element %}
 
-        {% accordion_element title="&hellip;edit a show I'm a part of?" %}
+        {% accordion_element title="How do I edit a show I'm a part of?" %}
         Only the user who initially created a show can edit it. Log in; from the menu, go to your
         <a class="link" href="{% url 'findshows:artist_dashboard' %}">artist dashboard</a>.
         If you created a show, it should have an <em>Edit</em> button next to it. If
@@ -33,7 +36,7 @@
         you can do that by editing your artist profile (also from the dashboard).
         {% endaccordion_element %}
 
-        {% accordion_element title="&hellip;delete/cancel a show I'm a part of?" %}
+        {% accordion_element title="How do I delete/cancel a show I'm a part of?" %}
         Only the user who initially created a show can cancel it. Log in; from the menu, go to your
         <a class="link" href="{% url 'findshows:artist_dashboard' %}">artist dashboard</a>.
         If you created a show, it should have a <em>Cancel</em> button next to it. The concert's
@@ -41,13 +44,46 @@
         longer show up anywhere else (search, artist pages, emails). You cannot delete a show.
         {% endaccordion_element %}
 
-        {% accordion_element title="&hellip;give a bandmate/manager access to list shows?" %}
+        {% accordion_element title="How do I give a bandmate/manager access to list shows?" %}
         Multiple users can manage the same artist. Log in; from the menu, go to your
         <a class="link" href="{% url 'findshows:artist_dashboard' %}">artist dashboard</a>.
-        Click <em>Manage access</em> under the relevant artist, enter the email of the person to whom you'd like to
-        give access, click <em>Add</em>, then <em>Submit</em>.
+        Click <em>Manage access</em> under the relevant artist, enter the email of the person to
+        whom you'd like togive access, click <em>Add</em>, then <em>Submit</em>.
         {% endaccordion_element %}
     </div>
+
+    <div class="p-4">
+
+        <h2> Followers </h2>
+        {% accordion_element title="What do followers see?" %}
+        Followers receive one weekly email for all the bands they follow. Your shows will be
+        included (a) the week they are announced and (b) the week before they happen.
+        {% endaccordion_element %}
+
+        {% accordion_element title="How do I get more followers?" %}
+        You can find a link and a QR code for each artist on your
+        <a class="link" href="{% url 'findshows:artist_dashboard' %}">artist dashboard</a>.
+        Share the link to your existing socials to convert followers, and print out the QR
+        code for your merch table. There are also discovery tools for listeners on the site
+        that can lead to new followers, but we recommend an active approach!
+        {% endaccordion_element %}
+
+        {% accordion_element title="Who can see who follows me?" %}
+        Nobody! Including you! You can see a follower count for each artist on your
+        <a class="link" href="{% url 'findshows:artist_dashboard' %}">artist dashboard</a>,
+        but that is not made public.
+        {% endaccordion_element %}
+
+        {% accordion_element title="Can I share other news (e.g. releases) with my followers?" %}
+        Soon! We're working on deciding the best way to implement this without abusing
+        the attention of listeners. Potential designs include (a) being able to announce
+        releases in the same way you can currently announce shows (i.e. a form with all
+        the relevant images and links) or (b) being able to syndicate your blog (e.g. Substack)
+        or Bluesky to the weekly email. Feel free to be in touch with ideas &amp feedback!
+        {% endaccordion_element %}
+
+    </div>
+
 
 </div>
 {% endblock %}

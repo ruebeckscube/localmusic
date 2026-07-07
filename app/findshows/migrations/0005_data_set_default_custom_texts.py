@@ -22,46 +22,32 @@ def create_default_custom_texts(apps, schema_editor):
         CustomTextTypes.WEEKLY_EMAIL_SUBJECT: "Your weekly local music recs",
         CustomTextTypes.WEEKLY_EMAIL_HEADER: "Thanks for subscribing to the email list and supporting local music!",
         CustomTextTypes.ARTIST_INVITE_EMAIL: f"""
-**For more information, read on!**
+**{settings.SITE_TITLE}** is an online, media-rich bulletin board for our
+local music scene.
 
-Or ask the person who invited you, or
-{local_url_to_email(reverse("findshows:contact"), "contact us")}.
+**Features for listeners**
 
-**{settings.SITE_TITLE}** is an online bulletin board for keeping up with our
-local music scene. Artists post shows, and anybody can sign up for a weekly
-roundup email with shows recommended through one or more of:
+- A single weekly email: all the shows from bands you follow, a few from bands you don't!
+- Shows searchable anytime on the site.
+- Embedded audio players for easy show browsing.
 
-- Followed artists: any shows with a band you follow on the bill will go
-  right to the top of your weekly email.
-- Similar artists: thanks to open-source data from ListenBrainz.org, you can enter
-  artists you listen to and get a rough recommendation for similar local artists.
-- Random: if you don't want _any_ algorithm in your life, you can choose
-  to just get a few random shows instead (along with your followed artists)
+**Features for artists**
 
-Visit the site anytime to browse shows on a given date. Preview what kind of
-show you're in for with an embedded player for each artist right in the search
-results.
+- Every show goes into every follower's inbox, and is recommended to some other users.
+- Profile doubles as a simple EPK for booking.
+- Profile information populates automatically to concert listings.
+- One-click follow link (for social media etc) and QR code (for your merch table).
+- Future features: release announcements, artist discovery search, RSS, and more!
 
-**Make a profile to**:
+Check out the {local_url_to_email(reverse("findshows:artist_faq"), "Artist FAQ")} for more details.
 
-- Set your preview tracks, similar artists, and other info that will be
-  automatically transferred onto any show listings you're on the bill for.
-- Post your shows
-- Get a link/QR code for your merch table to make it easy for folks to follow
-  you on the site.
-- Invite your artist friends to join so you can follow them and never miss a show again!
-- Use it as a super-simple EPK for booking (image, bio, stream-able recordings on one page).
-- (in the near future, we're planning the ability to announce releases as well.)
+Instagram and other big social media are filling our feeds with irrelevant content and otherwise
+[enshittifying](https://en.wikipedia.org/wiki/Enshittification) the internet.
+This site aims to be more of what we want and less of what we don't. More irl
+connection, more relevant information; less distraction, less stimulation, less
+scrolling.
 
-That's really it! Instagram and other social media aren't showing your posts to
-people who follow you anymore, instead filling our feeds with algorithmically
-selected content that we never asked for. This site aims to be more of what we
-want and less of what we don't. More irl connection, more of the information
-we're looking for, more old-fashioned emails (or RSS!); less distraction, less
-stimulation, less enshittification, less scrolling.
-
-All offered in the spirit & ethos of DIY, libre/open source forever and as
-gratis as we can sustainably make it.
+All offered in the DIY ethos; libre/open source forever and as gratis as we can sustainably make it.
         """,
     }
 
