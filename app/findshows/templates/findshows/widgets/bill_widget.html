@@ -13,59 +13,90 @@
             <template x-for="(artist, idx) in bill_order" :key="idx">
                 <li class="flex w-full max-w-lg justify-between my-2"
                     x-init="$nextTick(() => htmx.process($el))"> {# necessary for any HTMX in an x-for #}
-                    <div class="w-full"
+                    <div class="w-full dropdown-container"
                          @focusin="open_dropdown(artist)"
                          @click.outside="close_dropdown(artist)"
+                         @focusout.stop="if (!$el.contains($event.relatedTarget)) close_dropdown(artist)"
+                         @keydown.arrow-up.prevent="arrowPress($event, 'up')"
+                         @keydown.arrow-down.prevent="arrowPress($event, 'down')"
                     >
                         <input class="textinput w-full" type="search"
-                               id="artist-search-field"
                                name="artist-search" placeholder="Select an artist..."
+                               :title="`Artist ${bill_order.length - idx}`"
+                               aria-describedby="{{ widget.attrs.id }}_helptext"
                                x-model="artist.search_text"
                                hx-get="{% url 'findshows:artist_search_results' %}"
                                :hx-vals="JSON.stringify({'idx': idx})"
                                hx-trigger="keyup changed delay:500ms"
-                               hx-target="next #artist-search-results"
+                               hx-target="next .artist-search-results"
                         >
-                        <ul id="artist-search-results"
-                            class="absolute popup-menu"
+                        <menu
+                            class="absolute popup-menu artist-search-results"
                             x-show="artist.show_search"
-                            @click="close_dropdown(artist)"
-                            style="display: none;"
+                            @click="close_dropdown(artist, $el.previousElementSibling)"
+                            @keydown.enter.prevent="close_dropdown(artist, $el.previousElementSibling)"
+                            @keydown.space.prevent="close_dropdown(artist, $el.previousElementSibling)"
                         >
-                        </ul>
+                        </menu>
                     </div>
 
                     <div class="flex justify-around w-21 ml-2">
                         {# Up arrow #}
-                        <svg class="clickable-svg fill-current w-7"
-                             viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"
-                             @click="move_artist(idx, -1)">
-                            <path d="M17.504 26.025l.001-14.287 6.366 6.367L26 15.979 15.997 5.975 6 15.971 8.129 18.1l6.366-6.368v14.291z"/>
-                        </svg>
+                        <button type="button"
+                                :title="`Move ${artist.name || 'blank slot'} up on the bill`"
+                                @click="move_artist(idx, -1)"
+                                @keydown.enter.prevent="move_artist(idx, -1)">
+                            <svg class="clickable-svg fill-current w-7"
+                                 aria-hidden="true"
+                                 viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17.504 26.025l.001-14.287 6.366 6.367L26 15.979 15.997 5.975 6 15.971 8.129 18.1l6.366-6.368v14.291z"/>
+                            </svg>
+                        </button>
                         {# Down arrow #}
-                        <svg class="clickable-svg fill-current w-7"
-                             viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"
-                             @click="move_artist(idx, 1)">
-                            <path d="M14.496 5.975l-.001 14.287-6.366-6.367L6 16.021l10.003 10.004L26 16.029 23.871 13.9l-6.366 6.368V5.977z"/></svg>
-                        {# Remove button #}
-                        <svg class="clickable-svg fill-current w-7 stroke-3"
-                             viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"
-                             @click="remove_artist(idx)">
-                            <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
-                        </svg>
+                        <button type="button"
+                                :title="`Move ${artist.name || 'blank slot'} down on the bill`"
+                                @click="move_artist(idx, 1)"
+                                @keydown.enter.prevent="move_artist(idx, 1)">
+                            <svg class="clickable-svg fill-current w-7"
+                                 aria-hidden="true"
+                                 viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14.496 5.975l-.001 14.287-6.366-6.367L6 16.021l10.003 10.004L26 16.029 23.871 13.9l-6.366 6.368V5.977z"/>
+                            </svg>
+                        </button>
+                                {# Remove button #}
+                        <button type="button"
+                                :title="`Remove ${artist.name || 'blank slot'} from the bill`"
+                                @click="remove_artist(idx)"
+                                @keydown.enter.prevent="remove_artist(idx)">
+                            <svg class="clickable-svg fill-current w-7 stroke-3"
+                                 aria-hidden="true"
+                                 viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
+                            </svg>
+                        </button>
                     </div>
                 </li>
             </template>
-            <li class="btn" @click="add_artist()"> Add set</li>
         </ol>
     </div>
 
+    <div class="flex">
+    <button type="button" class="btn" x-ref="add-set"
+            @click="add_artist()">
+        <svg class="fill-current w-5 stroke-3 inline"
+             aria-hidden="true"
+             viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+            <path d="M213.333333,1.42108547e-14 L213.333,170.666 L384,170.666667 L384,213.333333 L213.333,213.333 L213.333333,384 L170.666667,384 L170.666,213.333 L1.42108547e-14,213.333333 L1.42108547e-14,170.666667 L170.666,170.666 L170.666667,1.42108547e-14 L213.333333,1.42108547e-14 Z"></path>
+        </svg>
+        Add set
+    </button>
+
     <div @modal-form-success="on_temp_artist_create">
-        {% with title_text="Invite Artist" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
+        {% with title_text="Invite artist" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
             {% include "findshows/partials/modal_form.html" %}
         {% endwith %}
     </div>
-
+    </div>
 </div>
 
 <script src='{% static "findshows/js/bill_data.js" %}'></script>

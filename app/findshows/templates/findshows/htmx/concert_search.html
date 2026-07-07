@@ -1,14 +1,14 @@
 {% load static %}
 
 <div class="w-full flex max-sidebar-bp:flex-col relative"
-     x-data="{'show_end_date': {{ search_form.is_date_range.value|lower }},
-              'show_search_form': true}"
+     x-data="concertSearchData({{ search_form.is_date_range.value|lower }})"
      hx-get="{% url 'findshows:concert_search' %}"
-     hx-trigger="widget-update from:body delay:.1s"
+     hx-trigger="load,widget-update from:body delay:.1s"
      hx-include="#search-form"
-     hx-target="this"
-     hx-swap="outerHTML"
-    >
+     hx-target="#concert-search-results"
+     hx-swap="innerHTML swap:.2s"
+     hx-on::after-request="update_url(event.detail.pathInfo, '{% url 'findshows:concert_search' %}', '{% url 'findshows:home' %}')"
+>
     <button type="button"
             class="btn sm:hidden w-1/2 min-w-60 mx-auto my-4"
             @click="show_search_form = true;"
@@ -22,11 +22,11 @@
          @keydown.enter.prevent>
 
         {# Search form #}
-        <form method="GET" action="" id="search-form"
+        <form method="GET" action="" id="search-form" aria-label="Search form. Results update automatically on changes"
               class="flex sidebar-bp:flex-col z-20 bg-background relative max-sm:min-w-80
                       max-sm:flex-col max-sm:shadow-xl max-sm:w-2/3 max-sm:mx-auto max-sm:p-5 max-sm:border-2 border-highlight-item"
               :class="show_search_form ? '' : 'max-sm:hidden'"
-              @click.away="show_search_form = false"
+              @click.outside="show_search_form = false"
               @keydown.escape.window="show_search_form = false"
         >
             <div class="clickable-svg absolute top-1 right-1 z-50 sm:hidden"
@@ -36,25 +36,31 @@
                 </svg>
             </div>
 
-            <div class="flex flex-col min-w-56">
+            <div class="flex flex-col min-w-58">
               <div class="flex flex-col fieldgroup min-w-44">
                 {{ search_form.date.as_field_group }}
                 <div x-show="show_end_date">
                     {{ search_form.end_date.as_field_group }}
                 </div>
-                <div x-show="!show_end_date" @click="show_end_date=true" class="link text-xs">
+                <button type="button"
+                        class="link text-xs w-fit px-1"
+                        x-show="!show_end_date"
+                        @click="show_hide_date_range('show', '{{ search_form.end_date.auto_id }}')">
                     Date range
-                </div>
-                <div x-show="show_end_date" @click="show_end_date=false;$dispatch('widget-update')" class="link text-xs">
+                </button>
+                <button type="button"
+                        class="link text-xs w-fit px-1"
+                        x-show="show_end_date"
+                        @click="show_hide_date_range('hide', '{{ search_form.date.auto_id }}')">
                     Hide date range
-                </div>
+                </button>
                 <input type='hidden' :value='show_end_date' name='is_date_range'>
               </div>
               <div class="fieldgroup">
                   <label class="fav-checkbox">
                       {{search_form.sort_followed_to_top}}
-                      <img class="w-8 h-8 img-checked" src="{% static 'findshows/follow-star-filled.svg' %}" />
-                      <img class="w-8 h-8 img-unchecked" src="{% static 'findshows/follow-star-empty.svg' %}" />
+                      <img aria-hidden="true" class="w-8 h-8 img-checked" src="{% static 'findshows/follow-star-filled.svg' %}" />
+                      <img aria-hidden="true" class="w-8 h-8 img-unchecked" src="{% static 'findshows/follow-star-empty.svg' %}" />
                       Sort followed
                   </label>
               </div>
@@ -71,16 +77,10 @@
     </div>
 
     {# Search results #}
-    {% if not initial %}
-        <div class="flex flex-col w-full">
-            {% for concert in concerts  %}
-                {% include "../partials/concert_card.html" with followed_artists=user.userprofile.followed_artists.all %}
-            {% empty %}
-                <div class="flex h-full flex-col justify-around text-center text-gray-800">
-                    No results; try modifying your search.
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
+    <div id="concert-search-results" class="flex flex-col w-full">
+    </div>
 
 </div>
+
+<script src="{% static 'findshows/js/update_url.js' %}"></script>
+<script src="{% static 'findshows/js/concert_search_data.js' %}"></script>

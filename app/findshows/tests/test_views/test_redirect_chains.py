@@ -15,7 +15,7 @@ class LoginRedirectTests(SeleniumTestCaseHelpers):
     def test_no_next(self):
         self.selenium.get(self.live_reverse("login"))
         self.fill_out_login(self.get_static_instance(self.StaticUsers.LOCAL_ARTIST).user.email)
-        self.assert_current_url("findshows:home")
+        self.assert_current_url("findshows:home", disregard_query=True)
 
     def test_artist_access_redirect(self):
         self.selenium.get(self.live_reverse("findshows:artist_dashboard"))

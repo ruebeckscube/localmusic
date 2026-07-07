@@ -1,6 +1,9 @@
 {% for mb_artist in musicbrainz_artists %}
     <li class="menuitem hover:text-clickable-h"
+        tabindex="-1"
         @click="add_artist('{{mb_artist.mbid|escapejs}}', '{{mb_artist.name|escapejs}}')"
+        @keydown.enter.prevent="add_artist('{{mb_artist.mbid|escapejs}}', '{{mb_artist.name|escapejs}}')"
+        @keydown.space.prevent="add_artist('{{mb_artist.mbid|escapejs}}', '{{mb_artist.name|escapejs}}')"
     >
         {{  mb_artist.name }}
         {% if mb_artist.disambiguation %}

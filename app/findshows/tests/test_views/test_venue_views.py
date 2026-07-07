@@ -81,6 +81,34 @@ class CreateVenueTests(TestCaseHelpers):
         self.assertFalse('HX-Trigger' in response.headers)
 
 
+    def assert_site_saving(self, website_input, expected_saved_value):
+        user = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        data=venue_post_data()
+        data['venue-website'] = website_input
+
+        response = self.client.post(reverse("findshows:create_venue"), data)
+
+        venues = Venue.objects.filter(created_by=user)
+        self.assertEqual(len(venues), 1)
+        self.assertEqual(venues[0].website, expected_saved_value)
+
+
+    def test_email_with_mailto(self):
+        self.assert_site_saving('mailto:another@email.com', 'mailto:another@email.com')
+
+    def test_email_no_protocol(self):
+        self.assert_site_saving('diy@super.rad', 'mailto:diy@super.rad')
+
+    def test_website_with_http(self):
+        self.assert_site_saving('http://mycool.site', 'http://mycool.site')
+
+    def test_website_with_https(self):
+        self.assert_site_saving('https://my-other-cool.site', 'https://my-other-cool.site')
+
+    def test_website_no_protocol(self):
+        self.assert_site_saving('hip.io', 'http://hip.io')
+
+
     def test_daily_limit(self):
         user = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
 

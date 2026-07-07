@@ -4,7 +4,7 @@
         <th class="font-light text-lg w-full"> URL </th>
     </tr>
     {% for link, placeholder in widget.socials_links %} {# num_links is included in data prep (fill w empty strings) #}
-        <tr>
+        <tr aria-label="Link {{ forloop.counter }}">
             <td> <input class="textinput" name="{{widget.name}}_display_name" type="text" value="{{ link.0 }}"
                         placeholder="{{ placeholder.0 }}"> </td>
             <td> <input class="textinput w-full" name="{{widget.name}}_url" type="text" value="{{ link.1 }}"

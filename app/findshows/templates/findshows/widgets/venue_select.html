@@ -7,11 +7,14 @@
     <input type="hidden" name="{{widget.name}}" :value="selected_venue_id">
 
     <div class="grow p-2"
-         x-ref="venue-search-plus-dropdown"
          @focusin="open_dropdown()"
+         @focusout.stop="if (!$el.contains($event.relatedTarget)) close_dropdown()"
          @click.outside="close_dropdown()"
+         @keydown.arrow-up.prevent="arrowPress($event, 'up')"
+         @keydown.arrow-down.prevent="arrowPress($event, 'down')"
     >
         <input class="textinput w-full" type="search"
+               x-ref="venue_search"
                name="venue-search" placeholder="Select a venue..."
                x-model="search_text"
                hx-get="{% url 'findshows:venue_search_results' %}"
@@ -19,13 +22,12 @@
                hx-target="#venue-search-results"
         >
 
-        <ul id="venue-search-results"
+        <menu id="venue-search-results"
             class="absolute popup-menu"
             x-show="show_search"
-            @click="close_dropdown()"
             style="display: none;"
         >
-        </ul>
+        </menu>
 
         <div x-show="selected_venue_name && (!selected_venue_is_verified)" class="text-sm">
             This venue has not yet been verified; the show will be listed
@@ -41,7 +43,7 @@
     </div>
 
     <div class="w-32" @modal-form-success="on_venue_create">
-        {% with title_text="New Venue" form_html="findshows/htmx/venue_form.html" htmx_url="findshows:create_venue" %}
+        {% with title_text="New venue" form_html="findshows/htmx/venue_form.html" htmx_url="findshows:create_venue" %}
             {% include "findshows/partials/modal_form.html" %}
         {% endwith %}
     </div>

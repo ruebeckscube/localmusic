@@ -1,4 +1,5 @@
 from datetime import timedelta
+import functools
 from itertools import zip_longest
 
 from django import forms
@@ -69,6 +70,9 @@ class UserProfileForm(DefaultStylingModelForm):
     class Meta:
         model=UserProfile
         fields=("favorite_musicbrainz_artists", "preferred_concert_tags", "weekly_email")
+        field_classes={
+            "weekly_email": functools.partial(forms.BooleanField, template_name="findshows/widgets/checkbox_field_group.html")
+        }
         widgets={"favorite_musicbrainz_artists": MusicBrainzArtistSearchWidget(max_artists=settings.MAX_USER_ARTISTS)}
 
 
@@ -78,11 +82,9 @@ def validate_image(image):
     return image
 
 
-LISTEN_LINK_HELP="""A preview player for all songs will be displayed on your
-artist page, and the first track will be displayed on concerts. Please
-provide either one album link or up to three song links on separate lines.
-Supports Spotify, Bandcamp, and SoundCloud links. For Spotify and SoundCloud,
-artist/playlist links work as well. """
+LISTEN_LINK_HELP="""Enter one album link or up to three song links. An embedded
+player will be displayed on your artist profile and concert listings. Supports
+Bandcamp, SoundCloud, and Spotify links."""
 
 
 class ArtistEditForm(DefaultStylingModelForm):
@@ -184,11 +186,9 @@ class ArtistEditForm(DefaultStylingModelForm):
 class ConcertForm(DefaultStylingModelForm):
     date = DatePickerField()
     # NOT a model field, we parse this and save to the artists field through the SetOrder through-model
-    bill = forms.JSONField(widget=BillWidget, help_text="""The artists will be
-    listed in the order they're entered; the artist performing first should be
-    at the bottom of the bill and the artist performing last should be at the
-    top of the bill. If the artist does not already have a profile, invite them
-    to create one with the Invite Artist button.""")
+    bill = forms.JSONField(widget=BillWidget, help_text="""List artists in set
+    order; bottom=first and top=last. If an artist does not show up in search,
+    invite them to make a profile.""")
 
     class Meta:
         model=Concert
@@ -205,6 +205,11 @@ class ConcertForm(DefaultStylingModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['description'].widget.attrs['placeholder'] = 'Emojis encouraged ✌️'
+
+        age_choices = list(self.fields['ages'].choices)
+        age_choices[0] = ('', 'Venue default')
+        self.fields['ages'].choices = age_choices
+
         if self.instance.id:
             self.fields['bill'].initial = [{'id': a.pk, 'name': a.name}
                                            for a in self.instance.sorted_artists]
@@ -327,13 +332,15 @@ class ArtistAccessForm(forms.Form):
 class TempArtistForm(DefaultStylingModelForm):
     prefix = "temp_artist"
     use_required_attribute = False
-    email=forms.EmailField(required=True, help_text="""Please check with the
-    artist you're inviting and and use a personal email rather than a band
-    email. This address must match the one on their account.""")
+    email=forms.EmailField(required=True)
 
     class Meta:
         model=Artist
         fields=("name", "local")
+        field_classes={
+            "local": functools.partial(forms.BooleanField, template_name="findshows/widgets/checkbox_field_group.html")
+        }
+
 
     def save(self, commit = True):
         artist = super().save(commit=False)
@@ -344,8 +351,8 @@ class TempArtistForm(DefaultStylingModelForm):
 
 
 class ShowFinderForm(forms.Form):
-    date = DatePickerField(required=False)
-    end_date = DatePickerField(required=False)
+    date = DatePickerField(required=False, template_name="findshows/widgets/date_picker_field_group.html")
+    end_date = DatePickerField(required=False, template_name="findshows/widgets/date_picker_field_group.html")
     is_date_range = forms.BooleanField(required=False)
     musicbrainz_artists = forms.ModelMultipleChoiceField(
         queryset=MusicBrainzArtist.objects.all(),
@@ -395,8 +402,6 @@ class ContactForm(DefaultStylingModelForm):
         model = Contact
         widgets = {'type': StyledSelect}
         fields = ('email', 'type', 'subject', 'message')
-
-    captcha = CaptchaField()
 
     def clean_subject(self):
         data = self.cleaned_data["subject"]

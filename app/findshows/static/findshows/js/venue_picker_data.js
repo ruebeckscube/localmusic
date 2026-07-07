@@ -18,11 +18,11 @@ function venue_picker_data(initial_venue_id, initial_venue_name, initial_venue_i
 
     close_dropdown(focusAfter) {
       if (! this.show_search) return;
+      focusAfter && focusAfter.focus();
       this.show_search = false;
       if (this.selected_venue_name) {
         this.search_text = this.selected_venue_name;
       }
-      focusAfter && focusAfter.focus();
     },
 
     select_venue(venue_name, venue_id, is_verified, declined_listing) {
@@ -31,6 +31,8 @@ function venue_picker_data(initial_venue_id, initial_venue_name, initial_venue_i
       this.selected_venue_id = venue_id;
       this.selected_venue_is_verified = is_verified;
       this.selected_venue_declined_listing = declined_listing;
+
+      this.close_dropdown(this.$refs.venue_search)
     },
 
     on_venue_create(event) {

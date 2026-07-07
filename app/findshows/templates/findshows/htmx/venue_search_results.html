@@ -1,6 +1,9 @@
 {% for venue in venues %}
     <li class="menuitem hover:text-clickable-h"
-        @click="select_venue('{{venue.name|escapejs}}', '{{venue.id}}', {{venue.is_verified|yesno:"true,false"}}, {{venue.declined_listing|yesno:"true,false"}})"
+        tabindex="-1"
+        @click="select_venue('{{venue.name|escapejs}}', '{{venue.id}}', {{venue.is_verified|yesno:'true,false'}}, {{venue.declined_listing|yesno:'true,false'}})"
+        @keydown.enter.prevent="select_venue('{{venue.name|escapejs}}', '{{venue.id}}', {{venue.is_verified|yesno:'true,false'}}, {{venue.declined_listing|yesno:'true,false'}})"
+        @keydown.space.prevent="select_venue('{{venue.name|escapejs}}', '{{venue.id}}', {{venue.is_verified|yesno:'true,false'}}, {{venue.declined_listing|yesno:'true,false'}})"
     >
         {{venue.name}}
     </li>

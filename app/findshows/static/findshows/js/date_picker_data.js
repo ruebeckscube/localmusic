@@ -2,102 +2,110 @@ function datePickerData(allowPastOrFuture) {
   return {
     MONTH_NAMES: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
     DAYS: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-    TODAY: new Date(),
+    TODAY: justDateToday(),
 
-    showDatepicker: false,
+    showDatePicker: false,
     apf: allowPastOrFuture, // -1 to allow only past, 1 to allow only future, 0 to allow both
 
-    selectedDate: '',
-    selectedMonth: '',
-    selectedYear: '',
-
-    // We're using month indexed from 1, javascript Date stuff expects it indexed from 0
-    calMonth: '',
-    calYear: '',
-    numDaysInMonth: 0,
-    NumSpacesBeforeDays: 0,
-    days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    focusedDate: justDateToday(), // the date the calendar is displaying as ready to select
+    selectedDate: null, // the value of the widget once the user selects a date
 
     initDate(initialWidgetVal) {
-      if (initialWidgetVal) {
-        [this.selectedYear, this.selectedMonth, this.selectedDate] = initialWidgetVal.split('-').map((x) => parseInt(x))
-
-        this.calMonth = this.selectedMonth;
-        this.calYear = this.selectedYear;
-      }
-      else {
-        let today = new Date();
-        this.calMonth = today.getMonth() + 1;
-        this.calYear = today.getFullYear();
-      }
-
+        this.selectedDate = initialWidgetVal ? justDateISO(initialWidgetVal) : null;
+        this.focusedDate = initialWidgetVal ? justDateISO(initialWidgetVal) : justDateToday();
     },
 
-    getDisplayDate() {
-      if (this.selectedYear==='' || this.selectedMonth==='' || this.selectedDate==='') {
-        return ''
-      }
-      d = new Date(this.selectedYear, this.selectedMonth - 1, this.selectedDate);
-      return d.toDateString()
+    openDatePicker() {
+        this.showDatePicker = true;
+        if (this.selectedDate) {
+            this.focusedDate = new Date(this.selectedDate.getTime())
+        }
     },
 
-    getWidgetReturnVal() {
-      if (this.selectedYear==='' || this.selectedMonth==='' || this.selectedDate==='') {
-        return ''
-      }
-      return [this.selectedYear, this.selectedMonth, this.selectedDate].join('-')
+    buttonAriaDescription() {
+        if (this.showDatePicker) return "Navigate with arrow keys";
+        return this.selectedDate ? this.selectedDate.toDateString() : 'No date selected';
     },
 
-    isToday(date) {
-      return (date === this.TODAY.getDate() &&
-              this.calMonth === this.TODAY.getMonth() + 1 &&
-              this.calYear === this.TODAY.getFullYear())
+    closeDatePicker(focusAfter) {
+        this.showDatePicker = false;
+        focusAfter && focusAfter.focus();
     },
 
-    isSelectable(date) {
-      // Assuming the year/month are bounded correctly by increment function
-      if (this.calYear != this.TODAY.getFullYear()) return true;
-      if (this.calMonth != this.TODAY.getMonth() + 1) return true;
-      if (this.apf * date < this.apf * this.TODAY.getDate()) return false;
-      return true;
+    currentMonthName() {
+        return this.MONTH_NAMES[this.focusedDate.getMonth()];
     },
 
-    isSelected(date) {
-      return (date === this.selectedDate &&
-              this.calMonth === this.selectedMonth &&
-              this.calYear === this.selectedYear)
+    displayDayToDate(day) {
+        return justDate(this.focusedDate.getFullYear(), this.focusedDate.getMonth(), day);
     },
 
-    onDateClick(date) {
-      if (!this.isSelectable(date)) return;
-
-      this.showDatepicker = false;
-
-      if (this.selectedYear === this.calYear &&
-          this.selectedMonth === this.calMonth &&
-          this.selectedDate === date) return;
-
-      this.selectedYear = this.calYear;
-      this.selectedMonth = this.calMonth;
-      this.selectedDate = date;
-
-      this.$dispatch('widget-update');
+    isToday(day) {
+        return datesAreEqual(this.displayDayToDate(day), this.TODAY);
     },
 
-    incrementCalDisplay(incr) {
-      newMonthIndexedZero = this.calMonth - 1 + incr;
-      newYear = this.calYear + Math.floor(newMonthIndexedZero / 12);
-      newMonthIndexedZero = ((newMonthIndexedZero % 12) + 12) % 12; // get true modulo from Javascript's remainder operator
+    isAllowedDate(date) {
+        return this.apf * date.getTime() >= this.apf * this.TODAY.getTime();
+    },
 
-      if (this.apf * newYear < this. apf * this.TODAY.getFullYear()) return;
-      if (newYear === this.TODAY.getFullYear() &&
-          this.apf * newMonthIndexedZero < this.apf * this.TODAY.getMonth()) return;
+    isSelectable(day) {
+        return this.isAllowedDate(this.displayDayToDate(day));
+    },
 
-      this.calYear = newYear;
-      this.calMonth = newMonthIndexedZero + 1;
+    isSelected(day) {
+        return datesAreEqual(this.displayDayToDate(day), this.selectedDate);
+    },
 
-      this.numDaysInMonth = new Date(this.calYear, this.calMonth, 0).getDate();
-      this.NumSpacesBeforeDays = new Date(this.calYear, this.calMonth - 1).getDay();
+    numDaysInMonth() {
+        return justDate(this.focusedDate.getFullYear(), this.focusedDate.getMonth() + 1, 0).getDate();
+    },
+
+    numSpacesBeforeDays() {
+        return justDate(this.focusedDate.getFullYear(), this.focusedDate.getMonth(), 1).getDay();
+    },
+
+    focusFocusedDate() {
+        document.getElementById(this.$id('date', this.focusedDate.getDate())).focus();
+    },
+
+    onArrowPress(event) {
+        let incr = 0;
+        switch (event.key) {
+          case "ArrowUp": incr = -7; break;
+          case "ArrowDown": incr = 7; break;
+          case "ArrowLeft": incr = -1; break;
+          case "ArrowRight": incr = 1; break;
+        }
+        this.incrementFocusedDate(incr);
+        this.focusFocusedDate();
+    },
+
+    incrementFocusedDate(incrDays) {
+        let newDate = justDate(this.focusedDate.getFullYear(), this.focusedDate.getMonth(), this.focusedDate.getDate() + incrDays);
+        if (this.isAllowedDate(newDate)) {
+            this.focusedDate = newDate;
+        }
+    },
+
+    incrementDisplayMonth(incrMonths) {
+        newMonth = this.focusedDate.getMonth() + incrMonths
+        newDay = incrMonths >= 0 ? 1 : justDate(this.focusedDate.getFullYear(), newMonth + 1, 0).getDate();
+        let newDate = justDate(this.focusedDate.getFullYear(), newMonth, newDay);
+        if (!this.isAllowedDate(newDate)) return;
+
+        this.focusedDate = newDate;
+    },
+
+    onDateClick(day) {
+        if (!this.isSelectable(day)) return;
+
+        this.closeDatePicker(this.$refs.datepicker);
+        clickedDate = this.displayDayToDate(day);
+
+        if (datesAreEqual(clickedDate, this.selectedDate)) return;
+
+        this.selectedDate = clickedDate;
+        this.$dispatch('widget-update');
     }
 
   }

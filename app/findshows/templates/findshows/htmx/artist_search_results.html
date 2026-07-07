@@ -1,6 +1,9 @@
 {% for artist in artists %}
     <li class="menuitem hover:text-clickable-h"
-        @click="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}')">
+        tabindex="-1"
+        @click="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}')"
+        @keydown.enter="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}')"
+        @keydown.space="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}')">
         {{artist.name}}
     </li>
 {% endfor %}

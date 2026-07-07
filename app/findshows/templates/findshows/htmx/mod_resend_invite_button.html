@@ -1,6 +1,9 @@
-<div class="mod-invite-button flex flex-col items-center">
+<div class="mod-invite-button flex flex-col items-center"
+     hx-on::after-settle="event.detail.elt.getElementsByTagName('p')[0].focus()">
     {% if success %}
-        Invite successfully sent!
+        <p tabindex=0>
+            Invite successfully sent!
+        </p>
     {% else %}
         <form type="post">
             {% csrf_token %}
@@ -15,9 +18,9 @@
             >
         </form>
         {% if errors %}
-            <div class="errorlist max-w-sm">
+            <p class="errorlist max-w-sm" tabindex=0>
                 {{ errors }}
-            </div>
+            </p>
         {% endif %}
     {% endif %}
 </div>

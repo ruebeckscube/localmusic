@@ -548,20 +548,11 @@ def cancel_concert(request, pk, uncancel=False):
     if (not concert.created_by == request.user.userprofile) and not request.user.is_staff:
         raise PermissionDenied
 
-    error = ""
-    if uncancel:
-        conflict_concerts = Concert.objects.filter(venue=concert.venue, date=concert.date).exclude(cancelled=True)
-        conflict_concerts = conflict_concerts.exclude(pk=pk)
-        if conflict_concerts.count():
-            error = "Can't uncancel; there is another concert at this venue on this date"
-
-    if not error:
-        concert.cancelled = not uncancel
-        concert.save()
+    concert.cancelled = not uncancel
+    concert.save()
 
     return render(request, "findshows/htmx/cancel_concert_button.html", context = {
         "concert": concert,
-        "error": error,
     })
 
 
@@ -705,11 +696,20 @@ def concert_search(request):
         concerts = []
         searched_musicbrainz_artists = []
 
-    return render(request, "findshows/htmx/concert_search.html", context={
+    response = render(request, "findshows/htmx/concert_search_results.html", context={
         "concerts": concerts,
         "search_form": search_form,
         "searched_musicbrainz_artists": searched_musicbrainz_artists,
     })
+    headers = {
+        "concert-search-form-updates": {
+            "data": search_form.data or search_form.initial,
+            "errors": search_form.errors,
+        }
+    }
+    response.headers['HX-Trigger'] = json.dumps(headers, default=str)
+
+    return response
 
 
 #######################

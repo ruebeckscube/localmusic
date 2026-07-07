@@ -29,22 +29,23 @@
     </head>
     <body>
         <div class="font-body font-stretch-90% flex flex-col min-h-screen bg-background">
-            <div>
+            <header>
                 {% include "./nav_bar.html" %}
-            </div>
-            <div class="flex-1">
+            </header>
+            <main class="flex-1">
                 {% block content %}
                 {% endblock %}
-            </div>
-            <div class="flex-shrink-0">
+            </main>
+            <footer class="flex-shrink-0">
                 {% include "./footer.html" %}
-            </div>
+            </footer>
         </div>
     </body>
 
     <script src='{% static "findshows/js/rough_classes.js" %}'></script>
     {# loading date picker here because it was doing weird shit when loaded by htmx #}
+    <script src='{% static "findshows/js/date_utils.js" %}'></script>
     <script src='{% static "findshows/js/date_picker_data.js" %}'></script>
     <script src='{% static "findshows/js/play_one_embed.js" %}'></script>
-
+    <script src='{% static "findshows/js/keyboard_handlers.js" %}'></script>
 </html>

@@ -3,7 +3,7 @@ from itertools import zip_longest
 import json
 from django.core.validators import URLValidator
 from django.forms import ClearableFileInput, Field, ValidationError
-from django.forms.fields import DateField, TimeField
+from django.forms.fields import DateField
 
 from django.forms.widgets import Input, Select
 
@@ -34,6 +34,7 @@ class MusicBrainzArtistSearchWidget(Input):
 class SocialsLinksWidget(Input):
     template_name="findshows/widgets/socials_links_widget.html"
     input_type="text"
+    use_fieldset=True
 
     def __init__(self, num_links=3, **kwargs):
         super().__init__(**kwargs)
@@ -90,6 +91,7 @@ class VenuePickerWidget(Input):
 class BillWidget(Input):
     template_name="findshows/widgets/bill_widget.html"
     input_type="hidden"
+    use_fieldset=True
 
 
 class ArtistAccessWidget(Input):
@@ -114,6 +116,7 @@ class StyledSelect(Select):
 
 class EmbedLinkWidget(Input):
     template_name="findshows/widgets/embed_link_widget.html"
+    use_fieldset=True
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)

@@ -123,8 +123,7 @@ class JPEGImageField(models.ImageField):
         return name, path, args, kwargs
 
 
-
-class LabeledURLsValidator(URLValidator):
+class EmailOrURLValidator(URLValidator):
     @classmethod
     def massage_url(cls, uri):
         return uri if uri[:4] =="http" else f"http://{uri}"
@@ -144,6 +143,14 @@ class LabeledURLsValidator(URLValidator):
 
 
     def __call__(self, value):
+        if self.is_valid_email(value):
+            return
+        URLValidator(schemes=('http', 'https'))(self.massage_url(value))
+
+
+
+class LabeledURLsValidator(EmailOrURLValidator):
+    def __call__(self, value):
         if type(value) is not list:
             raise ValidationError("Internal parsing error. Please report.", code=self.code, params={"value": value})
         for tup in value:
@@ -151,9 +158,7 @@ class LabeledURLsValidator(URLValidator):
                 raise ValidationError("Internal parsing error. Please report.", code=self.code, params={"value": value})
             if not tup[0]:
                 raise ValidationError("Display name is required.", code=self.code, params={"value": value})
-            if self.is_valid_email(tup[1]):
-                continue
-            URLValidator(schemes=('http', 'https'))(self.massage_url(tup[1]))
+            super().__call__(tup[1])
 
 
 
@@ -214,7 +219,7 @@ class Artist(CreationTrackingMixin):
     profile_picture_small=JPEGImageField(max_dimension=400, max_filesize_kb=100,
                                          upload_to=prof_pic_name_small)
     bio=models.TextField(null=True, max_length=800)
-    local=models.BooleanField(help_text="Check if this is a local artist. It will give them permission to list shows and invite other artists.")
+    local=models.BooleanField(help_text="Local artists can post shows.")
     qr_kit=models.FileField(null=True, editable=False)
 
     is_temp_artist=models.BooleanField()
@@ -223,7 +228,7 @@ class Artist(CreationTrackingMixin):
     socials_links=models.JSONField(default=list, blank=True)
 
     similar_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist, verbose_name="Sounds like",
-                                                       help_text="Select 3 artists whose fans might also like to listen to this artist. If an artist doesn't appear on the list, it means MusicBrainz doesn't have any similarity data on them; please pick another while their database grows!")
+                                                       help_text="Select 3 well-known artists whose fans might like your music.")
 
 
     def similarity_score(self, searched_mbids):
@@ -700,26 +705,23 @@ class UserProfile(models.Model):
         MusicBrainzArtist,
         blank=True,
         verbose_name="Favorite artists",
-        help_text="""Select some artists that you like, and we'll include
-        personalized recommendations in your weekly email (and default them into
-        the main search page). The more you include, the more likely we'll find
-        a good match.""",
+        help_text="""For the bands you don't follow, you can get personalized
+        recommendations by filling this out. Leave blank for random recs.""",
     )
 
     preferred_concert_tags=MultiSelectField(choices=ConcertTags,
                                             blank=True,
                                             max_length=15,
                                             verbose_name="Categories",
-                                            help_text="""Select which types of
-                                            shows you'd like to see in your
-                                            search results and weekly email.""")
+                                            help_text="""Optional filter tags for your
+                                             weekly email.""")
 
     followed_artists=models.ManyToManyField(Artist, related_name="followers", blank=True)
     managed_artists=models.ManyToManyField(Artist, related_name="managing_users", blank=True,
                                            help_text="Artists that this user manages.")
     artist_verification_status = models.CharField(max_length=2, choices=ArtistVerificationStatus, null=True)
 
-    weekly_email=models.BooleanField(default=True, help_text="Subscribe to an email with concert recommendations for the upcoming week")
+    weekly_email=models.BooleanField(default=True, help_text="All the shows from bands you follow, then a few from bands you don't.")
 
     given_artist_access_by=models.ForeignKey('UserProfile', related_name="gave_artist_access_to", on_delete=models.CASCADE, null=True, blank=True)
     given_artist_access_datetime=models.DateTimeField(null=True, blank=True)
@@ -747,13 +749,19 @@ class Ages(models.TextChoices):
 class Venue(CreationTrackingMixin):
     name=models.CharField(unique=True, max_length=30)
     ages=models.CharField(max_length=2, choices=Ages)
-    website=models.URLField(help_text="""Venues must have a public-facing
-    internet presence, even if it's just an Instagram page. This is for safety
-    reasons, as well as the means by which users will get venue addresses.""")
+    website=models.CharField(verbose_name="Venue Website", help_text="Concerts link here. Should include public address or a contact method to get the address.", validators=[EmailOrURLValidator()])
 
     is_verified=models.BooleanField(default=False)
     declined_listing=models.BooleanField(default=False,
                                          help_text="If true, this venue has decided not to allow listings on this site.")
+
+    def save(self, *args, **kwargs):
+        self.website = \
+            EmailOrURLValidator.massage_email(self.website) \
+            if EmailOrURLValidator.is_valid_email(self.website) \
+            else EmailOrURLValidator.massage_url(self.website)
+        return super().save(*args, **kwargs)
+
 
     def __str__(self):
         return self.name
@@ -777,22 +785,17 @@ class Concert(CreationTrackingMixin):
     start_time=models.TimeField()
     end_time=models.TimeField(blank=True, null=True)
     venue=models.ForeignKey(Venue, on_delete=models.CASCADE, help_text="""Select
-    a venue from the database; if it doesn't show up, create a new venue listing
-    with the New Venue button.""")
-    ages=models.CharField(max_length=2, choices=Ages, blank=True,
-                          help_text="Leave blank to use the venue's default.")
+    a venue from the database, or create one if needed.""")
+    ages=models.CharField(max_length=2, choices=Ages, blank=True)
     artists=models.ManyToManyField(Artist, through="SetOrder")
     ticket_link=models.URLField(blank=True)
     ticket_description=models.CharField(max_length=25, help_text="""A short
     description of the price, e.g. '$10 adv $12 door' or '$15 suggested'""")
     tags=MultiSelectField(choices=ConcertTags, max_length=15, help_text="""
-    Select what best represents the show. If you're playing all original music
-    except for one song, don't check Cover Set. If two bands are playing all
-    originals and one is playing a full cover set, check both Originals and
-    Cover Set.""")
+    Select what best represents the show as a whole.""")
     cancelled=models.BooleanField(blank=True, null=True)
     description=models.CharField(max_length=50, null=True, blank=True,
-                                 help_text="A headline-esque description of the concert")
+                                 help_text="50 characters of vibes.")
     announced=models.DateField(null=True, editable=False)
 
     @classmethod

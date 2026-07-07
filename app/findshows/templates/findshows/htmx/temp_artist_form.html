@@ -1,9 +1,13 @@
-<div class="helptext">
+<div class="helptext" tabindex="0">
     The artist will receive an email with an invite
     link. Your email address will be included in the message.
 </div>
-{% for field in temp_artist_form %}
-    <div class="flex flex-col fieldgroup">
-        {{ field.as_field_group }}
-    </div>
-{% endfor %}
+<div class="flex flex-col fieldgroup">
+    {{ temp_artist_form.name.as_field_group }}
+</div>
+<div class="fieldgroup">
+    {{ temp_artist_form.local.as_field_group }}
+</div>
+<div class="flex flex-col fieldgroup">
+    {{ temp_artist_form.email.as_field_group }}
+</div>

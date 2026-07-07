@@ -2,6 +2,7 @@
 
 {% block content %}
     <h1 class="pl-3 mb-1"> {{ pk | yesno:"Edit,Create"}} Artist </h1>
+    <p class="helptext pl-6">Fields marked <span class="text-highlight-text">*</span> are required.</p>
     {% if query.from == "link_artist" %}
         <div class="banner my-0">
             Artist linked successfully! You can now fill out your profile;
@@ -28,9 +29,11 @@
           action="{% url 'findshows:create_artist' %}"
           {% endif %}>
         {% csrf_token %}
-        <div class="p-4">
-            {{ form.non_field_errors }}
-        </div>
+        {% if form.non_field_errors %}
+            <div class="p-4">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
         <div class="flex max-md:flex-col flex-none w-full h-full">
             <div class="md:w-1/2 flex flex-col">
                 <div class= "flex flex-col fieldgroup">

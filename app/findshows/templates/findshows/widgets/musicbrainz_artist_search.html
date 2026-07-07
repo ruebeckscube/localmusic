@@ -2,32 +2,34 @@
 
 <div x-data="musicbrainz_artist_search_data({{ widget.artist_dicts }},{{ widget.max_artists }})"
      @keydown.escape.prevent.stop="close_dropdown()"
-     {#  @add-musicbrainz-card="add_rough_to_node($el.getElementById($event.detail.id))" #}
      @add-musicbrainz-card="$nextTick(() => add_rough_to_node(document.getElementById($event.detail.id)))"
 >
 
-    <div x-ref="musicbrainz-search-plus-dropdown"
+    <div class="dropdown-container"
          @focusin="open_dropdown()"
          @click.outside="close_dropdown()"
          @htmx:after-request="open_dropdown()"
+         @focusout.stop="if (!$el.contains($event.relatedTarget)) close_dropdown()"
+         @keydown.arrow-up.prevent="arrowPress($event, 'up')"
+         @keydown.arrow-down.prevent="arrowPress($event, 'down')"
     >
-            <input class="textinput" type="search"
+            <input class="textinput w-full max-w-48" type="search"
                    name="mb_search" placeholder="Search artists..."
                    x-model="search_text"
+                   x-ref="mb_search" id="{{ widget.attrs.id }}"
+                   aria-describedby="{{ widget.attrs.id }}_helptext" {# hackier than i'd like; ideally would read aria_describedby from Field properties #}
                    hx-get="{% url 'findshows:musicbrainz_artist_search_results' %}"
                    hx-trigger="keyup changed delay:500ms, click from:#search-results"
                    hx-target="#musicbrainz-search-results"
                    hx-swap="innerHTML"
                    hx-include="this"
             >
-
-            <ul id="musicbrainz-search-results"
+            <menu id="musicbrainz-search-results"
                 class="absolute popup-menu"
                 x-show="show_search"
-                @click="close_dropdown()"
                 style="display: none;"
             >
-            </ul>
+            </menu>
     </div>
 
     <div class="flex flex-wrap">
