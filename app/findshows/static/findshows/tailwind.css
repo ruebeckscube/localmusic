@@ -1440,6 +1440,7 @@
       --tw-font-weight: var(--font-weight-semibold);
       font-weight: var(--font-weight-semibold);
       color: var(--color-clickable);
+      text-decoration-line: underline;
       &:hover {
         @media (hover: hover) {
           color: var(--color-clickable-h);
@@ -1477,6 +1478,7 @@
     --tw-font-weight: var(--font-weight-semibold);
     font-weight: var(--font-weight-semibold);
     color: var(--color-clickable);
+    text-decoration-line: underline;
     &:hover {
       @media (hover: hover) {
         color: var(--color-clickable-h);

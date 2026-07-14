@@ -59,7 +59,7 @@
 
   .markdown {
     a {
-      @apply text-clickable hover:text-clickable-h font-semibold cursor-pointer; /*Duplicates link*/
+      @apply text-clickable hover:text-clickable-h font-semibold cursor-pointer underline;; /*Duplicates link*/
     }
 
     ul {
@@ -94,7 +94,7 @@
 
 @layer components {
   .link {
-    @apply text-clickable hover:text-clickable-h font-semibold cursor-pointer;
+    @apply text-clickable hover:text-clickable-h font-semibold cursor-pointer underline;
   }
 
   .btn {
