@@ -17,7 +17,7 @@
                         hx-trigger="click,load"
                         {% elif query.date and tab.name == 'dailyDigest' %}
                         hx-trigger="click,load"
-                        hx-vals='{"date": "{{date}}"}'
+                        hx-vals='{"date": "{{query.date}}"}'
                         {% else %}
                         hx-trigger="click"
                         {% endif %}
