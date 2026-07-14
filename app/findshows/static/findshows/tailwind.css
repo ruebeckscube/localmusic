@@ -999,6 +999,19 @@
       flex-direction: column;
     }
   }
+  .max-sm\:sr-only {
+    @media (width < 40rem) {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+      border-width: 0;
+    }
+  }
   .max-sm\:fixed {
     @media (width < 40rem) {
       position: fixed;
@@ -1019,6 +1032,11 @@
       margin-inline: auto;
     }
   }
+  .max-sm\:block {
+    @media (width < 40rem) {
+      display: block;
+    }
+  }
   .max-sm\:flex {
     @media (width < 40rem) {
       display: flex;
@@ -1037,6 +1055,11 @@
   .max-sm\:w-2\/3 {
     @media (width < 40rem) {
       width: calc(2/3 * 100%);
+    }
+  }
+  .max-sm\:w-fit {
+    @media (width < 40rem) {
+      width: fit-content;
     }
   }
   .max-sm\:w-full {

@@ -108,16 +108,17 @@
     {% if outstanding_invites %}
     <div class="bg-highlight-item-light/40 p-3 m-3">
         <h2> Outstanding invites </h2>
-        <table class="w-full text-center max-w-4xl fieldgroup p-5 mx-auto">
-            <tr class="bg-highlight-item-light text-lg">
-                <th>Email</th><th>Artist name</th><th>Actions</th>
+
+        <table class="w-full text-center max-w-3xl p-5 mx-auto max-sm:w-fit">
+            <tr class="bg-highlight-item-light text-lg max-sm:sr-only">
+                <th>Artist</th><th>Email</th><th>Actions</th>
             </tr>
 
             {% for ali in outstanding_invites %}
-            <tr class="odd:bg-white">
-                <td><a class="link" href="mailto:{{ ali.invited_email }}">{{ ali.invited_email }}</a></td>
-                <td>{{ ali.artist }}</td>
-                <td>{% include "findshows/htmx/mod_resend_invite_button.html" %}</td>
+            <tr class="odd:bg-white even: bg-sub-background">
+                <td class="m-1 max-sm:block">{{ ali.artist }}</td>
+                <td class="m-1 max-sm:block"><a class="link" href="mailto:{{ ali.invited_email }}">{{ ali.invited_email }}</a></td>
+                <td class="m-1 max-sm:block">{% include "findshows/htmx/mod_resend_invite_button.html" %}</td>
             </tr>
             {% endfor %}
         </table>
