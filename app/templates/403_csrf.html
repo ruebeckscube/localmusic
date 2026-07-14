@@ -1,0 +1,15 @@
+{% extends "localmusic/small_page.html" %}
+
+{% block small_content %}
+
+    <h1 class="text-center"> Oops! </h1>
+
+    <p class="p-2 text-center">
+        HTTP error 403 (incorrect CSRF token)
+    </p><p class="p-2">
+        Something went wrong--try going <a class="link" href={% url 'findshows:home' %}>home</a> and navigating back here!
+    </p><p class="p-2">
+        This can happen if you pressed the back button or if you have the site open in multiple tabs.
+    </p>
+
+{% endblock %}

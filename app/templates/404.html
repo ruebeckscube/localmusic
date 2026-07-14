@@ -1,0 +1,18 @@
+{% extends "localmusic/small_page.html" %}
+
+{% block small_content %}
+
+    <h1 class="text-center"> Oops! </h1>
+
+    <p class="p-2 text-center">
+        HTTP error 404 (resource not found)
+    </p><p class="p-2">
+        Looks like you're trying to find something that doesn't exist. If you were linked here,
+        it's probably a bug; please <a class="link" href={% url 'findshows:contact' %}>let us know</a>.
+        If you were futzing with URLs, stop it ;)
+    </p><p class="p-2 text-center">
+        <a class="link mx-5" href="javascript:history.back()">Go Back</a>
+        <a class="link mx-5" href={% url 'findshows:home' %}>Go home</a>
+    </p>
+
+{% endblock %}

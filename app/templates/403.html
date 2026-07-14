@@ -1,0 +1,19 @@
+{% extends "localmusic/small_page.html" %}
+
+{% block small_content %}
+
+    <h1 class="text-center"> Oops! </h1>
+
+    <p class="p-2 text-center">
+        HTTP error 403 (forbidden)
+    </p><p class="p-2">
+        Hey! You can't go there! You're logged in as {{ user.email }} and do not have access to
+        this page.
+    </p><p class="p-2">
+        If you think this is in error, please <a class="link" href={% url 'findshows:contact' %}>let us know</a>.
+    </p><p class="p-2 text-center">
+        <a class="link mx-5" href="javascript:history.back()">Go Back</a>
+        <a class="link mx-5" href={% url 'findshows:home' %}>Go home</a>
+    </p>
+
+{% endblock %}
