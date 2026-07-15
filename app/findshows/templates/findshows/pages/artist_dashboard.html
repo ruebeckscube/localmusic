@@ -50,8 +50,6 @@
         <p class="pl-4">
             Manage your artist profiles, and who can access them.
             Follower counts are not displayed publically.
-            Followers will always get your shows at the top of their weekly email
-            (both the week you announce it, and the week of the show).
         </p>
         <div class="flex flex-wrap align-middle items-center justify-center">
             {% for artist in artists %}
@@ -114,12 +112,12 @@
         <h2> Outstanding invites </h2>
 
         <table class="w-full text-center max-w-3xl p-5 mx-auto max-sm:w-fit">
-            <tr class="bg-highlight-item-light text-lg max-sm:sr-only">
+            <tr class="sr-only">
                 <th>Artist</th><th>Email</th><th>Actions</th>
             </tr>
 
             {% for ali in outstanding_invites %}
-            <tr class="odd:bg-white even: bg-sub-background">
+            <tr class="odd:bg-background even:bg-sub-background">
                 <td class="m-1 max-sm:block">{{ ali.artist }}</td>
                 <td class="m-1 max-sm:block"><a class="link" href="mailto:{{ ali.invited_email }}">{{ ali.invited_email }}</a></td>
                 <td class="m-1 max-sm:block">{% include "findshows/htmx/mod_resend_invite_button.html" %}</td>
