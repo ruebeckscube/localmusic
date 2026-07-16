@@ -732,10 +732,10 @@
   .bg-background {
     background-color: var(--color-background);
   }
-  .bg-gray-600\/40 {
-    background-color: color-mix(in srgb, oklch(44.6% 0.03 256.802) 40%, transparent);
+  .bg-black\/50 {
+    background-color: color-mix(in srgb, #000 50%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-gray-600) 40%, transparent);
+      background-color: color-mix(in oklab, var(--color-black) 50%, transparent);
     }
   }
   .bg-highlight-item-light {

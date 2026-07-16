@@ -342,7 +342,7 @@ def create_temp_artist(request):
     if request.user.has_exceeded_daily_invites():
         response = render(request, 'findshows/htmx/modal_error_msg.html')
     else:
-        response = render(request, "findshows/htmx/temp_artist_form.html", {
+        response = render(request, "findshows/partials/invite_artist.html#temp-artist-form", {
             "temp_artist_form": form,
         })
 
@@ -415,7 +415,7 @@ def manage_artist_access(request, pk):
         partial_errors = None
 
 
-    response = render(request, "findshows/htmx/artist_access_form.html", {
+    response = render(request, "findshows/partials/artist_buttons.html#artist-access-form", {
         "artist_access_form": form,
         "partial_errors": partial_errors
     })
@@ -598,7 +598,7 @@ def create_venue(request):
         venue.save()
         venue_form = VenueForm()
 
-    response = render(request, "findshows/htmx/venue_form.html", {
+    response = render(request, "findshows/widgets/venue_select.html#venue-form", {
         "venue_form": venue_form,
     })
 
@@ -696,7 +696,7 @@ def concert_search(request):
         concerts = []
         searched_musicbrainz_artists = []
 
-    response = render(request, "findshows/htmx/concert_search_results.html", context={
+    response = render(request, "findshows/partials/concert_search.html#results", context={
         "concerts": concerts,
         "search_form": search_form,
         "searched_musicbrainz_artists": searched_musicbrainz_artists,

@@ -1,4 +1,5 @@
 {% load static %}
+{% load findshows_tags %}
 
 <div class="flex items-center"
      x-data="venue_picker_data('{{widget.value|escapejs}}', '{{widget.venue.name|escapejs}}', {{widget.venue.is_verified|yesno:"true,false"}}, {{widget.venue.declined_listing|yesno:"true,false"}} )"
@@ -43,9 +44,15 @@
     </div>
 
     <div class="w-32" @modal-form-success="on_venue_create">
-        {% with title_text="New venue" form_html="findshows/htmx/venue_form.html" htmx_url="findshows:create_venue" %}
-            {% include "findshows/partials/modal_form.html" %}
-        {% endwith %}
+        {% modal_form title="New venue" htmx_url="findshows:create_venue" %}
+            {% partialdef venue-form inline %}
+                {% for field in venue_form %}
+                    <div class="flex flex-col fieldgroup">
+                        {{ field.as_field_group }}
+                    </div>
+                {% endfor %}
+            {% endpartialdef venue-form %}
+        {% endmodal_form %}
     </div>
 
 </div>

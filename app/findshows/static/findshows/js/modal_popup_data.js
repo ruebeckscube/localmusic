@@ -1,6 +1,6 @@
-function modal_form_data() {
+function modal_popup_data(show_initial=false) {
   return {
-    show_modal: false,
+    show_modal: show_initial,
     success_text: "",
 
     open_modal() {

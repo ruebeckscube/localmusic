@@ -1,7 +1,0 @@
-{% for concert in concerts  %}
-    {% include "../partials/concert_card.html" with followed_artists=user.userprofile.followed_artists.all %}
-{% empty %}
-    <div class="flex h-full flex-col justify-around text-center text-gray-800">
-        No results; try modifying your search.
-    </div>
-{% endfor %}

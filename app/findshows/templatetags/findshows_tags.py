@@ -72,3 +72,14 @@ def accordion_element(content, title):
         'content': content,
         'title': title,
     })
+
+@register.simple_block_tag(takes_context=True)
+def modal_form(context: template.RequestContext, content, title, htmx_url, htmx_param=None):
+    context.push({
+        'type': 'form',
+        'title': title,
+        'content': content,
+        'hx_post': reverse(htmx_url, args=(htmx_param,) if htmx_param else None)
+    })
+    return render_to_string('findshows/partials/modal_popup.html', context.flatten())
+

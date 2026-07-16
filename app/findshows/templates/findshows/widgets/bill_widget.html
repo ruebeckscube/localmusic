@@ -92,9 +92,7 @@
     </button>
 
     <div @modal-form-success="on_temp_artist_create">
-        {% with title_text="Invite artist" form_html="findshows/htmx/temp_artist_form.html" htmx_url="findshows:create_temp_artist" %}
-            {% include "findshows/partials/modal_form.html" %}
-        {% endwith %}
+        {% include "findshows/partials/invite_artist.html" %}
     </div>
     </div>
 </div>

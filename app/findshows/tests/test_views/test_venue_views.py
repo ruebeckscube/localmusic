@@ -117,5 +117,5 @@ class CreateVenueTests(TestCaseHelpers):
 
         response = self.client.post(reverse("findshows:create_venue"), data=venue_post_data())
         self.assertTemplateUsed(response, 'findshows/htmx/modal_error_msg.html')
-        self.assertTemplateNotUsed(response, 'findshows/htmx/venue_form.html')
+        self.assertTemplateNotUsed(response, 'venue-form')
         self.assert_records_created(Venue, settings.MAX_DAILY_VENUE_CREATES)

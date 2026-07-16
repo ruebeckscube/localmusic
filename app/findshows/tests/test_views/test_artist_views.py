@@ -29,13 +29,13 @@ class ArtistDashboardTests(TestCaseHelpers):
     def test_local_artist_user_can_invite(self):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         response = self.client.get(reverse("findshows:artist_dashboard"))
-        self.assertIn('Invite Artist', str(response.content))
+        self.assertIn('Invite artist', str(response.content))
 
 
     def test_nonlocal_artist_user_cant_invite(self):
         self.login_static_user(self.StaticUsers.NONLOCAL_ARTIST)
         response = self.client.get(reverse("findshows:artist_dashboard"))
-        self.assertNotIn('Invite Artist', str(response.content))
+        self.assertNotIn('Invite artist', str(response.content))
 
 
     def test_only_shows_users_concerts(self):
@@ -471,23 +471,23 @@ class CreateTempArtistTests(TestCaseHelpers):
         # Initial GET should return form
         response = self.client.post(reverse("findshows:create_temp_artist"))
         self.assertTemplateNotUsed(response, 'findshows/htmx/modal_error_msg.html')
-        self.assertTemplateUsed(response, 'findshows/htmx/temp_artist_form.html')
+        self.assertTemplateUsed(response, 'temp-artist-form')
 
         # Making the max number should work, but should tell the user they've hit the max
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
         self.assertTemplateUsed(response, 'findshows/htmx/modal_error_msg.html')
-        self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
+        self.assertTemplateNotUsed(response, 'temp-artist-form')
         self.assert_records_created(ArtistLinkingInfo, settings.MAX_DAILY_INVITES)
 
         # Simulates inital page load when max is already hit
         response = self.client.post(reverse("findshows:create_temp_artist"))
         self.assertTemplateUsed(response, 'findshows/htmx/modal_error_msg.html')
-        self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
+        self.assertTemplateNotUsed(response, 'temp-artist-form')
 
         # Simulates if they managed a POST request with the correct data anyway
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
         self.assertTemplateUsed(response, 'findshows/htmx/modal_error_msg.html')
-        self.assertTemplateNotUsed(response, 'findshows/htmx/temp_artist_form.html')
+        self.assertTemplateNotUsed(response, 'temp-artist-form')
         self.assert_records_created(ArtistLinkingInfo, settings.MAX_DAILY_INVITES)
 
 
@@ -498,11 +498,11 @@ class CreateTempArtistTests(TestCaseHelpers):
 
         response = self.client.post(reverse("findshows:create_temp_artist"))
         self.assertTemplateNotUsed(response, 'findshows/htmx/modal_error_msg.html')
-        self.assertTemplateUsed(response, 'findshows/htmx/temp_artist_form.html')
+        self.assertTemplateUsed(response, 'temp-artist-form')
 
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
         self.assertTemplateNotUsed(response, 'findshows/htmx/modal_error_msg.html')
-        self.assertTemplateUsed(response, 'findshows/htmx/temp_artist_form.html')
+        self.assertTemplateUsed(response, 'temp-artist-form')
         self.assert_records_created(ArtistLinkingInfo, settings.MAX_DAILY_INVITES + 2)
 
 
