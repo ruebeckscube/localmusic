@@ -83,3 +83,10 @@ def modal_form(context: template.RequestContext, content, title, htmx_url, htmx_
     })
     return render_to_string('findshows/partials/modal_popup.html', context.flatten())
 
+
+@register.filter
+def obfuscate_if_email(value):
+    if value[:7] != "mailto:": return value
+
+    user, domain = value[7:].split("@")
+    return mark_safe(f'#" data-eu="{user}" data-ed="{domain}")')

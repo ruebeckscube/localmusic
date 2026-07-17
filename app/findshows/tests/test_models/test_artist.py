@@ -24,12 +24,12 @@ class SaveTests(TestCaseHelpers):
         artist = self.create_artist(socials_links=[
             ['HTTPS', 'https://this.shouldnt.change'],
             ['HTTP', 'http://nor.this'],
-            ['No protocol', 'this.should.get/an/http/on/the/front'],
+            ['No protocol', 'this.should.get/an/https/on/the/front'],
         ])
         self.assertEqual(artist.socials_links, [
             ['HTTPS', 'https://this.shouldnt.change'],
             ['HTTP', 'http://nor.this'],
-            ['No protocol', 'http://this.should.get/an/http/on/the/front'],
+            ['No protocol', 'https://this.should.get/an/https/on/the/front'],
         ])
 
     def test_social_links_email_massaging(self):

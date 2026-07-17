@@ -106,7 +106,7 @@ class CreateVenueTests(TestCaseHelpers):
         self.assert_site_saving('https://my-other-cool.site', 'https://my-other-cool.site')
 
     def test_website_no_protocol(self):
-        self.assert_site_saving('hip.io', 'http://hip.io')
+        self.assert_site_saving('hip.io', 'https://hip.io')
 
 
     def test_daily_limit(self):

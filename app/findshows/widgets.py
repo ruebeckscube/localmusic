@@ -50,7 +50,7 @@ class SocialsLinksWidget(Input):
         context = super().get_context(name, value, attrs)
         l = json.loads(value)
         links = l + [('','')] * (self.num_links - len(l))
-        placeholders = (("Website", "https://band-site.com"), ("Email", "my-address@mail.com"))
+        placeholders = (("e.g. Website", "https://band-site.com"), ("Email works too!", "my-address@mail.com"))
         context['widget']['socials_links'] =  zip_longest(links, placeholders, fillvalue=('',''))
         return context
 

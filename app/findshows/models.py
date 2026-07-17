@@ -126,7 +126,7 @@ class JPEGImageField(models.ImageField):
 class EmailOrURLValidator(URLValidator):
     @classmethod
     def massage_url(cls, uri):
-        return uri if uri[:4] =="http" else f"http://{uri}"
+        return uri if uri[:4] =="http" else f"https://{uri}"
 
     @classmethod
     def massage_email(cls, uri):
