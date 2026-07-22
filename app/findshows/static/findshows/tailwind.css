@@ -210,6 +210,9 @@
   .\@container {
     container-type: inline-size;
   }
+  .\@container-normal {
+    container-type: normal;
+  }
   .visible {
     visibility: visible;
   }
