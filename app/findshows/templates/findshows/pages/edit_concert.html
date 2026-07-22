@@ -1,5 +1,7 @@
 {% extends "localmusic/base.html" %}
 
+{% load findshows_tags %}
+
 {% block content %}
     <h1 class="pl-3 mb-1"> Edit Concert </h1>
 
@@ -72,8 +74,35 @@
                 </div>
             </div>
         </div>
+
+        {% modal_confirmation title="Warnings" initial_show=show_confirmation_popup %}
+            <div class="helptext">
+                Just one or two things to confirm before saving:
+            </div>
+
+            {% partialdef confirmation-field %}
+                <div class="flex flex-col fieldgroup {{ field.errors|yesno:',hidden,' }}">
+                    {{ field.errors }}
+                    <div class="helptext">
+                        {{ field.help_text }}
+                    </div>
+                    {{ field }}
+                </div>
+            {% endpartialdef confirmation-field %}
+
+            {% with field=form.single_artist_confirmation %}
+                {% partial confirmation-field %}
+            {% endwith %}
+
+            {% with field=form.venue_date_confirmation %}
+                {% partial confirmation-field %}
+            {% endwith %}
+        {% endmodal_confirmation %}
+
         <div class="flex fieldgroup justify-center mt-6">
-            <button type="button" class="block btn w-full max-w-30 m-8" onclick="location.href='{{ cancel_link }}'">Cancel</button>
+            <button type="button" class="block btn w-full max-w-30 m-8"
+                    @click="location.href='{{ cancel_link }}'"
+            >Cancel</button>
             <input class="block btn w-full max-w-30 m-8" type="submit" value="Save">
         </div>
     </form>

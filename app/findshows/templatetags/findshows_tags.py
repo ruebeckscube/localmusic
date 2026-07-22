@@ -74,6 +74,17 @@ def accordion_element(content, title):
     })
 
 @register.simple_block_tag(takes_context=True)
+def modal_confirmation(context, content, title, initial_show='false'):
+    context.push({
+        'type': 'confirmation',
+        'title': title,
+        'content': content,
+        'initial_show': initial_show,
+    })
+    return render_to_string('findshows/partials/modal_popup.html', context.flatten())
+
+
+@register.simple_block_tag(takes_context=True)
 def modal_form(context: template.RequestContext, content, title, htmx_url, htmx_param=None):
     context.push({
         'type': 'form',

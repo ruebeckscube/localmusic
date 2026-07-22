@@ -11,3 +11,4 @@ markdown==3.10.2
 nh3==0.3.4
 segno==1.6.6
 fpdf2==2.8.7
+django-tasks-db==0.12.0

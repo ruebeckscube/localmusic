@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import SimpleTestCase, TestCase, override_settings, tag
+from django.test import TestCase, override_settings, tag
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
 from django.utils.timezone import now
@@ -42,9 +42,7 @@ def concert_GET_params(date=timezone_today(),
     }
 
 
-@override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
-@override_settings(PASSWORD_HASHERS = ("django.contrib.auth.hashers.MD5PasswordHasher",))
-class MixinForAllTestCases(SimpleTestCase):
+class MixinForAllTestCases():
     DEFAULT_PASSWORD = '1234'
 
     class StaticUsers(Enum):
@@ -348,6 +346,8 @@ class MixinForAllTestCases(SimpleTestCase):
         return Contact.objects.create(email=email, subject=subject, message=message, type=type, pk=pk)
 
 
+@override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
+@override_settings(PASSWORD_HASHERS = ("django.contrib.auth.hashers.MD5PasswordHasher",))
 class TestCaseHelpers(TestCase, MixinForAllTestCases):
     fixtures = ["findshows/test-fixture.json"]
 
@@ -420,6 +420,8 @@ class TestCaseHelpers(TestCase, MixinForAllTestCases):
 
 
 @tag("selenium")
+@override_settings(MEDIA_ROOT = tempfile.TemporaryDirectory().name)
+@override_settings(PASSWORD_HASHERS = ("django.contrib.auth.hashers.MD5PasswordHasher",))
 class SeleniumTestCaseHelpers(StaticLiveServerTestCase, MixinForAllTestCases):
     fixtures = ["findshows/test-fixture.json"]
     host = settings.DJANGO_HOST_NAME

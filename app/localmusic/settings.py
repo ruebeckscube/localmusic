@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
     'mjml',
     'captcha',
+    "django_tasks_db",
 ]
 
 MIDDLEWARE = [
@@ -188,6 +189,15 @@ if not IS_DEV:
 LOGIN_REDIRECT_URL = "/"
 LOGIN_URL = "login"
 LOGOUT_REDIRECT_URL = "/"
+
+
+# Tasks
+TASKS = {
+    "default": {
+        "BACKEND": "django.tasks.backends.immediate.ImmediateBackend" if IS_DEV else "django_tasks_db.DatabaseBackend",
+        "QUEUES": ["default", "emails"],
+    }
+}
 
 
 # Email

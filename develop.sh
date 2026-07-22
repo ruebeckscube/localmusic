@@ -184,12 +184,12 @@ nightly_tasks() {
     invoke_manage send_mod_reminder
     echo "BACKUP"
     backup
-    # echo "UPDATING APP"
-    # update_app
     echo "CLEANING UP MEDIA FOLDER"
     invoke_manage cleanup_media
     echo "ROTATING LOGS"
     logrotate -v -s config/logrotate.status config/logrotate.conf
+    echo "PRUNING TASK DATABASE"
+    invoke_manage prune_db_task_results --queue="*"
 }
 
 weekly_tasks() {

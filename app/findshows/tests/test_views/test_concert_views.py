@@ -13,7 +13,7 @@ from findshows.tests.test_helpers import TestCaseHelpers
 
 
 class ConcertViewTestHelpers(TestCaseHelpers):
-    def concert_post_request(self, artist):
+    def concert_post_request(self, artists, single_artist_confirmation=''):
         return {'date': (timezone_today() + datetime.timedelta(3)).isoformat(),
                 'doors_time': ['20:00'],
                 'start_time': ['20:30'],
@@ -22,8 +22,9 @@ class ConcertViewTestHelpers(TestCaseHelpers):
                 'ticket_link': ['https://www.thisisthevalueforconcertpostrequests.com'],
                 'ticket_description': ['$10 suggested'],
                 'poster': self.image_file(),
-                'bill': json.dumps([{"id":artist.pk,"name":artist.name}]),
-                'tags': ['OG']
+                'bill': json.dumps([{"id":artist.pk,"name":artist.name} for artist in artists]),
+                'tags': ['OG'],
+                'single_artist_confirmation': [single_artist_confirmation],
                 }
 
 
@@ -107,6 +108,12 @@ class RecordsCreatedTodayTests(ConcertViewTestHelpers):
 class CreateConcertTests(ConcertViewTestHelpers):
     """Tests edit_concert, but just the pathways that create a new concert.
     (i.e. the create_concert url)"""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.extra_artist = cls.create_artist()
+
     def test_unverified_email_can_GET_but_not_POST(self):
         artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
         user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
@@ -118,7 +125,7 @@ class CreateConcertTests(ConcertViewTestHelpers):
         self.assertTemplateUsed(response, 'findshows/pages/edit_concert.html')
         self.assert_blank_form(response.context['form'], ConcertForm)
 
-        response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request(artist))
+        response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request([artist, self.extra_artist]))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/edit_concert.html')
         self.assertIn("Please verify your email before submitting.", response.context['form'].errors['__all__'])
@@ -135,7 +142,7 @@ class CreateConcertTests(ConcertViewTestHelpers):
     def test_user_doesnt_own_one_of_the_artists(self):
         artist = self.get_static_instance(self.StaticArtists.NONLOCAL_ARTIST)
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST) # different artist
-        response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request(artist))
+        response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request([artist, self.extra_artist]))
         self.assertEqual(response.context['form'].errors["bill"][0][:17], "The bill must inc")
 
 
@@ -143,7 +150,7 @@ class CreateConcertTests(ConcertViewTestHelpers):
         user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         artist2 = self.get_static_instance(self.StaticArtists.NONLOCAL_ARTIST)
         user_profile.managed_artists.add(artist2)
-        response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request(artist2))
+        response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request([artist2, self.extra_artist]))
         self.assertEqual(response.context['form'].errors["bill"][0][:17], "The bill must inc")
 
 
@@ -170,17 +177,30 @@ class CreateConcertTests(ConcertViewTestHelpers):
         for i in range(settings.MAX_DAILY_CONCERT_CREATES):
             self.create_concert(created_by=user_profile)
 
-        response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request(artist))
+        response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request([artist, self.extra_artist]))
         self.assertTemplateUsed(response, 'findshows/pages/cant_create_concert.html')
         self.assertTemplateNotUsed(response, 'findshows/pages/edit_concert.html')
         self.assert_records_created(Concert, settings.MAX_DAILY_CONCERT_CREATES)
+
+
+    def test_single_artist_(self):
+        artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+
+        response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request([artist], single_artist_confirmation=''))
+        self.assertTrue(response.context['show_confirmation_popup'])
+        self.assertEqual(Concert.objects.count(), 0)
+
+        response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request([artist], single_artist_confirmation='RML'))
+        self.assertEqual(Concert.objects.count(), 1)
+        self.assert_emails_sent(1)
 
 
     def test_create_concert_successful_POST(self):
         artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
         user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         self.assert_records_created(Concert, 0)
-        response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request(artist))
+        response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request([artist, self.extra_artist]))
         concerts = Concert.objects.all()
         self.assertEqual(len(concerts), 1)
         self.assertEqual(concerts[0].created_by, user_profile)
@@ -193,7 +213,7 @@ class CreateConcertTests(ConcertViewTestHelpers):
     @patch('findshows.models.Image.open', side_effect=PIL.UnidentifiedImageError)
     def test_JPEG_image_exception(self, *args):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        post_request = self.concert_post_request(self.get_static_instance(self.StaticArtists.LOCAL_ARTIST))
+        post_request = self.concert_post_request([self.get_static_instance(self.StaticArtists.LOCAL_ARTIST), self.extra_artist])
 
         response = self.client.post(reverse("findshows:create_concert"), data=post_request)
         self.assertEqual(response.status_code, 200)
@@ -204,6 +224,12 @@ class CreateConcertTests(ConcertViewTestHelpers):
 class EditConcertTests(ConcertViewTestHelpers):
     """Tests edit_concert, but just the pathways that edit an existing concert.
     (i.e. the edit_concert url)"""
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.extra_artist = cls.create_artist()
+
+
     def test_edit_concert_successful_GET(self):
         user = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         concert = self.create_concert(created_by=user)
@@ -218,7 +244,7 @@ class EditConcertTests(ConcertViewTestHelpers):
         user = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         concert_before = self.create_concert(created_by=user, artists=[artist])
 
-        response = self.client.post(reverse("findshows:edit_concert", args=(concert_before.pk,)), data=self.concert_post_request(artist))
+        response = self.client.post(reverse("findshows:edit_concert", args=(concert_before.pk,)), data=self.concert_post_request([artist, self.extra_artist]))
         self.assertRedirects(response, reverse('findshows:view_concert', args=(concert_before.pk,)))
 
         concert_after = Concert.objects.get(pk=concert_before.pk)

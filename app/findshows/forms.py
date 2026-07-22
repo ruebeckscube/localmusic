@@ -8,6 +8,7 @@ from django.contrib.auth.forms import BaseUserCreationForm
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
 from django.forms.widgets import TimeInput
+from django.template.loader import render_to_string
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 from multiselectfield.forms.fields import MultiSelectFormField
@@ -190,6 +191,19 @@ class ConcertForm(DefaultStylingModelForm):
     order; bottom=first and top=last. If an artist does not show up in search,
     invite them to make a profile.""")
 
+    single_artist_confirmation = forms.ChoiceField(
+        required=False, widget=forms.RadioSelect(), choices=(
+            ('CSA', "There is only one artist playing this show."),
+            ('RML', "I need more time to gather contact info; remind me later by email.")
+        ),
+    )
+    venue_date_confirmation = forms.ChoiceField(
+        help_text="Please check the other listing. Is your date correct?",
+        required=False, widget=forms.RadioSelect(), choices=(
+            ('unique', "This show is not a duplicate or conflict, and has the correct venue and date."),
+        ),
+    )
+
     class Meta:
         model=Concert
         fields=("poster", "date", "doors_time", "start_time", "end_time", "venue", "ages", "ticket_link", "ticket_description", "tags", "description")
@@ -256,10 +270,31 @@ class ConcertForm(DefaultStylingModelForm):
             self.add_error(None, "Doors time must be before start time if provided.")
 
 
+    def check_single_artist(self, cleaned_data):
+        artists = cleaned_data.get("bill")
+        num_artists = len(artists) if artists else 0
+        if num_artists == 1 and not cleaned_data.get("single_artist_confirmation"):
+            self.add_error('single_artist_confirmation', "Bill only has one artist.")
+
+
+    def check_venue_date(self, cleaned_data):
+        concert = Concert(
+            venue=cleaned_data.get('venue'),
+            date=cleaned_data.get('date'),
+            pk=self.instance.pk if self.instance else None
+        )
+        if concert.conflicts and not cleaned_data.get("venue_date_confirmation"):
+            self.add_error('venue_date_confirmation',
+                           render_to_string('findshows/partials/concert_status.html#conflicts',
+                                            {'concert': concert}))
+
+
     def clean(self):
         cleaned_data = super().clean() or {}
         self.check_artist_on_bill(cleaned_data)
         self.check_time_ordering(cleaned_data)
+        self.check_single_artist(cleaned_data)
+        self.check_venue_date(cleaned_data)
         return cleaned_data
 
     def save(self, commit = True): # saving this without a commit is gonna be weird, hope it doesn't happen

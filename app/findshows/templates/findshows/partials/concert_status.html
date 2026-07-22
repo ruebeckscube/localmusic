@@ -26,10 +26,12 @@
 
 {% if show_conflicts and concert.conflicts %}
     <div class="errorlist banner mt-3">
+      {% partialdef conflicts inline %}
         There is another show listed with the same venue and date:
         {% for c in concert.conflicts %}
-            <a class="link block" href={% url "findshows:view_concert" c.pk %}>{{ c }}</a>
+            <a class="link block" target="_blank" href={% url "findshows:view_concert" c.pk %}>{{ c }}</a>
         {% endfor %}
+      {% endpartialdef %}
         (this warning is not displayed publically)
     </div>
 {% endif %}

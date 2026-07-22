@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.email import invite_artist, invite_user_to_artist, notify_artist_verified, send_verify_email
+from findshows.email import enqueue_concert_edit_reminder, invite_artist, invite_user_to_artist, notify_artist_verified, send_verify_email
 from findshows.widgets import ArtistAccessWidget
 
 from .models import Artist, ArtistLinkingInfo, ArtistVerificationStatus, Concert, ConcertTags, Contact, EmailCodeError, EmailVerification, JPEGImageException, MusicBrainzArtist, User, UserProfile, Venue
@@ -531,13 +531,24 @@ def edit_concert(request, pk=None):
         elif form.is_valid():
             try:
                 concert = form.save()
+                if form.cleaned_data['single_artist_confirmation'] == 'RML':
+                    enqueue_concert_edit_reminder(concert)
+
                 return redirect(reverse('findshows:view_concert', args=[concert.pk]))
             except JPEGImageException as e:
                 form.add_error('poster', e.message)
 
-    context = {'form': form,
-               'cancel_link': from_link(request, pk),
-               'pk': pk}
+    # Only show confirmation popup if warnings are present and are the only errors
+    confirmation_fields = {'single_artist_confirmation', 'venue_date_confirmation'}
+    error_fields = set(form.errors.keys())
+    show_confirmation_popup = error_fields and confirmation_fields.issuperset(error_fields)
+
+    context = {
+        'form': form,
+        'cancel_link': from_link(request, pk),
+        'pk': pk,
+        'show_confirmation_popup': 'true' if show_confirmation_popup else 'false',
+    }
 
     return render(request, 'findshows/pages/edit_concert.html', context)
 

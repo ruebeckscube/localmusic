@@ -17,6 +17,8 @@ class ConcertFormTestHelpers(TestCaseHelpers):
                   user_profile = None,
                   doors_time = None,
                   start_time = None,
+                  single_artist_confirmation = '',
+                  venue_date_confirmation = '',
                   ):
         if not user_profile:
             user_profile = self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)
@@ -30,7 +32,9 @@ class ConcertFormTestHelpers(TestCaseHelpers):
             'bill': self.bill_json_from_artist_list(artists or [self.create_artist(f"Test Artist {i}") for i in range(3)]),
             'ticket_link': 'https://www.testurl.com',
             'ticket_description': ticket_description,
-            'tags': tags or ['OG']
+            'tags': tags or ['OG'],
+            'single_artist_confirmation': single_artist_confirmation,
+            'venue_date_confirmation': venue_date_confirmation,
         }
         form = ConcertForm(data, {'poster': self.image_file()})
         form.set_editing_user(user_profile.user)
@@ -62,11 +66,36 @@ class ValidationTests(ConcertFormTestHelpers):
         form = self.make_form()
         self.assertTrue(form.is_valid())
 
-    def test_duplicated_venue_and_date_allowed(self):
+
+    def test_duplicated_venue_and_date_makes_warning(self):
         venue = self.create_venue()
         tomorrow = timezone_today() + datetime.timedelta(1)
         self.create_concert(date=tomorrow, venue=venue)
-        form = self.make_form(date=tomorrow, venue=venue)
+        form = self.make_form(date=tomorrow, venue=venue, venue_date_confirmation='')
+        self.assertFalse(form.is_valid())
+        self.assertTrue(form.errors['venue_date_confirmation'])
+
+
+    def test_duplicated_venue_and_date_allowed_with_confirmation(self):
+        venue = self.create_venue()
+        tomorrow = timezone_today() + datetime.timedelta(1)
+        self.create_concert(date=tomorrow, venue=venue)
+        form = self.make_form(date=tomorrow, venue=venue, venue_date_confirmation='unique')
+        self.assertTrue(form.is_valid())
+
+
+    def test_single_artist_makes_warning(self):
+        artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        user_profile = self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)
+        form = self.make_form(artists=[artist], user_profile=user_profile, single_artist_confirmation='')
+        self.assertFalse(form.is_valid())
+        self.assertTrue(form.errors['single_artist_confirmation'])
+
+
+    def test_single_artist_allowed_with_confirmation(self):
+        artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
+        user_profile = self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)
+        form = self.make_form(artists=[artist], user_profile=user_profile, single_artist_confirmation='CSA')
         self.assertTrue(form.is_valid())
 
 
