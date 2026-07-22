@@ -70,7 +70,7 @@ class PermissionsTests(TestCaseHelpers):
                 self.assertIn(response.status_code, (200, 302), msg=url_name)
                 match response.status_code:
                     case 200:
-                        self.assertTemplateNotUsed('findshows/htmx/modal_error_msg.html', msg_prefix=url_name)
+                        self.assertTemplateNotUsed(response, 'findshows/htmx/modal_error_msg.html', msg_prefix=url_name)
                     case 302:
                         try:
                             self.assertRedirects(response, reverse('login', query={'next': url}), msg_prefix=url_name)
@@ -82,8 +82,19 @@ class PermissionsTests(TestCaseHelpers):
                 self.assertIn(response.status_code, (200, 302, 403), msg=url_name)
                 match response.status_code:
                     case 200:
-                        self.assertIn("htmx", url) # 200 is only an allowable error response for modal stuff
-                        self.assertTemplateUsed('findshows/htmx/modal_error_msg.html', msg_prefix=url_name)
+                         # 200 is only an allowable error response for modal stuff or nicer error messages
+                        if "/htmx/" in url:
+                            if "HX-Redirect" in response.headers:
+                                # These redirects are tested in test_redirect_chains.py
+                                self.assertEqual(response.headers["HX-Redirect"].split('?')[0], reverse('login'))
+                            else:
+                                self.assertTemplateUsed(response, 'findshows/htmx/modal_error_msg.html', msg_prefix=url_name)
+                        elif "/artist/" in url:
+                            self.assertTemplateUsed(response, 'findshows/pages/view_artist_hidden.html', msg_prefix=url_name)
+                        elif "/concert/" in url:
+                            self.assertTemplateUsed(response, 'findshows/pages/view_concert_hidden.html', msg_prefix=url_name)
+                        else:
+                            raise AssertionError(f"{url_name}: Expected no permissions, got 200 response not in exception list")
                     case 302:
                         self.assertRedirects(response, reverse('login', query={'next': url}), msg_prefix=url_name)
                     case 403:
@@ -208,26 +219,35 @@ class PermissionsTests(TestCaseHelpers):
             chain(MOD_URLS_WITH_PK, disallowed_artist_with_pk))
         self.assert_permissions_for_hidden_records((), PUBLIC_URLS_WITH_PK)
 
+
     def test_mod(self):
         self.login_static_user(self.StaticUsers.MOD_USER)
 
+        artist_urls_no_pk_allowed = ("create_temp_artist",)
+        artist_urls_no_pk_disallowed = (url for url in ARTIST_URLS_NO_PK if url not in artist_urls_no_pk_allowed)
+        artist_urls_with_pk_allowed = ("resend_invite",)
+        artist_urls_with_pk_disallowed = (url for url in ARTIST_URLS_WITH_PK if url not in artist_urls_with_pk_allowed)
+
         self.assert_generic_permissions(
-            chain(PUBLIC_URLS_NO_PK, LOGGED_IN_URLS_NO_PK, MOD_URLS_NO_PK),
-            chain(PUBLIC_URLS_WITH_PK, LOGGED_IN_URLS_WITH_PK, MOD_URLS_WITH_PK),
-            ARTIST_URLS_NO_PK,
-            ARTIST_URLS_WITH_PK)
+            chain(PUBLIC_URLS_NO_PK, LOGGED_IN_URLS_NO_PK, artist_urls_no_pk_allowed, MOD_URLS_NO_PK),
+            chain(PUBLIC_URLS_WITH_PK, LOGGED_IN_URLS_WITH_PK, artist_urls_with_pk_allowed, MOD_URLS_WITH_PK),
+            artist_urls_no_pk_disallowed,
+            artist_urls_with_pk_disallowed)
         self.assert_permissions_for_hidden_records(PUBLIC_URLS_WITH_PK, ())
+
 
     def test_admin(self):
         self.create_user_profile(email="admin@admin.net", password='12345', is_staff=True)
         self.client.login(email="admin@admin.net", password='12345')
 
-        # Critically this includes yes permissions for editing artists/concrets not belonging to this user
-        artist_urls_besides_dashboard = (url for url in ARTIST_URLS_NO_PK if url != "artist_dashboard")
+        # Critically this includes yes permissions for editing artists/concerts not belonging to this user
+        artist_urls_no_pk_disallowed = ("artist_dashboard",)
+        artist_urls_no_pk_allowed = (url for url in ARTIST_URLS_NO_PK if url not in artist_urls_no_pk_disallowed)
+
         self.assert_generic_permissions(
-            chain(PUBLIC_URLS_NO_PK, LOGGED_IN_URLS_NO_PK, artist_urls_besides_dashboard, MOD_URLS_NO_PK),
+            chain(PUBLIC_URLS_NO_PK, LOGGED_IN_URLS_NO_PK, artist_urls_no_pk_allowed, MOD_URLS_NO_PK),
             chain(PUBLIC_URLS_WITH_PK, LOGGED_IN_URLS_WITH_PK, ARTIST_URLS_WITH_PK, MOD_URLS_WITH_PK),
-            ("artist_dashboard",),
+            artist_urls_no_pk_disallowed,
             ())
         self.assert_permissions_for_hidden_records(PUBLIC_URLS_WITH_PK, ())
 

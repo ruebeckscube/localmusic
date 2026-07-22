@@ -117,10 +117,12 @@ class ViewArtistTests(TestCaseHelpers):
 
     def test_temp_artist_can_only_be_viewed_by_artist(self):
         response = self.client.get(reverse("findshows:view_artist", args=(self.StaticArtists.TEMP_ARTIST.value,)))
-        self.assertEqual(response.status_code, 403)
+        self.assertTemplateUsed(response, 'findshows/pages/view_artist_hidden.html')
+
         self.login_static_user(self.StaticUsers.TEMP_ARTIST)
         response = self.client.get(reverse("findshows:view_artist", args=(self.StaticArtists.TEMP_ARTIST.value,)))
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateNotUsed(response, 'findshows/pages/view_artist_hidden.html')
 
 
     def test_visible_if_and_only_if_created_by_verified(self):
@@ -134,9 +136,11 @@ class ViewArtistTests(TestCaseHelpers):
         for concert in visible_artists:
             response = self.client.get(reverse("findshows:view_artist", args=(concert.pk,)))
             self.assertEqual(response.status_code, 200)
+            self.assertTemplateNotUsed(response, 'findshows/pages/view_artist_hidden.html')
         for concert in hidden_artists:
             response = self.client.get(reverse("findshows:view_artist", args=(concert.pk,)))
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, 'findshows/pages/view_artist_hidden.html')
 
 
 class ArtistViewTestHelpers(TestCaseHelpers):
@@ -392,7 +396,7 @@ class CreateTempArtistTests(TestCaseHelpers):
         response = self.client.post(reverse("findshows:create_temp_artist"), data=temp_artist_post_data())
         self.assert_records_created(Artist, 0)
         self.assertIn("Please verify your email before inviting artists.", str(response.content))
-        self.assertTemplateUsed("findshows/htmx/modal_error_msg.html")
+        self.assertTemplateUsed(response, "findshows/htmx/modal_error_msg.html")
 
 
     def test_unverified_user_can_create_but_no_email(self):

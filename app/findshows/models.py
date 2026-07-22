@@ -650,6 +650,10 @@ class User(AbstractBaseUser, PermissionsMixin):
                                                                 ArtistVerificationStatus.INVITED,
                                                                 ArtistVerificationStatus.NOT_LOCAL))
 
+    def can_see_artist_dashboard_or_is_admin(self):
+        return (not self.is_anonymous) and (self.can_see_artist_dashboard() or self.is_staff)
+
+
     def is_local_artist_account(self):
         return (not self.is_anonymous
             and self.userprofile.artist_verification_status in (ArtistVerificationStatus.UNVERIFIED,

@@ -1,0 +1,10 @@
+{% extends "localmusic/small_page.html" %}
+
+{% block small_content %}
+    <div class="text-center m-auto fieldgroup">
+        The artist profile you're trying to view is not public yet. They either
+        need to finish filling out their profile, or mods haven't verified
+        the account yet. Thanks for your patience! (If this is your page,
+        <a class="link" href={% url 'login' %}>log in</a> to view it.)
+    </div>
+{% endblock %}

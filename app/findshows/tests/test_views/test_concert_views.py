@@ -33,16 +33,16 @@ class ViewConcertTests(ConcertViewTestHelpers):
         concert = self.create_concert(artists=[self.get_static_instance(self.StaticArtists.LOCAL_ARTIST),
                                             self.get_static_instance(self.StaticArtists.TEMP_ARTIST)])
         response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
-        self.assertEqual(response.status_code, 403)
+        self.assertTemplateUsed(response, 'findshows/pages/view_concert_hidden.html')
 
         self.login_static_user(self.StaticUsers.TEMP_ARTIST)
         response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
-        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'findshows/pages/view_concert.html')
 
         self.client.logout()
         self.login_static_user(self.StaticUsers.NON_ARTIST)
         response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
-        self.assertEqual(response.status_code, 403)
+        self.assertTemplateUsed(response, 'findshows/pages/view_concert_hidden.html')
 
 
     def test_concert_made_by_unverified_user_is_only_viewable_by_artists_on_bill(self):
@@ -53,16 +53,16 @@ class ViewConcertTests(ConcertViewTestHelpers):
                                                artist],
                                       created_by=unverified_user)
         response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
-        self.assertEqual(response.status_code, 403)
+        self.assertTemplateUsed(response, 'findshows/pages/view_concert_hidden.html')
 
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
-        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'findshows/pages/view_concert.html')
 
         self.client.logout()
         self.login_static_user(self.StaticUsers.TEMP_ARTIST)
         response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
-        self.assertEqual(response.status_code, 403)
+        self.assertTemplateUsed(response, 'findshows/pages/view_concert_hidden.html')
 
 
     def test_visible_if_and_only_if_created_by_verified(self):
@@ -75,10 +75,10 @@ class ViewConcertTests(ConcertViewTestHelpers):
 
         for concert in visible_concerts:
             response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
-            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, 'findshows/pages/view_concert.html')
         for concert in hidden_concerts:
             response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
-            self.assertEqual(response.status_code, 403)
+            self.assertTemplateUsed(response, 'findshows/pages/view_concert_hidden.html')
 
 
 class RecordsCreatedTodayTests(ConcertViewTestHelpers):

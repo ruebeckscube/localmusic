@@ -1,0 +1,10 @@
+{% extends "localmusic/small_page.html" %}
+
+{% block small_content %}
+    <div class="text-center m-auto fieldgroup">
+        The concert page you're trying to view is not public yet. It either
+        needs artists to finish filling out their profile, or for mods to verify
+        artist accounts or venues. Thanks for your patience! (If this is your
+        concert listing, <a class="link" href={% url 'login' %}>log in</a> to view it.)
+    </div>
+{% endblock %}

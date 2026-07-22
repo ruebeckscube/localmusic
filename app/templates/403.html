@@ -7,8 +7,10 @@
     <p class="p-2 text-center">
         HTTP error 403 (forbidden)
     </p><p class="p-2">
-        Hey! You can't go there! You're logged in as {{ user.email }} and do not have access to
-        this page.
+        Hey! You can't go there!
+        {% if user.is_authenticated %}
+            You're logged in as {{ user.email }} and do not have access to this page.
+        {% endif %}
     </p><p class="p-2">
         If you think this is in error, please <a class="link" href={% url 'findshows:contact' %}>let us know</a>.
     </p><p class="p-2 text-center">

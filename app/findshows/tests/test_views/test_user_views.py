@@ -147,7 +147,7 @@ def create_account_post_request():
 class CreateAccountTests(TestCaseHelpers):
     def test_create_account_GET(self):
         response = self.client.get(reverse("create_account"))
-        self.assertTemplateUsed('create_account.html')
+        self.assertTemplateUsed(response, 'registration/create_account.html')
         self.assertEqual(response.status_code, 200)
         self.assert_records_created(User, 0)
         self.assert_records_created(UserProfile, 0)

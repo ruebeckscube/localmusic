@@ -185,11 +185,11 @@ def view_artist(request, pk):
     if request.user.is_anonymous:
         can_edit = False
         if not is_public:
-            raise PermissionDenied
+            return render(request, "findshows/pages/view_artist_hidden.html")
     else:
         can_edit = artist in request.user.userprofile.managed_artists.all()
         if not (is_public or can_edit or request.user.is_mod_or_admin()):
-            raise PermissionDenied
+            return render(request, "findshows/pages/view_artist_hidden.html")
 
     upcoming_concerts = Concert.objects.all() if (can_edit or User.is_mod_or_admin(request.user)) else Concert.publically_visible()
     upcoming_concerts = upcoming_concerts.filter(date__gte=timezone.now(), artists=artist)
@@ -305,7 +305,7 @@ def artist_search_results(request):
 @login_required
 def create_temp_artist(request):
     permissions_msg = ""
-    if not (request.user.is_local_artist_account() or request.user.is_mod):
+    if not (request.user.is_local_artist_account() or request.user.is_mod or request.user.is_staff):
         permissions_msg = "You must have a local artist account to invite an artist to the platform."
     elif not request.user.userprofile.email_is_verified:
         permissions_msg = "Please verify your email before inviting artists."
@@ -356,7 +356,7 @@ def create_temp_artist(request):
     return response
 
 
-@login_required
+@user_passes_test(User.can_see_artist_dashboard_or_is_admin)
 def manage_artist_access(request, pk):
     artist = get_object_or_404(Artist, pk=pk)
     if (artist not in request.user.userprofile.managed_artists.all()) and not request.user.is_staff:
@@ -466,7 +466,7 @@ def follow_artist(request, pk, unfollow=False, htmx=False):
     if request.user.is_anonymous:  # can't use login_required bc htmx
         next = reverse('findshows:unfollow_artist' if unfollow else 'findshows:follow_artist', args=(pk,))
         url = url_with_next(reverse('login'), next)
-        return HttpResponse('', headers={"HX-Redirect": url}) if htmx else redirect(url)
+        return HttpResponse(b'', headers={"HX-Redirect": url}) if htmx else redirect(url)
 
     artist = get_object_or_404(Artist, pk=pk)
 
@@ -500,11 +500,11 @@ def view_concert(request, pk=None):
     artists = concert.artists.all()
     if (not concert.created_by.user.listings_are_public()) or any(a.is_temp_artist for a in artists):
         if request.user.is_anonymous:
-            raise PermissionDenied
+            return render(request, "findshows/pages/view_concert_hidden.html")
         elif request.user.is_mod_or_admin():
             pass
         elif not set(artists) & set(request.user.userprofile.managed_artists.all()):
-            raise PermissionDenied
+            return render(request, "findshows/pages/view_concert_hidden.html")
 
     return render(request, 'findshows/pages/view_concert.html', {'concert': concert})
 
