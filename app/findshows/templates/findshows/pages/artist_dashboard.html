@@ -1,5 +1,6 @@
 {% extends "localmusic/base.html" %}
 {% load static %}
+{% load findshows_tags %}
 
 {% block content %}
 <div class="p-3">
@@ -85,27 +86,33 @@
 
     <div class="bg-highlight-item-light/40 p-3 m-3">
         <h2> My Shows </h2>
-
+        <p class="pl-4 max-w-[1000px]">
+            Shows are announced to followers the week after they're posted &amp; complete.
+            They are shared to followers + recomendees the week before the show date.
+        </p>
         <div class="flex flex-col w-full align-middle">
-            {% for concert in concerts %}
+          {% for concert in concerts %}
             <div class="flex max-sm:flex-col m-2">
                 <div class="w-full">
                     {% include "findshows/partials/concert_card.html" %}
                 </div>
-                {% if concert.created_by == user.userprofile %}
                 <div class="w-60 flex sm:flex-col justify-center items-center mx-auto my-2">
+                    <div class="p-2 text-center"> {% announce_date concert %} </div>
+                    <div class="p-2 text-center"> {% share_date concert %} </div>
+                  {% if concert.created_by == user.userprofile %}
                     <button type="button" class="btn" onclick="location.href='{% url 'findshows:edit_concert' concert.pk %}?from=artist_dashboard'">
                         Edit
                     </button>
                     {% include "findshows/htmx/cancel_concert_button.html" %}
+                  {% endif %}
                 </div>
-                {% endif %}
             </div>
-            {% empty %}
+          {% empty %}
             <div class="w-fit mx-auto p-2"> You do not have any upcoming shows listed. </div>
-            {% endfor %}
+          {% endfor %}
         </div>
     </div>
+
     {% if outstanding_invites %}
     <div class="bg-highlight-item-light/40 p-3 m-3">
         <h2> Outstanding invites </h2>
@@ -125,6 +132,7 @@
         </table>
     </div>
     {% endif %}
+
 </div>
 
 {% endblock %}

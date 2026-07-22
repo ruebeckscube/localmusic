@@ -566,6 +566,9 @@
   .max-w-\[50em\] {
     max-width: 50em;
   }
+  .max-w-\[1000px\] {
+    max-width: 1000px;
+  }
   .max-w-full {
     max-width: 100%;
   }

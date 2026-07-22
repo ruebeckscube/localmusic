@@ -797,6 +797,7 @@ class Concert(CreationTrackingMixin):
     description=models.CharField(max_length=50, null=True, blank=True,
                                  help_text="50 characters of vibes.")
     announced=models.DateField(null=True, editable=False)
+    shared=models.DateField(null=True, editable=False)
 
     @classmethod
     def publically_visible(cls):

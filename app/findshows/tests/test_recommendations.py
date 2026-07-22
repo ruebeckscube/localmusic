@@ -1,7 +1,9 @@
 import datetime
 from django.core import mail
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.timezone import now
+from django.views.generic.dates import timezone_today
 from findshows.email import send_rec_email
 from findshows.models import ConcertTags, MusicBrainzArtist
 from findshows.tests.test_helpers import TestCaseHelpers, concert_GET_params
@@ -109,6 +111,11 @@ class RecommendationTests(TestCaseHelpers):
                                               (self.concerts[2], announced_concert, self.concerts[0], self.concerts[1]),
                                               excluded_concerts=(self.concerts[3],))
 
+        announced_concert.refresh_from_db()
+        self.assertEqual(announced_concert.announced, timezone_today())
+        self.assertEqual(announced_concert.shared, None)
+        self.concerts[0].refresh_from_db()
+        self.assertEqual(self.concerts[0].shared, timezone_today())
 
 
     def test_number_database_hits_in_send_rec_email(self):
@@ -116,13 +123,13 @@ class RecommendationTests(TestCaseHelpers):
         self.create_user_profile(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user1@em.ail", preferred_concert_tags=[ConcertTags.ORIGINALS])
         self.create_user_profile(favorite_musicbrainz_artists=['4-0', '4-1', '4-2'], email="user2@em.ail")
 
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(10):
             send_rec_email()
         self.assert_emails_sent(2)
 
         self.create_user_profile(favorite_musicbrainz_artists=[], email="user3@em.ail")
         self.create_user_profile(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user4@em.ail")
 
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(10):
             send_rec_email()
         self.assert_emails_sent(6)

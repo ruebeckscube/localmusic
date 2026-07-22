@@ -283,9 +283,16 @@ def _one_rec_email(user_profile, search_params, subject, email_header, next_week
     return (subject, text_message, html_message, None, (user_profile.user.email,))
 
 
+def _update_share_date(concerts, field):
+    today = datetime.date.today()
+    for c in concerts:
+        setattr(c, field, today)
+    Concert.objects.bulk_update(concerts, [field], 100)
+
+
 def send_rec_email():
     subject, user_profiles, search_params, email_header, next_week_concerts, unannounced_concerts = _load_general_recommendation_data()
-    if not next_week_concerts:
+    if not (next_week_concerts or unannounced_concerts):
         logger.info(f"There are no concerts listed this week--not sending recommendation emails.")
         return None
 
@@ -293,10 +300,8 @@ def send_rec_email():
                                for user_profile in user_profiles.iterator(chunk_size=1000))
 
     if sent:
-        today = datetime.date.today()
-        for c in unannounced_concerts:
-            c.announced = today
-        Concert.objects.bulk_update(unannounced_concerts, ['announced'], 100)
+        _update_share_date(unannounced_concerts, 'announced')
+        _update_share_date(next_week_concerts, 'shared')
 
     logger.info(f"Sent {sent} recommendation emails")
     return sent

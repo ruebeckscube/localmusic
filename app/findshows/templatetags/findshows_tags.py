@@ -4,9 +4,12 @@ from django import template
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils.timezone import timedelta
+from django.views.generic.dates import timezone_today
+from django.conf import settings
 
 from findshows.email import local_url_to_email
-from findshows.models import CustomText
+from findshows.models import Concert, CustomText
 
 register = template.Library()
 
@@ -101,3 +104,40 @@ def obfuscate_if_email(value):
 
     user, domain = value[7:].split("@")
     return mark_safe(f'#" data-eu="{user}" data-ed="{domain}")')
+
+
+# Email includes send_date <= concert.date <= send_date + 6
+# settings.WEEKLY_EMAIL_DAY = 6 (Sunday)
+def _closest_email_date(date, before=False):
+    delta = (settings.WEEKLY_EMAIL_DAY - date.weekday()) % 7
+    delta = delta or 7 # day-of, assume the email has already gone out
+    return date + timedelta(delta - (before * 7))
+
+
+def _format_share_info(text, date):
+    date = date.strftime("%b %d") if date else "n/a"
+    return mark_safe(f"<div>{text}</div><div>{date}</div>")
+
+
+@register.simple_tag
+def announce_date(concert: Concert):
+    if concert.announced:
+        return _format_share_info("Announced", concert.announced)
+
+    email_date = _closest_email_date(timezone_today())
+    if concert.date < (email_date + timedelta(7)) or concert.cancelled:
+        return _format_share_info("Announced", None)
+
+    return _format_share_info("To announce", email_date)
+
+
+@register.simple_tag
+def share_date(concert):
+    if concert.shared:
+        return _format_share_info("Shared", concert.shared)
+
+    email_date = _closest_email_date(concert.date, before=True)
+    if email_date <= timezone_today() or concert.cancelled:
+        return _format_share_info("Shared", None)
+
+    return _format_share_info("To share", email_date)

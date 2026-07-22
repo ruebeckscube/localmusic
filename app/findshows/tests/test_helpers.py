@@ -248,6 +248,7 @@ class MixinForAllTestCases():
                        cancelled=False,
                        pk=None,
                        announced=None,
+                       shared=None,
                        ) -> Concert:
         date = date or timezone_today()
         start_time = start_time or datetime.time(19,0)
@@ -262,6 +263,7 @@ class MixinForAllTestCases():
             ticket_description=ticket_description,
             tags=tags,
             announced=announced,
+            shared=shared,
         )
         if created_by is None:
             concert.created_by_id = cls.StaticUsers.DEFAULT_CREATOR.value
