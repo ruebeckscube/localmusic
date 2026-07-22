@@ -278,6 +278,10 @@ class ConcertForm(DefaultStylingModelForm):
 
 
     def check_venue_date(self, cleaned_data):
+        for field in ('venue', 'date'):
+            if not cleaned_data.get(field):
+                return
+
         concert = Concert(
             venue=cleaned_data.get('venue'),
             date=cleaned_data.get('date'),

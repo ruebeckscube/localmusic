@@ -84,6 +84,12 @@ class ValidationTests(ConcertFormTestHelpers):
         self.assertTrue(form.is_valid())
 
 
+    def test_no_venue_doesnt_error(self):
+        form = self.make_form()
+        form.data.pop('venue')
+        self.assertFalse(form.is_valid())
+
+
     def test_single_artist_makes_warning(self):
         artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
         user_profile = self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)
