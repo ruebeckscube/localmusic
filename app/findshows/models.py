@@ -2,6 +2,7 @@ from datetime import timedelta
 import hashlib
 from html.parser import HTMLParser
 import logging
+from requests.exceptions import SSLError
 from urllib.parse import urlencode, urlsplit, parse_qs
 from statistics import mean
 import secrets
@@ -361,10 +362,13 @@ class EmbedLink(models.Model):
 
 
     def _get_oembed_iframe_url(self):
-        r = requests.get(self._base_oembed_url(), params={
-            "url": self.resource_url,
-            "format": "json",
-        })
+        try:
+            r = requests.get(self._base_oembed_url(), params={
+                "url": self.resource_url,
+                "format": "json",
+            })
+        except SSLError:
+            raise ValidationError("Error connecting to embed host. Please try again in a few minutes; if the error persists please contact us to report the bug.")
 
         match r.status_code:
             case 200:
@@ -387,7 +391,10 @@ class EmbedLink(models.Model):
 
 
     def _get_bandcamp_iframe_url(self):
-        r = requests.get(self.resource_url)
+        try:
+            r = requests.get(self.resource_url)
+        except SSLError:
+            raise ValidationError("Error connecting to Bandcamp. Please try again in a few minutes; if the error persists please contact us to report the bug.")
         if r.status_code == 504:
             raise ValidationError(f"Timeout from {self._base_oembed_url()}; please try a different source or try again in a few minutes.")
         if r.status_code != 200:

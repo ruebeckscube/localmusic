@@ -2,6 +2,7 @@ from unittest.mock import patch, MagicMock
 
 from django.forms import ValidationError
 from django.test import TestCase
+from requests.exceptions import SSLError
 
 from findshows.models import EmbedLink, ListenLink, YoutubeLink
 
@@ -59,6 +60,18 @@ class UpdateIframeUrlTests(TestCase):
             self.set_mock_props(requests_mock, code)
             with self.assertRaises(ValidationError):
                 link.update_iframe_url()
+
+    def test_oembed_SSL_error(self, requests_mock):
+        link = ListenLink(resource_url = EXAMPLE_SPOTIFY_RESOURCE_URL)
+        requests_mock.side_effect = SSLError
+        with self.assertRaises(ValidationError):
+            link.update_iframe_url()
+
+    def test_bandcamp_SSL_error(self, requests_mock):
+        link = ListenLink(resource_url = EXAMPLE_BANDCAMP_RESOURCE_URL)
+        requests_mock.side_effect = SSLError
+        with self.assertRaises(ValidationError):
+            link.update_iframe_url()
 
     def test_oembed_good_http_response_bad_content(self, requests_mock):
         link = ListenLink(resource_url = EXAMPLE_SPOTIFY_RESOURCE_URL)
