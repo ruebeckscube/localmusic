@@ -8,6 +8,12 @@
 
         <title>{{ SITE_TITLE }}</title>
 
+        {# Icons #}
+        <link rel="manifest" href="{% static 'findshows/icons/manifest.webmanifest' %}">
+        <link rel="icon" href="{% static 'findshows/icons/favicon.ico' %}" sizes="32x32">
+        <link rel="icon" href="{% static 'findshows/icons/icon.svg' %}" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="{% static 'findshows/icon/apple-touch-icon.png' %}">
+
         {# HTMX https://htmx.org/ #}
         <script src="https://unpkg.com/htmx.org@2.0.4"></script>
         {# Alpine plugins (load BEFORE core)#}
