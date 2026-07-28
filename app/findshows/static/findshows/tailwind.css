@@ -991,6 +991,13 @@
       background-color: var(--color-sub-background);
     }
   }
+  .hover\:cursor-pointer {
+    &:hover {
+      @media (hover: hover) {
+        cursor: pointer;
+      }
+    }
+  }
   .hover\:border-clickable-h {
     &:hover {
       @media (hover: hover) {
