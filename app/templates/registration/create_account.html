@@ -3,7 +3,9 @@
 {% block small_content %}
     <div class="p-3">
         <h1>Create an account</h1>
-        <form method="post" action="{% url 'create_account' %}">
+        <form method="post" action="{% url 'create_account' %}"
+              x-data="generic_form_data()"
+              x-bind="props">
             {% csrf_token %}
             <div class="flex flex-col">
                 <div class="errorlist">
@@ -16,7 +18,7 @@
                 {% endfor %}
             </div>
             <div>
-                <input class="btn block w-50 mx-auto mt-5" type="submit" value="Create account">
+                <input class="btn block w-50 mx-auto mt-5" type="submit" value="Create account" :disabled="submitDisabled">
                 {% if next %}
                     <input type="hidden" name="next" value="{{ next }}">
                 {% endif %}

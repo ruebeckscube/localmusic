@@ -66,9 +66,9 @@
                        hx-post="{% url 'findshows:delete_contact' contact.id %}"
                        hx-trigger="click"
                        value="Delete"
-                       hx-target="next .delete-contact-response"
+                       hx-target="this"
+                       hx-swap="outerHTML"
                 >
-                <div class="delete-contact-response"></div>
             </form>
         </div>
         {% endfor %}

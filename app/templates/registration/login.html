@@ -31,7 +31,9 @@
         {% endif %}
     {% endif %}
 
-    <form class="flex flex-col w-full items-center" method="post" action="{% url 'login' %}">
+    <form class="flex flex-col w-full items-center" method="post" action="{% url 'login' %}"
+          x-data="generic_form_data()"
+          x-bind="props">
         {% csrf_token %}
         <div class="flex flex-col fieldgroup w-full max-w-md">
             <div><label for="{{form.username.auto_id}}">Email:</label></div>
@@ -42,7 +44,7 @@
             <div class="textinput-wrapper">{{ form.password }}</div>
         </div>
 
-        <input class="block btn w-40 m-2" type="submit" value="Log in">
+        <input class="block btn w-40 m-2" type="submit" value="Log in" :disabled="submitDisabled">
 
         {% if next %}
             <a class="link text-sm m-1" href="{% url 'password_reset' %}?next={{ next | urlencode }}">Lost password?</a>

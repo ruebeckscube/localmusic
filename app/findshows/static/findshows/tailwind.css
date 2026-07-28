@@ -1540,6 +1540,15 @@
         background-color: var(--color-clickable-h);
       }
     }
+    &:disabled {
+      cursor: progress;
+    }
+    &:disabled {
+      background-color: color-mix(in srgb, #9719ea 20%, transparent);
+      @supports (color: color-mix(in lab, red, red)) {
+        background-color: color-mix(in oklab, var(--color-clickable) 20%, transparent);
+      }
+    }
   }
   .textinput {
     margin: calc(var(--spacing) * 0.5);

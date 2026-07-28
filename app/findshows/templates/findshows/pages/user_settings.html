@@ -23,6 +23,8 @@
   {% endif %}
     <h1> User Settings </h1>
     <form class="flex flex-col"
+          x-data="generic_form_data()"
+          x-bind="props"
           method="post" action="{% url 'findshows:user_settings' %}">
         {% csrf_token %}
         <div class="fieldgroup">
@@ -38,7 +40,7 @@
             {{form.preferred_concert_tags.as_field_group}}
         </div>
         <input type="hidden" name="next" value="{{ query.next }}">
-        <input class="btn mx-auto" type="submit" value="Save">
+        <input class="btn mx-auto" type="submit" value="Save" :disabled="submitDisabled">
     </form>
 
     <h1> Following </h1>

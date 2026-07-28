@@ -99,6 +99,7 @@
 
   .btn {
     @apply shadow-lg bg-clickable hover:bg-clickable-h cursor-pointer text-white m-0.5 p-2 w-fit h-fit text-center;
+    @apply disabled:bg-clickable/20 disabled:cursor-progress;
   }
 
   .textinput {
