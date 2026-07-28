@@ -16,6 +16,8 @@
     <p class="helptext pl-6">Fields marked <span class="text-highlight-text">*</span> are required.</p>
     <form method="post"
           enctype="multipart/form-data"
+          x-data="{'blockUnload': true}"
+          @beforeunload.window="if (blockUnload) {$event.preventDefault(); $event.returnValue = true;}"
           {% if pk %}
           action="{% url 'findshows:edit_concert' pk %}"
           {% else %}
@@ -100,8 +102,11 @@
         {% endmodal_confirmation %}
 
         <div class="flex fieldgroup justify-center mt-6">
-            <a class="block btn w-full max-w-30 m-8" href="{{ cancel_link }}">Cancel</a>
-            <input class="block btn w-full max-w-30 m-8" type="submit" value="Save">
+            <a class="block btn w-full max-w-30 m-8" href="{{ cancel_link }}"
+               @click="blockUnload=false;"
+            >Cancel</a>
+            <input class="block btn w-full max-w-30 m-8" type="submit" value="Save"
+                   @click="blockUnload=false;">
         </div>
     </form>
 {% endblock %}
