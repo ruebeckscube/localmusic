@@ -8,10 +8,11 @@ from findshows.tests.test_helpers import TestCaseHelpers
 
 
 class ArtistFormTestHelpers(TestCaseHelpers):
-    def form_data(self, listen_links=None, youtube_links = []):
+    def form_data(self, listen_links=None, youtube_links = [], num_mb_artists=3):
         self.create_musicbrainz_artist('1')
         self.create_musicbrainz_artist('2')
         self.create_musicbrainz_artist('3')
+        self.create_musicbrainz_artist('4')
         data = {
             'name': ['This is a test with lots of extra text'],
             'bio': ['I sing folk songs and stuff'],
@@ -19,7 +20,7 @@ class ArtistFormTestHelpers(TestCaseHelpers):
                 'https://soundcloud.com/measuringmarigolds/was-it-worth-the-kiss-demo',
                 'https://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo',
                 'https://soundcloud.com/measuringmarigolds/wax-wane-demo'],
-            'similar_musicbrainz_artists': ['1', '2', '3'],
+            'similar_musicbrainz_artists': ['1', '2', '3', '4'][:num_mb_artists],
             'socials_links_display_name': ['', '', ''],
             'socials_links_url': ['', '', ''],
             'initial-socials_links': ['[]'],
@@ -58,19 +59,33 @@ def mock_iframe(embed_link: EmbedLink):
 
 
 @patch("findshows.forms.MusicBrainzArtist.get_similar_artists", return_value={"abc"})
+class SimilarMusicbrainzArtistsTests(ArtistFormTestHelpers):
+    def test_too_few_mb_artists(self, *_):
+        form = ArtistEditForm(self.form_data(num_mb_artists=2), self.file_data())
+        self.assertFalse(form.is_valid())
+        self.assertIn("Please enter three", form.errors['similar_musicbrainz_artists'][0])
+
+    def test_too_many_mb_artists(self, *_):
+        form = ArtistEditForm(self.form_data(num_mb_artists=4), self.file_data())
+        self.assertFalse(form.is_valid())
+        self.assertIn("Please enter three", form.errors['similar_musicbrainz_artists'][0])
+
+
+
+@patch("findshows.forms.MusicBrainzArtist.get_similar_artists", return_value={"abc"})
 class EmbedTests(ArtistFormTestHelpers):
-    def test_valid_links(self, *args):
+    def test_valid_links(self, *_):
         form = ArtistEditForm(self.form_data(), self.file_data())
         self.assertTrue(form.is_valid())
 
-    def test_empty_links(self, *args):
+    def test_empty_links(self, *_):
         form = ArtistEditForm(self.form_data(listen_links=[]), self.file_data())
         self.assertFalse(form.is_valid())
         self.assertIn("Please enter at least one", form.errors['listen_links'][0])
 
     @patch('findshows.forms.ListenLink.update_iframe_url', side_effect=mock_iframe, autospec=True)
     @patch('findshows.forms.YoutubeLink.update_iframe_url', side_effect=mock_iframe, autospec=True)
-    def test_multiple_album_links(self, *args):
+    def test_multiple_album_links(self, *_):
         listen_links = ["https://open.spotify.com/album/52UVPYpWJtkadiJeIq6OSz?si=eEUWYO3BR8y7ivSbUi0G5A",
                         "https://measuringmarigolds.bandcamp.com/album/measuring-marigolds"]
         form = ArtistEditForm(self.form_data(listen_links=listen_links), self.file_data())
@@ -78,7 +93,7 @@ class EmbedTests(ArtistFormTestHelpers):
         self.assertIn("Please enter links to either (a) one album", form.errors['listen_links'][0])
 
     @patch('findshows.models.EmbedLink._get_oembed_iframe_url', side_effect=ValidationError("test error"))
-    def test_error_from_update_iframe(self, *args):
+    def test_error_from_update_iframe(self, *_):
         listen_links = ["https://open.spotify.com/album/52UVPYpWJtkadiJeIq6OSz?si=eEUWYO3BR8y7ivSbUi0G5A",
                         "https://measuringmarigolds.bandcamp.com/album/measuring-marigolds"]
         youtube_links = ["https://youtu.be/dQw4w9WgXcQ?si=qTRRfXlOMaGVdx1N"]
@@ -89,7 +104,7 @@ class EmbedTests(ArtistFormTestHelpers):
 
     @patch('findshows.forms.ListenLink.update_iframe_url', side_effect=mock_iframe, autospec=True)
     @patch('findshows.forms.YoutubeLink.update_iframe_url', side_effect=mock_iframe, autospec=True)
-    def test_update_embed_links(self, *args):
+    def test_update_embed_links(self, *_):
         listen_links=['https://soundcloud.com/measuringmarigolds/was-it-worth-the-kiss-demo',
                       'https://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo']
         youtube_links=['https://www.youtube.com/watch?v=IC1ZuNDTiz8']

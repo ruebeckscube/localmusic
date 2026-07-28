@@ -148,6 +148,9 @@ class ArtistEditForm(DefaultStylingModelForm):
 
     def clean_similar_musicbrainz_artists(self):
         mb_artists = self.cleaned_data['similar_musicbrainz_artists']
+        if mb_artists and len(mb_artists) != 3:
+            raise ValidationError("Please enter three artists. These are used for recommendations.")
+
         no_similar_artists = [mba.name
                               for mba in mb_artists
                               if not mba.get_similar_artists()]
