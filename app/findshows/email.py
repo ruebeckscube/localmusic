@@ -87,8 +87,7 @@ def send_verify_email(email_verification: EmailVerification, invite_code, form=N
     message_blocks = [f"""
 Welcome to {settings.SITE_TITLE}!
 
-Please click the following link to verify your email address:
-{local_url_to_email(email_verification.get_url(invite_code))}
+{local_url_to_email(email_verification.get_url(invite_code), "Please click here to verify your email address")}.
     """]
     logger.info("Sending verification email")
     return send_simple_email(subject, message_blocks, [email_verification.invited_email], form, errorlist=errorlist)

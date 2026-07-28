@@ -8,7 +8,7 @@
             <form type="post">
                 {% csrf_token %}
                 Please check your email for a verification link. Weekly emails and other features will
-                be unavailable with an unconfirmed email address. If you didn't receive an email after
+                be unavailable with an unconfirmed email address. If you don't receive an email after
                 a few minutes, try
                 <span class="link"
                       name="resend-verification-email"
@@ -16,9 +16,7 @@
                       hx-trigger="click"
                       hx-target="closest .email-verification-banner"
                       hx-swap="outerHTML"
-                >
-                    resending.
-                </span>
+                >resending</span>.
             </form>
         {% endfor %}
     {% endif %}
