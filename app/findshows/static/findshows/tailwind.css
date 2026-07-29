@@ -210,9 +210,6 @@
   .\@container {
     container-type: inline-size;
   }
-  .\@container-normal {
-    container-type: normal;
-  }
   .visible {
     visibility: visible;
   }
@@ -559,6 +556,9 @@
   }
   .max-w-48 {
     max-width: calc(var(--spacing) * 48);
+  }
+  .max-w-52 {
+    max-width: calc(var(--spacing) * 52);
   }
   .max-w-60 {
     max-width: calc(var(--spacing) * 60);
@@ -1309,16 +1309,6 @@
       padding-left: calc(var(--spacing) * 1);
     }
   }
-  .\@2xs\:auto-cols-fr {
-    @container (width >= 18rem) {
-      grid-auto-columns: minmax(0, 1fr);
-    }
-  }
-  .\@2xs\:grid-flow-col {
-    @container (width >= 18rem) {
-      grid-auto-flow: column;
-    }
-  }
   .\@2xs\:grid-cols-1 {
     @container (width >= 18rem) {
       grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -1337,11 +1327,6 @@
   .\@2xs\:grid-cols-4 {
     @container (width >= 18rem) {
       grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-  .\@2xs\:grid-rows-2 {
-    @container (width >= 18rem) {
-      grid-template-rows: repeat(2, minmax(0, 1fr));
     }
   }
   .\@md\:mr-4 {
