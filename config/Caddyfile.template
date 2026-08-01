@@ -6,10 +6,6 @@ TEMPLATE_HOST_NAME, www.TEMPLATE_HOST_NAME {
     @php path *.php
     respond @php 404
 
-    handle_path /favicon.ico {
-        redir /static/findshows/icons/favicon.ico
-    }
-
     handle_path /static/* {
         root * /static/
         file_server
