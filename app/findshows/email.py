@@ -250,7 +250,8 @@ def _get_concerts_for_email(user_profile, search_params, next_week_concerts, una
                              ] if search_params['concert_tags'] else list(not_followed_artist_concerts)
 
     scored_concerts = ((c.relevance_score(search_params['musicbrainz_artists']), c) for c in tag_filtered_concerts)
-    rec_concerts = [s_c[1] for s_c in sorted((s_c for s_c in scored_concerts if s_c[0] != 0), reverse=True)][:settings.CONCERT_RECS_PER_EMAIL]
+    key_func = lambda s_c: (s_c[0], s_c[1].pk)
+    rec_concerts = [s_c[1] for s_c in sorted((s_c for s_c in scored_concerts if s_c[0] != 0), reverse=True, key=key_func)][:settings.CONCERT_RECS_PER_EMAIL]
 
     random_concerts = tag_filtered_concerts or not_followed_artist_concerts
     shuffle(random_concerts)

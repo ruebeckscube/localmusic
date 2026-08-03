@@ -118,6 +118,14 @@ class RecommendationTests(TestCaseHelpers):
         self.assertEqual(self.concerts[0].shared, timezone_today())
 
 
+    def test_equal_scores_doesnt_error(self):
+        # duplicate of other existing concert
+        self.create_concert(artists=[self.artists[0][0], self.artists[0][1], self.artists[0][2]])
+        self.create_user_profile(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user1@em.ail")
+        send_rec_email()
+        self.assert_emails_sent(1)
+
+
     def test_number_database_hits_in_send_rec_email(self):
         # Main point is that it's constant with number of users :)
         self.create_user_profile(favorite_musicbrainz_artists=['0-0', '0-1', '0-2'], email="user1@em.ail", preferred_concert_tags=[ConcertTags.ORIGINALS])
