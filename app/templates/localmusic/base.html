@@ -21,8 +21,6 @@
         <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
         {# Alpine core https://alpinejs.dev/ #}
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
-        {# Rough.js #}
-        <script src="https://unpkg.com/roughjs@latest/bundled/rough.js"></script>
         {# Tailwind https://tailwindcss.com/docs/transition-property #}
         <link rel="stylesheet" href="{% static 'findshows/tailwind.css' %}">
 
@@ -48,7 +46,10 @@
         </div>
     </body>
 
-    <script src='{% static "findshows/js/rough_classes.js" %}'></script>
+    <svg class="w-0 h-0" aria-hidden="true">
+        <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="3" result="n"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="5.5"></feDisplacementMap></filter>
+    </svg>
+
     {# loading date picker here because it was doing weird shit when loaded by htmx #}
     <script src='{% static "findshows/js/date_utils.js" %}'></script>
     <script src='{% static "findshows/js/date_picker_data.js" %}'></script>

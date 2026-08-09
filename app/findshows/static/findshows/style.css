@@ -93,6 +93,10 @@
 }
 
 @layer components {
+  .rough-bg {
+      @apply relative z-10 before:absolute before:inset-0 before:filter-[url(#rough)] before:-z-10 even:before:rotate-[.7deg] odd:before:rotate-[-0.4deg];
+  }
+
   .link {
     @apply text-clickable hover:text-clickable-h font-semibold cursor-pointer underline;
   }

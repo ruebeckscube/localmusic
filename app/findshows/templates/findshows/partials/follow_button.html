@@ -27,18 +27,19 @@
         </button>
     </form>
 {% else %}
-    <div class="flex w-fit items-center p-1 min-h-12 relative">
-        <svg class="rough-bg-social-link h-full w-full absolute -z-0" xmlns="http://www.w3.org/2000/svg"
-             preserveAspectRatio='none' aria-hidden="true"></svg>
-          {% if is_followed %}
-            <a class="flex link text-lg text-center m-3 z-10" href={% url 'findshows:unfollow_artist' artist.pk %}>
-                <img title="Unfollow" src="{% static 'findshows/follow-star-filled.svg' %}"/>
-            </a>
-          {% else %}
-            <a class="flex link text-lg text-center m-3 z-10" href={% url 'findshows:follow_artist' artist.pk %}>
-                <img src="{% static 'findshows/follow-star-empty.svg' %}"/>
-                <div class="my-auto">Follow</div>
-            </a>
-          {% endif %}
-    </div>
+    <a class="flex link text-lg text-center m-3 p-2 rough-bg
+              before:bg-highlight-item-light before:rounded-full
+              before:border-2 before:border-clickable hover:before:border-clickable-h"
+       {% if is_followed %}
+       href={% url 'findshows:unfollow_artist' artist.pk %}
+       {% else %}
+       href={% url 'findshows:follow_artist' artist.pk %}
+       {% endif %}
+    >
+        {% if is_followed %}
+            <img title="Unfollow" src="{% static 'findshows/follow-star-filled.svg' %}"/>
+        {% else %}
+            <img title="Follow" src="{% static 'findshows/follow-star-empty.svg' %}"/>
+        {% endif %}
+    </a>
 {% endif %}

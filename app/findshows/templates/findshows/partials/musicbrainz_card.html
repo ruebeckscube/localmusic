@@ -1,15 +1,14 @@
-<div class="flex items-center p-1 min-h-12 relative"
+<div class="flex items-center p-1 m-1 ml-2 min-h-12
+            rough-bg before:border-2 before:bg-highlight-item-light"
      {{ dynamic|yesno:":id=musicbrainz_artist.mbid," }}
 >
-    <svg class="rough-bg-musicbrainz-card h-full w-full absolute -z-0" xmlns="http://www.w3.org/2000/svg"
-         preserveAspectRatio='none' aria-hidden="true"></svg>
-    <div class="m-1 ml-2 z-10" {{ dynamic|yesno:"x-text=musicbrainz_artist.name," }}>
+    <div class="m-1 ml-2" {{ dynamic|yesno:"x-text=musicbrainz_artist.name," }}>
         {% if not dynamic %}
             {{musicbrainz_artist.name}}
         {% endif %}
     </div>
     {% if dynamic %}
-        <div class="w-fit self-start pt-1 z-10">
+        <div class="w-fit self-start pt-1">
             <button type="button"
                     :aria-label="`Remove ${musicbrainz_artist.name} from search`"
                     @click="remove_artist(index)"

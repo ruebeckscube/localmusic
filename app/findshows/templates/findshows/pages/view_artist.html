@@ -47,11 +47,10 @@
                         {% include 'findshows/partials/follow_button.html' %}
                     </div>
                     {% for link in artist.socials_links %}
-                        <div class="flex items-center p-1 min-h-12 h-fit relative">
-                            <svg class="rough-bg-social-link h-full w-full absolute -z-0" xmlns="http://www.w3.org/2000/svg"
-                                 preserveAspectRatio='none' aria-hidden="true"></svg>
-                            <a class="link text-lg text-center m-3 z-10" href="{{ link.1|obfuscate_if_email }}" target="_blank">{{link.0}}</a>
-                        </div>
+                        <a class="link text-lg text-center m-3 p-4
+                                  rough-bg before:bg-highlight-item-light
+                                  before:border-2 before:border-clickable hover:before:border-clickable-h"
+                           href="{{ link.1|obfuscate_if_email }}" target="_blank">{{link.0}}</a>
                     {% endfor %}
                 </div>
         </div>

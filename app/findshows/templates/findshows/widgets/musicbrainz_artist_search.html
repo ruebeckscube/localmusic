@@ -2,7 +2,6 @@
 
 <div x-data="musicbrainz_artist_search_data({{ widget.artist_dicts }},{{ widget.max_artists }})"
      @keydown.escape.prevent.stop="close_dropdown()"
-     @add-musicbrainz-card="$nextTick(() => add_rough_to_node(document.getElementById($event.detail.id)))"
 >
 
     <div class="dropdown-container"

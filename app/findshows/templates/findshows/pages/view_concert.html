@@ -20,11 +20,9 @@
         <div class="flex flex-col sm:max-md:flex-row items-center md:w-1/3 fieldgroup h-fit">
             <!-- Concert poster -->
             <div class="flex flex-col sm:max-md:w-1/2 justify-center items-center @max-md:px-9 @max-md:py-4">
-                <a href={% url 'findshows:view_concert' concert.pk %}>
-                    <img src="{{concert.poster.url}}" alt="Concert poster"
-                         class="object-contain max-w-full
-                              max-h-[30em]" />
-                </a>
+                <img src="{{concert.poster.url}}" alt="Concert poster"
+                     class="object-contain max-w-full
+                          max-h-[30em]" />
             </div>
             <!-- Info -->
             <div class="w-full sm:max-md:w-1/2">
