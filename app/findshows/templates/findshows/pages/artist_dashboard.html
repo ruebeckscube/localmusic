@@ -18,19 +18,12 @@
                 <h2> Actions </h2>
                 <div class="mx-auto w-72">
                     <button class="btn block w-full" onclick="location.href='{% url 'findshows:create_concert' %}?from=artist_dashboard'">
-                        Create new show listing
+                        + New show listing
                     </button>
-                </div>
-
-                <div class="mx-auto w-72">
-                    <form>
-                        {% csrf_token %}
-                        {% include "findshows/partials/invite_artist.html" %}
-                    </form>
                 </div>
                 <div class="mx-auto w-72">
                     <button class="btn block w-full" onclick="location.href='{% url 'findshows:create_artist' %}'">
-                        Create new artist page
+                        + New artist profile
                     </button>
                 </div>
             </div>

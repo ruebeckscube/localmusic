@@ -190,9 +190,8 @@ class ArtistEditForm(DefaultStylingModelForm):
 class ConcertForm(DefaultStylingModelForm):
     date = DatePickerField()
     # NOT a model field, we parse this and save to the artists field through the SetOrder through-model
-    bill = forms.JSONField(widget=BillWidget, help_text="""List artists in set
-    order; bottom=first and top=last. If an artist does not show up in search,
-    invite them to make a profile.""")
+    bill = forms.JSONField(widget=BillWidget,
+                           help_text="List artists in set order; bottom=first and top=last.")
 
     single_artist_confirmation = forms.ChoiceField(
         required=False, widget=forms.RadioSelect(), choices=(
@@ -203,7 +202,7 @@ class ConcertForm(DefaultStylingModelForm):
     venue_date_confirmation = forms.ChoiceField(
         help_text="Please check the other listing. Is your date correct?",
         required=False, widget=forms.RadioSelect(), choices=(
-            ('unique', "This show is not a duplicate or conflict, and has the correct venue and date."),
+            ('unique', "This show is not a duplicate, and has the correct venue and date."),
         ),
     )
 

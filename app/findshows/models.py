@@ -795,8 +795,7 @@ class Concert(CreationTrackingMixin):
     doors_time=models.TimeField(blank=True, null=True)
     start_time=models.TimeField()
     end_time=models.TimeField(blank=True, null=True)
-    venue=models.ForeignKey(Venue, on_delete=models.CASCADE, help_text="""Select
-    a venue from the database, or create one if needed.""")
+    venue=models.ForeignKey(Venue, on_delete=models.CASCADE)
     ages=models.CharField(max_length=2, choices=Ages, blank=True)
     artists=models.ManyToManyField(Artist, through="SetOrder")
     ticket_link=models.URLField(blank=True)

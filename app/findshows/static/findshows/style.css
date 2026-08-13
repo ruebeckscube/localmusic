@@ -127,7 +127,7 @@
   }
 
   .popup-menu {
-    @apply z-50 border-1 border-highlight-item bg-background shadow-2xl;
+    @apply z-50 not-empty:border-1 border-highlight-item bg-background shadow-2xl;
   }
 
   .clickable-svg {
@@ -135,23 +135,23 @@
   }
 
   .select-wrapper {
-    @apply w-full border bg-white grid items-center pr-[8px] z-0 mx-[1px] my-[12px];
+    @apply w-full border bg-white grid items-center z-0 m-0.5 p-1 max-w-md;
     grid-template-areas: "select";
   }
 
   .select-wrapper:has(:focus-visible) {
-      @apply border-clickable border-2 mx-0 my-[11px] pr-[7px];
+    @apply border-clickable border-2 m-[1px];
   }
 
   .select-wrapper::after {
-    @apply w-[12px] h-[8px] bg-clickable justify-self-end;
+    @apply w-[12px] h-[8px] bg-clickable justify-self-end mr-2;
     content: "";
     grid-area: select;
     clip-path: polygon(100% 0%, 0 0%, 50% 100%);
   }
 
   .select-wrapper > select {
-    @apply appearance-none outline-none bg-transparent z-10 w-full h-full cursor-pointer m-1;
+    @apply appearance-none outline-none bg-transparent z-10 w-full h-full cursor-pointer;
     grid-area: select;
   }
 

@@ -26,18 +26,6 @@ class ArtistDashboardTests(TestCaseHelpers):
                                   (self.StaticArtists.LOCAL_ARTIST.value, self.StaticArtists.TEMP_ARTIST.value))
 
 
-    def test_local_artist_user_can_invite(self):
-        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        response = self.client.get(reverse("findshows:artist_dashboard"))
-        self.assertIn('Invite artist', str(response.content))
-
-
-    def test_nonlocal_artist_user_cant_invite(self):
-        self.login_static_user(self.StaticUsers.NONLOCAL_ARTIST)
-        response = self.client.get(reverse("findshows:artist_dashboard"))
-        self.assertNotIn('Invite artist', str(response.content))
-
-
     def test_only_shows_users_concerts(self):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
         artist2 = self.get_static_instance(self.StaticArtists.NONLOCAL_ARTIST)

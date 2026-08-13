@@ -17,7 +17,6 @@
     --spacing: 0.25rem;
     --container-sm: 24rem;
     --container-md: 28rem;
-    --container-lg: 32rem;
     --container-xl: 36rem;
     --container-2xl: 42rem;
     --container-3xl: 48rem;
@@ -374,6 +373,9 @@
   .mr-3 {
     margin-right: calc(var(--spacing) * 3);
   }
+  .mr-23 {
+    margin-right: calc(var(--spacing) * 23);
+  }
   .mr-auto {
     margin-right: auto;
   }
@@ -572,9 +574,6 @@
   .max-w-full {
     max-width: 100%;
   }
-  .max-w-lg {
-    max-width: var(--container-lg);
-  }
   .max-w-md {
     max-width: var(--container-md);
   }
@@ -595,6 +594,9 @@
   }
   .min-w-48 {
     min-width: calc(var(--spacing) * 48);
+  }
+  .min-w-56 {
+    min-width: calc(var(--spacing) * 56);
   }
   .min-w-58 {
     min-width: calc(var(--spacing) * 58);
@@ -628,6 +630,9 @@
   }
   .basis-0 {
     flex-basis: calc(var(--spacing) * 0);
+  }
+  .cursor-default {
+    cursor: default;
   }
   .cursor-pointer {
     cursor: pointer;
@@ -739,6 +744,12 @@
     background-color: color-mix(in srgb, #000 50%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-black) 50%, transparent);
+    }
+  }
+  .bg-clickable\/50 {
+    background-color: color-mix(in srgb, #9719ea 50%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-clickable) 50%, transparent);
     }
   }
   .bg-highlight-item-light {
@@ -973,6 +984,22 @@
     --tw-ease: var(--ease-in-out);
     transition-timing-function: var(--ease-in-out);
   }
+  .not-focus\:m-\[1px\] {
+    &:not(*:focus) {
+      margin: 1px;
+    }
+  }
+  .not-focus\:border-2 {
+    &:not(*:focus) {
+      border-style: var(--tw-border-style);
+      border-width: 2px;
+    }
+  }
+  .not-focus\:border-red-700 {
+    &:not(*:focus) {
+      border-color: var(--color-red-700);
+    }
+  }
   .before\:m-2 {
     &::before {
       content: var(--tw-content);
@@ -1049,6 +1076,16 @@
       }
     }
   }
+  .hover\:bg-clickable-h\/50 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: color-mix(in srgb, #ea19af 50%, transparent);
+        @supports (color: color-mix(in lab, red, red)) {
+          background-color: color-mix(in oklab, var(--color-clickable-h) 50%, transparent);
+        }
+      }
+    }
+  }
   .hover\:bg-highlight-item-light {
     &:hover {
       @media (hover: hover) {
@@ -1078,8 +1115,8 @@
       flex-direction: column;
     }
   }
-  .max-xl\:flex-col {
-    @media (width < 80rem) {
+  .max-lg\:flex-col {
+    @media (width < 64rem) {
       flex-direction: column;
     }
   }
@@ -1298,14 +1335,9 @@
       font-size: 7vw;
     }
   }
-  .xl\:w-2\/7 {
-    @media (width >= 80rem) {
-      width: calc(2/7 * 100%);
-    }
-  }
-  .xl\:w-5\/7 {
-    @media (width >= 80rem) {
-      width: calc(5/7 * 100%);
+  .lg\:w-52 {
+    @media (width >= 64rem) {
+      width: calc(var(--spacing) * 52);
     }
   }
   .\@max-4xl\:w-fit {
@@ -1652,12 +1684,14 @@
   }
   .popup-menu {
     z-index: 50;
-    border-style: var(--tw-border-style);
-    border-width: 1px;
     border-color: var(--color-highlight-item);
     background-color: var(--color-background);
     --tw-shadow: 0 25px 50px -12px var(--tw-shadow-color, rgb(0 0 0 / 0.25));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    &:not(*:empty) {
+      border-style: var(--tw-border-style);
+      border-width: 1px;
+    }
   }
   .clickable-svg {
     cursor: pointer;
@@ -1675,26 +1709,25 @@
   }
   .select-wrapper {
     z-index: 0;
-    margin-inline: 1px;
-    margin-block: 12px;
+    margin: calc(var(--spacing) * 0.5);
     display: grid;
     width: 100%;
+    max-width: var(--container-md);
     align-items: center;
     border-style: var(--tw-border-style);
     border-width: 1px;
     background-color: var(--color-white);
-    padding-right: 8px;
+    padding: calc(var(--spacing) * 1);
     grid-template-areas: "select";
   }
   .select-wrapper:has(:focus-visible) {
-    margin-inline: calc(var(--spacing) * 0);
-    margin-block: 11px;
+    margin: 1px;
     border-style: var(--tw-border-style);
     border-width: 2px;
     border-color: var(--color-clickable);
-    padding-right: 7px;
   }
   .select-wrapper::after {
+    margin-right: calc(var(--spacing) * 2);
     height: 8px;
     width: 12px;
     justify-self: flex-end;
@@ -1705,7 +1738,6 @@
   }
   .select-wrapper > select {
     z-index: 10;
-    margin: calc(var(--spacing) * 1);
     height: 100%;
     width: 100%;
     cursor: pointer;

@@ -1,11 +1,14 @@
-function modal_popup_data(show_initial=false) {
+function modal_popup_data(show_initial=false, id='') {
   return {
     show_modal: show_initial,
     success_text: "",
+    id: id,
 
-    open_modal() {
-      this.show_modal = true;
-      this.success_text = "";
+    open_modal(event) {
+        if (event && event.detail.modal_id != this.id) return;
+
+        this.show_modal = true;
+        this.success_text = "";
     },
 
     close_modal() {

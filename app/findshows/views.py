@@ -296,7 +296,7 @@ def artist_search_results(request):
     search_results = Artist.objects.filter(reduce(and_, (Q(name__icontains=k) for k in keywords))
     ).exclude(created_by__artist_verification_status=ArtistVerificationStatus.DEVERIFIED
     )[:5]
-    return render(request, "findshows/htmx/artist_search_results.html", {
+    return render(request, "findshows/widgets/bill_widget.html#artist-search-results", {
         "artists": search_results,
         "idx": idx
     })
@@ -342,7 +342,7 @@ def create_temp_artist(request):
     if request.user.has_exceeded_daily_invites():
         response = render(request, 'findshows/htmx/modal_error_msg.html')
     else:
-        response = render(request, "findshows/partials/invite_artist.html#temp-artist-form", {
+        response = render(request, "findshows/widgets/bill_widget.html#temp-artist-form", {
             "temp_artist_form": form,
         })
 
@@ -579,7 +579,7 @@ def venue_search_results(request):
     search_results = Venue.objects.filter(
         reduce(and_, (Q(name__icontains=k) for k in keywords))
     )[:5]
-    return render(request, "findshows/htmx/venue_search_results.html", {
+    return render(request, "findshows/widgets/venue_select.html#venue-search-results", {
         "venues": search_results
     })
 
@@ -637,7 +637,7 @@ def musicbrainz_artist_search_results(request):
     mb_artists = mb_artists.annotate(similarity=TrigramSimilarity('name', q)
                                      ).filter(name__fuzzy_index=q).order_by('-similarity')[:10]
 
-    return render(request, "findshows/htmx/musicbrainz_artist_search_results.html", {
+    return render(request, "findshows/widgets/musicbrainz_artist_search.html#musicbrainz-search-results", {
         "musicbrainz_artists": mb_artists
     })
 

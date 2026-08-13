@@ -19,16 +19,35 @@
                    aria-describedby="{{ widget.attrs.id }}_helptext" {# hackier than i'd like; ideally would read aria_describedby from Field properties #}
                    hx-get="{% url 'findshows:musicbrainz_artist_search_results' %}"
                    hx-trigger="keyup changed delay:500ms, click from:#search-results"
+                   @input.debounce.500ms="open_dropdown()"
                    hx-target="#musicbrainz-search-results"
                    hx-swap="innerHTML"
                    hx-include="this"
             >
-            <menu id="musicbrainz-search-results"
+            <menu {# IMPORTANT no whitespace inside menu (css :empty selector hates whitespace) but damn makes this ugly#}
+                id="musicbrainz-search-results"
                 class="absolute popup-menu"
                 x-show="show_search"
                 style="display: none;"
-            >
-            </menu>
+            >{% partialdef musicbrainz-search-results %}
+                {% for mb_artist in musicbrainz_artists %}
+                    <li class="menuitem hover:text-clickable-h"
+                        tabindex="-1"
+                        @click="add_artist('{{mb_artist.mbid|escapejs}}', '{{mb_artist.name|escapejs}}')"
+                        @keydown.enter.prevent="add_artist('{{mb_artist.mbid|escapejs}}', '{{mb_artist.name|escapejs}}')"
+                        @keydown.space.prevent="add_artist('{{mb_artist.mbid|escapejs}}', '{{mb_artist.name|escapejs}}')"
+                    >
+                        {{  mb_artist.name }}
+                        {% if mb_artist.disambiguation %}
+                            <span class="text-gray-500"> ({{ mb_artist.disambiguation }}) </span>
+                        {% endif %}
+                    </li>
+                {% empty %}
+                    <li class="menuitem cursor-default">
+                        No results
+                    </li>
+                {% endfor %}
+              {% endpartialdef musicbrainz-search-results %}</menu>
     </div>
 
     <div class="flex flex-wrap">

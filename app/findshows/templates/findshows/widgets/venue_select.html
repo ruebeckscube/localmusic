@@ -1,38 +1,56 @@
 {% load static %}
 {% load findshows_tags %}
 
-<div class="flex items-center"
+<div class="flex flex-col"
      x-data="venue_picker_data('{{widget.value|escapejs}}', '{{widget.venue.name|escapejs}}', {{widget.venue.is_verified|yesno:"true,false"}}, {{widget.venue.declined_listing|yesno:"true,false"}} )"
      x-cloak>
 
     <input type="hidden" name="{{widget.name}}" :value="selected_venue_id">
 
-    <div class="grow p-2"
-         @focusin="open_dropdown()"
+    <div @focusin="open_dropdown()"
          @focusout.stop="if (!$el.contains($event.relatedTarget)) close_dropdown()"
          @click.outside="close_dropdown()"
          @keydown.arrow-up.prevent="arrowPress($event, 'up')"
          @keydown.arrow-down.prevent="arrowPress($event, 'down')"
     >
-        <input class="textinput w-full" type="search"
+        <input class="textinput w-full max-w-md" type="search"
+               :class="(search_text && !selected_venue_name) ? 'not-focus:border-2 not-focus:border-red-700 not-focus:m-[1px]' : ''"
                x-ref="venue_search"
                name="venue-search" placeholder="Select a venue..."
                x-model="search_text"
                hx-get="{% url 'findshows:venue_search_results' %}"
                hx-trigger="keyup changed delay:500ms"
+               @input.debounce.500ms="open_dropdown()"
                hx-target="#venue-search-results"
+               @keydown.enter.prevent
         >
 
-        <menu id="venue-search-results"
-            class="absolute popup-menu"
+        <menu {# IMPORTANT no whitespace inside menu (css :empty selector hates whitespace)#}
+            id="venue-search-results"
+            class="absolute popup-menu min-w-56"
             x-show="show_search"
-            style="display: none;"
-        >
-        </menu>
+        >{% partialdef venue-search-results %}
+                {% for venue in venues %}
+                    <li class="menuitem hover:text-clickable-h"
+                        tabindex="-1"
+                        @click="select_venue('{{venue.name|escapejs}}', '{{venue.id}}', {{venue.is_verified|yesno:'true,false'}}, {{venue.declined_listing|yesno:'true,false'}})"
+                        @keydown.enter.prevent="select_venue('{{venue.name|escapejs}}', '{{venue.id}}', {{venue.is_verified|yesno:'true,false'}}, {{venue.declined_listing|yesno:'true,false'}})"
+                        @keydown.space.prevent="select_venue('{{venue.name|escapejs}}', '{{venue.id}}', {{venue.is_verified|yesno:'true,false'}}, {{venue.declined_listing|yesno:'true,false'}})"
+                    >
+                        {{venue.name}}
+                    </li>
+                {% endfor %}
+                <li class="menuitem bg-clickable/50 hover:bg-clickable-h/50"
+                    tabindex="-1"
+                    @click="$dispatch('open-modal-popup', {modal_id: 'create-venue-modal'})"
+                    @keydown.enter="$dispatch('open-modal-popup', {modal_id: 'create-venue-modal'})"
+                    @keydown.space="$dispatch('open-modal-popup', {modal_id: 'create-venue-modal'})">
+                    + New venue
+                </li>
+            {% endpartialdef venue-search-results %}</menu>
 
-        <div x-show="selected_venue_name && (!selected_venue_is_verified)" class="text-sm">
-            This venue has not yet been verified; the show will be listed
-            after verification is complete.
+        <div x-show="selected_venue_name && (!selected_venue_is_verified)" class="text-sm p-1 max-w-md">
+            This show will be listed after the venue is verified by mods. Thanks for your patience!
         </div>
 
         <div x-show="selected_venue_declined_listing" class="text-sm">
@@ -44,7 +62,7 @@
     </div>
 
     <div class="w-32" @modal-form-success="on_venue_create">
-        {% modal_form title="New venue" htmx_url="findshows:create_venue" %}
+        {% modal_form title="New venue" htmx_url="findshows:create_venue" id="create-venue-modal" %}
             {% partialdef venue-form inline %}
                 {% for field in venue_form %}
                     <div class="flex flex-col fieldgroup">

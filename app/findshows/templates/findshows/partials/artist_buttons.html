@@ -8,9 +8,20 @@
 <button type="button" class="{{ class }}" onclick="window.open('{{ artist.qr_kit.url }}', '_blank');">QR kit</button>
 {% endif %}
 
+<button class="{{ class }}"
+        x-data="{copied: false}"
+        @click="copied=true;navigator.clipboard.writeText('{% email_url 'findshows:follow_artist' artist.pk %}')"
+        x-text="copied ? 'Follow link copied!' : 'Copy follow link'">
+</button>
+
+<button type="button" class="{{ class }}"
+        x-data="" @click="$dispatch('open-modal-popup', {modal_id: '{{ artist.pk }}-artist-management-modal'})">
+    Manage access
+</button>
 <form>
     {% csrf_token %}
-    {% modal_form title="Manage access"  htmx_url="findshows:manage_artist_access" htmx_param=artist.pk %}
+    {% with artist.pk|stringformat:"d"|add:"-artist-management-modal" as id_with_prefix %}
+      {% modal_form title="Manage access"  htmx_url="findshows:manage_artist_access" htmx_param=artist.pk id=id_with_prefix %}
         {% partialdef artist-access-form inline %}
             {% if partial_errors %}
                 {{ partial_errors }}
@@ -29,11 +40,6 @@
                 remove you from accessing it.
             </div>
         {% endpartialdef artist-access-form %}
-    {% endmodal_form %}
+      {% endmodal_form %}
+    {% endwith %}
 </form>
-
-<button class="{{ class }}"
-        x-data="{copied: false}"
-        @click="copied=true;navigator.clipboard.writeText('{% email_url 'findshows:follow_artist' artist.pk %}')"
-        x-text="copied ? 'Follow link copied!' : 'Copy follow link'">
-</button>

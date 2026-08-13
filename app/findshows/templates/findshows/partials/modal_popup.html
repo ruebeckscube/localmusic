@@ -1,18 +1,16 @@
 {% load static %}
 
 <div class="w-full"
-     x-data="modal_popup_data({{ initial_show }})"
+     x-data="modal_popup_data({{ initial_show }}, '{{ id }}')"
+     {% if id %} id="{{ id }}" {% endif %}
      @keydown.escape.window="close_modal()"
+     @open-modal-popup.window="open_modal"
+     {# open with e.g. $dispatch('open-modal-popup', {modal_id: '<id>'}) #}
      x-cloak
 >
 
-    {% if type == "form" %}
-        <button type="button" class="{{ class|default:'btn w-full' }}" @click="open_modal()">
-            {{ title }}
-        </button>
-        <div x-text="success_text">
-        </div>
-    {% endif %}
+    <div x-text="success_text">
+    </div>
 
     <!--Overlay-->
     <div class="overflow-auto bg-black/50"
@@ -43,15 +41,15 @@
             <!--Footer-->
             <div class="flex justify-end pt-2">
                 <button type="button" class="btn" @click="close_modal()">Cancel</button>
-                {% if type == "confirmation" %}
-                    <button type="submit" class="btn">Save</button>
-                {% elif type == "form" %}
+                {% if hx_post %}
                     <button type="button" class="btn"
                             hx-post="{{ hx_post }}"
                             hx-trigger="click,load,keydown[keyCode==13] from:closest .modalform"
                             hx-target="previous .modal-form"
                             @modal-form-success="on_successful_create"
                     >Submit</button>
+                {% else %}
+                    <button type="submit" class="btn">Save</button>
                 {% endif %}
             </div>
 

@@ -1,19 +1,20 @@
 {% load static %}
+{% load findshows_tags %}
 
 <div class="flex flex-col items-center justify-center"
      x-data="bill_data()"
      x-init="bill_init({{widget.value}})" {# don't need |escapejs because it's already encoded as JSON? #}
      x-cloak>
 
-    <div class="flex w-full p-2 h-full items-center">
+    <div class="flex w-full flex-col">
 
         <input type="hidden" name="{{widget.name}}" :value="JSON.stringify(bill_order)">
 
         <ol id="bill-editor" class="w-full">
             <template x-for="(artist, idx) in bill_order" :key="idx">
-                <li class="flex w-full max-w-lg justify-between my-2"
+                <li class="flex my-2"
                     x-init="$nextTick(() => htmx.process($el))"> {# necessary for any HTMX in an x-for #}
-                    <div class="w-full dropdown-container"
+                    <div class="w-full max-w-md dropdown-container"
                          @focusin="open_dropdown(artist)"
                          @click.outside="close_dropdown(artist)"
                          @focusout.stop="if (!$el.contains($event.relatedTarget)) close_dropdown(artist)"
@@ -21,6 +22,7 @@
                          @keydown.arrow-down.prevent="arrowPress($event, 'down')"
                     >
                         <input class="textinput w-full" type="search"
+                               :class="(artist.search_text && !artist.id) ? 'not-focus:border-2 not-focus:border-red-700 not-focus:m-[1px]' : ''"
                                name="artist-search" placeholder="Select an artist..."
                                :title="`Artist ${bill_order.length - idx}`"
                                aria-describedby="{{ widget.attrs.id }}_helptext"
@@ -28,16 +30,34 @@
                                hx-get="{% url 'findshows:artist_search_results' %}"
                                :hx-vals="JSON.stringify({'idx': idx})"
                                hx-trigger="keyup changed delay:500ms"
+                               @input.debounce.500ms="open_dropdown(artist)"
                                hx-target="next .artist-search-results"
+                               @keydown.enter.prevent
                         >
-                        <menu
-                            class="absolute popup-menu artist-search-results"
+                        <menu {# IMPORTANT no whitespace inside menu (css :empty selector hates whitespace)#}
+                            class="absolute popup-menu artist-search-results min-w-56"
                             x-show="artist.show_search"
                             @click="close_dropdown(artist, $el.previousElementSibling)"
                             @keydown.enter.prevent="close_dropdown(artist, $el.previousElementSibling)"
                             @keydown.space.prevent="close_dropdown(artist, $el.previousElementSibling)"
-                        >
-                        </menu>
+                        >{% partialdef artist-search-results %}
+                                {% for artist in artists %}
+                                    <li class="menuitem hover:text-clickable-h"
+                                        tabindex="-1"
+                                        @click="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}')"
+                                        @keydown.enter="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}')"
+                                        @keydown.space="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}')">
+                                        {{artist.name}}
+                                    </li>
+                                {% endfor %}
+                                <li class="menuitem bg-clickable/50 hover:bg-clickable-h/50"
+                                    tabindex="-1"
+                                    @click="open_create_artist_modal(idx)"
+                                    @keydown.enter="open_create_artist_modal(idx)"
+                                    @keydown.space="open_create_artist_modal(idx)">
+                                    + New artist
+                                </li>
+                            {% endpartialdef artist-search-results %}</menu>
                     </div>
 
                     <div class="flex justify-around w-21 ml-2">
@@ -63,7 +83,7 @@
                                 <path d="M14.496 5.975l-.001 14.287-6.366-6.367L6 16.021l10.003 10.004L26 16.029 23.871 13.9l-6.366 6.368V5.977z"/>
                             </svg>
                         </button>
-                                {# Remove button #}
+                        {# Remove button #}
                         <button type="button"
                                 :title="`Remove ${artist.name || 'blank slot'} from the bill`"
                                 @click="remove_artist(idx)"
@@ -78,22 +98,31 @@
                 </li>
             </template>
         </ol>
-    </div>
+        <div class="mr-23">
+            <button type="button"
+                    class="textinput w-full max-w-md hover cursor-pointer bg-clickable/50 hover:bg-clickable-h/50"
+                    x-ref="add-set"
+                    @click="add_artist()">
+                + Add set
+            </button>
+        </div>
 
-    <div class="flex">
-    <button type="button" class="btn" x-ref="add-set"
-            @click="add_artist()">
-        <svg class="fill-current w-5 stroke-3 inline"
-             aria-hidden="true"
-             viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-            <path d="M213.333333,1.42108547e-14 L213.333,170.666 L384,170.666667 L384,213.333333 L213.333,213.333 L213.333333,384 L170.666667,384 L170.666,213.333 L1.42108547e-14,213.333333 L1.42108547e-14,170.666667 L170.666,170.666 L170.666667,1.42108547e-14 L213.333333,1.42108547e-14 Z"></path>
-        </svg>
-        Add set
-    </button>
+    </div>
 
     <div @modal-form-success="on_temp_artist_create">
-        {% include "findshows/partials/invite_artist.html" %}
-    </div>
+        {% modal_form title="New artist"  htmx_url="findshows:create_temp_artist" id="create-artist-modal" %}
+            {% partialdef temp-artist-form %}
+                <div class="flex flex-col fieldgroup">
+                    {{ temp_artist_form.name.as_field_group }}
+                </div>
+                <div class="fieldgroup">
+                    {{ temp_artist_form.local.as_field_group }}
+                </div>
+                <div class="flex flex-col fieldgroup">
+                    {{ temp_artist_form.email.as_field_group }}
+                </div>
+            {% endpartialdef temp-artist-form %}
+        {% endmodal_form %}
     </div>
 </div>
 
