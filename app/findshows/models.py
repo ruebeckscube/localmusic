@@ -503,110 +503,141 @@ class YoutubeLink(EmbedLink):
     artist=models.ForeignKey(Artist, on_delete=models.CASCADE)
 
 
-class EmailCodeError(Exception):
+class LinkCodeError(Exception):
     def __init__(self, message):
         self.message = message
         super().__init__(self.message)
 
 
-class EmailCodeMixin(models.Model):
-    invited_email=models.EmailField()
+class LinkCode(models.Model):
     generated_datetime=models.DateTimeField()
-    invite_code_hashed=models.CharField(unique=True, max_length=128, editable=False)
+    code_hashed=models.CharField(unique=True, max_length=128, editable=False)
     url_name=""
 
     class Meta:
         abstract = True
 
     @classmethod
-    def check_url(cls, GET_data, user_email):
-        id = GET_data.get('id')
-        code = GET_data.get('code')
+    def check_url(cls, request):
+        err = LinkCodeError(f"Invalid link. If the link was older than {settings.LINK_CODE_EXPIRATION_DAYS} days, request a re-send. If this error persists, please contact site admins.")
 
-        bad_link_error = "Invalid link. Make sure you clicked the link in your email or copied it correctly; if this error persists, please contact site admins."
+        if not request.GET:
+            raise err
+
+        id = request.GET.get('id')
+        code = request.GET.get('code')
         if not (id and code):
-            raise EmailCodeError(bad_link_error)
+            raise err
+
         try:
-            email_code = cls.objects.get(id=id)
+            link_code = cls.objects.get(id=id)
         except (cls.DoesNotExist, ValueError):
-            raise EmailCodeError(bad_link_error)
-        if user_email.lower() != email_code.invited_email.lower():
-            raise EmailCodeError("User's email does not match the link. Please log back in with the email that the link was sent to.")
-        if email_code.generated_datetime + timedelta(settings.INVITE_CODE_EXPIRATION_DAYS) < timezone.now():
-            raise EmailCodeError("Expired link. Please request a re-send.")
-        if not email_code.check_invite_code(code):
-            raise EmailCodeError(bad_link_error)
+            raise err
+        if link_code.generated_datetime + timedelta(settings.LINK_CODE_EXPIRATION_DAYS) < timezone.now():
+            raise err
+        if not link_code.check_code(code):
+            raise err
 
-        return email_code
+        return link_code
 
 
-    def get_url(self, code):
+    def get_url(self):
+        """Only works when code_cache is present (after _generate_code or regenerate_code)"""
         qs = {'id': self.pk,
-              'code': code}
+              'code': self.code_cache}
         return reverse(self.url_name, query=qs)
 
 
-    def regenerate_invite_code(self):
-        invite_code = self._generate_invite_code()
+    def regenerate_code(self):
+        """Caches invite code on LinkCode.code_cache"""
+        self.code_cache = self._generate_code()
         self.save()
-        return invite_code
 
 
-    def _calculate_stored_hash(self, invite_code, salt):
-        hash = hashlib.sha256(invite_code.encode() + salt.encode()).hexdigest()
+    def _calculate_stored_hash(self, code, salt):
+        hash = hashlib.sha256(code.encode() + salt.encode()).hexdigest()
         return '%s$%s' % (salt, hash)
 
 
-    def check_invite_code(self, invite_code):
-        salt = self.invite_code_hashed.split('$')[0]
-        hash = self._calculate_stored_hash(invite_code, salt)
-        return hash == self.invite_code_hashed
+    def check_code(self, code):
+        salt = self.code_hashed.split('$')[0]
+        hash = self._calculate_stored_hash(code, salt)
+        return hash == self.code_hashed
 
 
-    def _generate_invite_code(self):
-        """Model MUST be saved after this function is called."""
-        invite_code = secrets.token_urlsafe(32)
+    def _generate_code(self):
+        """Caches code on LinkCode.code_cache
+        Model MUST be saved after this function is called."""
+        code = secrets.token_urlsafe(32)
         salt = secrets.token_urlsafe(32)
-        self.invite_code_hashed = self._calculate_stored_hash(invite_code, salt)
+        self.code_hashed = self._calculate_stored_hash(code, salt)
         self.generated_datetime = now()
-        return invite_code
+        self.code_cache = code
 
 
+class EmailLinkCode(LinkCode):
+    email=models.EmailField()
 
-class EmailVerification(EmailCodeMixin):
-    url_name="verify_email"
-    class Meta(CreationTrackingMixin.Meta, EmailCodeMixin.Meta):
-        unique_together = (('invited_email'),)
+    class Meta:
+        abstract = True
 
     @classmethod
-    def create_and_get_invite_code(cls, email):
-        email_verification = cls(invited_email=email)
-        invite_code = email_verification._generate_invite_code()
-        email_verification.save()
-        return email_verification, invite_code
+    def check_url(cls, request):
+        link_code = super().check_url(request)
+        if request.user.email.lower() != link_code.email.lower():
+            raise LinkCodeError("User's email does not match the link. Please log back in with the email that the link was sent to.")
+        return link_code
 
 
+class EmailVerificationLinkCode(EmailLinkCode):
+    url_name="verify_email"
 
-class ArtistLinkingInfo(CreationTrackingMixin, EmailCodeMixin):
+    class Meta:
+        unique_together = (('email'),)
+
+    @classmethod
+    def create_and_generate(cls, email):
+        link_code = cls(email=email)
+        link_code._generate_code()
+        link_code.save()
+        return link_code
+
+
+class ArtistLinkCode(LinkCode, CreationTrackingMixin):
     artist=models.ForeignKey(Artist, on_delete=models.CASCADE)
 
-    url_name="findshows:link_artist"
-
-    class Meta(CreationTrackingMixin.Meta, EmailCodeMixin.Meta):
-        unique_together = (('invited_email', 'artist'),)
-
-
-    @classmethod
-    def create_and_get_invite_code(cls, artist, email, created_by):
-        link_info = cls(artist=artist, invited_email=email)
-        invite_code = link_info._generate_invite_code()
-        link_info.created_by = created_by
-        link_info.save()
-        return link_info, invite_code
-
+    class Meta:
+        abstract = True
 
     def __str__(self):
-        return f"{self.invited_email} -> {str(self.artist)}"
+        return f"{self.created_by.user.email} -> {str(self.artist)}"
+
+
+class ArtistManagementLinkCode(ArtistLinkCode, EmailLinkCode):
+    url_name="findshows:link_artist_management"
+
+    class Meta:
+        unique_together = (('email', 'artist'),)
+
+    @classmethod
+    def create_and_generate(cls, artist, email, created_by):
+        link_code = cls(artist=artist, email=email)
+        link_code.created_by = created_by
+        link_code._generate_code()
+        link_code.save()
+        return link_code
+
+
+class ArtistInviteLinkCode(ArtistLinkCode):
+    url_name="findshows:link_artist"
+
+    @classmethod
+    def create_and_generate(cls, artist, created_by):
+        link_code = cls(artist=artist)
+        link_code.created_by = created_by
+        link_code._generate_code()
+        link_code.save()
+        return link_code
 
 
 class ConcertTags(models.TextChoices):
@@ -694,7 +725,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def has_exceeded_daily_invites(self):
         return (not self.is_mod_or_admin() and
-                self.userprofile.records_created_today(ArtistLinkingInfo) >= settings.MAX_DAILY_INVITES)
+                (self.userprofile.records_created_today(ArtistInviteLinkCode)
+                 + self.userprofile.records_created_today(ArtistManagementLinkCode)
+                 ) >= settings.MAX_DAILY_INVITES)
 
 
     def __str__(self):

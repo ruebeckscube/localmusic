@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 
-from .models import Artist, ArtistLinkingInfo, CustomText, ListenLink, MusicBrainzArtist, UserProfile, Venue, Concert, SetOrder, YoutubeLink
+from .models import Artist, ArtistInviteLinkCode, ArtistManagementLinkCode, EmailVerificationLinkCode, CustomText, ListenLink, MusicBrainzArtist, UserProfile, Venue, Concert, SetOrder, YoutubeLink
 
 class SetOrderInline(admin.TabularInline):
     model = SetOrder
@@ -42,6 +42,8 @@ admin.site.register(UserProfile, UserProfileAdmin)
 admin.site.register(Artist, ArtistAdmin)
 admin.site.register(Venue, VenueAdmin)
 admin.site.register(MusicBrainzArtist, MusicBrainzArtistAdmin)
-admin.site.register(ArtistLinkingInfo)
+admin.site.register(ArtistInviteLinkCode)
+admin.site.register(ArtistManagementLinkCode)
+admin.site.register(EmailVerificationLinkCode)
 admin.site.register(CustomText)
 # Register your models here.

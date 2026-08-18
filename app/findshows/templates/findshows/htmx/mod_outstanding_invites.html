@@ -1,38 +1,44 @@
 <div>
     <div class="text-lg"> Review outstanding invites. </div>
     <h2 class="my-4"> Invites </h2>
-    {% if artist_linking_infos %}
+    {% if link_codes %}
         <table class="w-full text-center max-w-5xl fieldgroup p-5">
             <tr class="bg-highlight-item-light text-lg">
-                <th> Email </th>
                 <th> Artist name </th>
                 <th> Invited by </th>
+                <th> To email </th>
                 <th> Actions </th>
                 {% if user.is_staff %}
                     <th> Admin </th>
                 {% endif %}
             </tr>
 
-            {% for ali in artist_linking_infos %}
+            {% for link_code in link_codes %}
                 <tr class="odd:bg-white">
                     <td>
-                        <a class="link" href="mailto:{{ ali.invited_email }}">{{ ali.invited_email }}</a>
+                        {{ link_code.artist }}
                     </td>
                     <td>
-                        {{ ali.artist }}
-                    </td>
-                    <td>
-                        <div>{{ ali.created_by.user.email }}</div>
+                        <div>{{ link_code.created_by.user.email }}</div>
                         <div class="text-xs text-gray-600">
-                            ({{ ali.created_by.get_artist_verification_status_display }})
+                            ({{ link_code.created_by.get_artist_verification_status_display }})
                         </div>
+                    </td>
+                    <td>
+                        {% if link_code.email%}
+                            <a class="link" href="mailto:{{ link_code.email }}">{{ link_code.email }}</a>
+                        {% endif %}
                     </td>
                     <td>
                         {% include "findshows/htmx/mod_resend_invite_button.html" %}
                     </td>
                     {% if user.is_staff %}
                         <td>
-                            <a class="link" href="{% url 'admin:findshows_artistlinkinginfo_change' ali.pk %}">Admin edit</a>
+                            {% if link_code.email %}
+                                <a class="link" href="{% url 'admin:findshows_artistmanagementlinkcode_change' link_code.pk %}">Admin edit</a>
+                            {% else %}
+                                <a class="link" href="{% url 'admin:findshows_artistinvitelinkcode_change' link_code.pk %}">Admin edit</a>
+                            {% endif %}
                         </td>
                     {% endif %}
                 </tr>

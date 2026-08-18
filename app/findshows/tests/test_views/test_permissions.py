@@ -25,6 +25,7 @@ PUBLIC_URLS_WITH_PK = (
 LOGGED_IN_URLS_NO_PK = (
     "user_settings",
     "link_artist",
+    "link_artist_management",
     "create_artist",
 )
 LOGGED_IN_URLS_WITH_PK = (
@@ -46,6 +47,7 @@ ARTIST_URLS_WITH_PK = (
     "uncancel_concert",
     "manage_artist_access",
     "resend_invite",
+    "get_invite_link",
 )
 MOD_URLS_NO_PK = (
     "mod_dashboard",
@@ -60,12 +62,25 @@ MOD_URLS_WITH_PK = (
     "delete_contact",
 )
 
+#################
+## Special things for special URLs
+PK_IN_POST = {
+    "get_invite_link": "artist_id"
+}
+
 class PermissionsTests(TestCaseHelpers):
-    def assert_view_permissions(self, url_set, expected_to_have_permission, pk=None):
-        for url_name in url_set:
+    def url_and_response(self, url_name, pk=None):
+        if url_name in PK_IN_POST:
+            url = reverse(f"findshows:{url_name}")
+            response = self.client.post(url, data={PK_IN_POST[url_name]: pk})
+        else:
             url = reverse(f"findshows:{url_name}", args=[pk] if pk else [])
             response = self.client.get(url)
+        return url, response
 
+    def assert_view_permissions(self, url_set, expected_to_have_permission, pk=None):
+        for url_name in url_set:
+            url, response = self.url_and_response(url_name, pk)
             if expected_to_have_permission:
                 self.assertIn(response.status_code, (200, 302), msg=url_name)
                 match response.status_code:
@@ -89,7 +104,7 @@ class PermissionsTests(TestCaseHelpers):
                                 self.assertEqual(response.headers["HX-Redirect"].split('?')[0], reverse('login'))
                             else:
                                 self.assertTemplateUsed(response, 'findshows/htmx/modal_error_msg.html', msg_prefix=url_name)
-                        elif "/artist/" in url:
+                        elif "/artist/" in url and "get_invite_link" not in url:
                             self.assertTemplateUsed(response, 'findshows/pages/view_artist_hidden.html', msg_prefix=url_name)
                         elif "/concert/" in url:
                             self.assertTemplateUsed(response, 'findshows/pages/view_concert_hidden.html', msg_prefix=url_name)
@@ -127,7 +142,8 @@ class PermissionsTests(TestCaseHelpers):
         self.artist = self.create_artist(pk=self.pk, created_by=self.userprofile)
         self.userprofile.managed_artists.add(self.artist)
         self.concert = self.create_concert(pk=self.pk, venue = self.venue, artists = [self.artist], created_by=self.userprofile)
-        self.ali = self.create_artist_linking_info(pk=self.pk, created_by=self.userprofile)
+        self.link_code = self.create_artist_invite_link_code(pk=self.pk, created_by=self.userprofile)
+        self.link_code = self.create_artist_management_link_code(pk=self.pk, created_by=self.userprofile)
         self.contact = self.create_contact(pk=self.pk)
 
         self.other_pk = 1001
@@ -183,8 +199,12 @@ class PermissionsTests(TestCaseHelpers):
         # Checks that the artist can't access records they don't own
         self.create_artist(pk=9999)
         self.create_concert(pk=9999)
-        self.create_artist_linking_info(pk=9999)
-        self.assert_view_permissions(ARTIST_URLS_WITH_PK, False, pk=9999)
+        self.create_artist_invite_link_code(pk=9999)
+        self.create_artist_management_link_code(pk=9999)
+        viewable = ("get_invite_link",)
+        not_viewable = (url for url in ARTIST_URLS_WITH_PK if url not in viewable)
+        self.assert_view_permissions(not_viewable, False, pk=9999)
+        self.assert_view_permissions(viewable, True, pk=9999)
 
 
     def test_unverified_local_artist(self):
@@ -225,7 +245,7 @@ class PermissionsTests(TestCaseHelpers):
 
         artist_urls_no_pk_allowed = ("create_temp_artist",)
         artist_urls_no_pk_disallowed = (url for url in ARTIST_URLS_NO_PK if url not in artist_urls_no_pk_allowed)
-        artist_urls_with_pk_allowed = ("resend_invite",)
+        artist_urls_with_pk_allowed = ("resend_invite", "get_invite_link")
         artist_urls_with_pk_disallowed = (url for url in ARTIST_URLS_WITH_PK if url not in artist_urls_with_pk_allowed)
 
         self.assert_generic_permissions(
@@ -254,8 +274,7 @@ class PermissionsTests(TestCaseHelpers):
 
     def assert_404s(self, url_set, pk):
         for url_name in url_set:
-            url = reverse(f"findshows:{url_name}", args=[pk])
-            response = self.client.get(url)
+            _, response = self.url_and_response(url_name, pk)
             self.assertEqual(response.status_code, 404, msg=url_name)
 
 

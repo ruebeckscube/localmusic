@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from findshows.forms import ContactForm
-from findshows.models import ConcertTags, Contact, EmailVerification, UserProfile
+from findshows.models import ConcertTags, Contact, EmailVerificationLinkCode, UserProfile
 from findshows.tests.test_helpers import TestCaseHelpers
 
 User = get_user_model()
@@ -166,7 +166,7 @@ class CreateAccountTests(TestCaseHelpers):
         self.client.post(reverse("create_account"), data)
         self.assert_emails_sent(1)
         self.assertIn(reverse('verify_email'), mail.outbox[0].body)
-        self.assertEqual(1, EmailVerification.objects.count())
+        self.assertEqual(1, EmailVerificationLinkCode.objects.count())
 
 
     @patch('findshows.email.logger')
@@ -178,7 +178,7 @@ class CreateAccountTests(TestCaseHelpers):
 
         self.assert_emails_sent(0)
         mock_logger.warning.assert_called_once()
-        self.assertEqual(0, EmailVerification.objects.count())
+        self.assertEqual(0, EmailVerificationLinkCode.objects.count())
 
 
     def test_create_account_POST_fail(self):
@@ -217,26 +217,26 @@ class VerifyEmailTests(TestCaseHelpers):
     def test_successful_verification(self):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
         self.client.login(username=user_profile.user.email, password='1234')
-        email_verification, code = self.create_email_verification(user_profile.user.email)
+        email_verification = self.create_email_verification_link_code(user_profile.user.email)
 
-        response = self.client.post(email_verification.get_url(code))
+        response = self.client.post(email_verification.get_url())
 
         user_profile.refresh_from_db()
         self.assertTrue(user_profile.email_is_verified)
-        self.assertEqual(0, EmailVerification.objects.count())
+        self.assertEqual(0, EmailVerificationLinkCode.objects.count())
         self.assertIn("Successfully", str(response.content))
 
 
     def test_missing_params(self):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
         self.client.login(username=user_profile.user.email, password='1234')
-        self.create_email_verification(user_profile.user.email)
+        self.create_email_verification_link_code(user_profile.user.email)
 
         response = self.client.post(reverse('verify_email', query={'id': ''}))
 
         user_profile.refresh_from_db()
         self.assertFalse(user_profile.email_is_verified)
-        self.assertEqual(1, EmailVerification.objects.count())
+        self.assertEqual(1, EmailVerificationLinkCode.objects.count())
         self.assertIn('error', response.context)
         self.assertIn('Invalid link.', response.context['error'])
 
@@ -262,13 +262,14 @@ class VerifyEmailTests(TestCaseHelpers):
     def test_bad_invite_code(self):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
         self.client.login(username=user_profile.user.email, password='1234')
-        email_verification, code = self.create_email_verification(user_profile.user.email)
+        email_verification = self.create_email_verification_link_code(user_profile.user.email)
 
-        response = self.client.post(email_verification.get_url(code + '123'))
+        query = {'id': email_verification.pk, 'code': email_verification.code_cache + '123'}
+        response = self.client.post(reverse(email_verification.url_name, query=query))
 
         self.assertIn('error', response.context)
         self.assertIn('Invalid link', response.context['error'])
-        self.assertEqual(1, EmailVerification.objects.filter(pk=email_verification.pk).count())
+        self.assertEqual(1, EmailVerificationLinkCode.objects.filter(pk=email_verification.pk).count())
         user_profile.refresh_from_db()
         self.assertFalse(user_profile.email_is_verified)
 
@@ -277,14 +278,14 @@ class VerifyEmailTests(TestCaseHelpers):
     def test_expired_invite_code(self, mock_timezone):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
         self.client.login(username=user_profile.user.email, password='1234')
-        email_verification, code = self.create_email_verification(user_profile.user.email)
-        mock_timezone.now.return_value = timezone.now() + datetime.timedelta(settings.INVITE_CODE_EXPIRATION_DAYS + 2)
+        email_verification = self.create_email_verification_link_code(user_profile.user.email)
+        mock_timezone.now.return_value = timezone.now() + datetime.timedelta(settings.LINK_CODE_EXPIRATION_DAYS + 2)
 
-        response = self.client.post(email_verification.get_url(code))
+        response = self.client.post(email_verification.get_url())
 
         self.assertIn('error', response.context)
-        self.assertIn('Expired link', response.context['error'])
-        self.assertEqual(1, EmailVerification.objects.filter(pk=email_verification.pk).count())
+        self.assertIn('Invalid link', response.context['error'])
+        self.assertEqual(1, EmailVerificationLinkCode.objects.filter(pk=email_verification.pk).count())
         user_profile.refresh_from_db()
         self.assertFalse(user_profile.email_is_verified)
 
@@ -292,11 +293,11 @@ class VerifyEmailTests(TestCaseHelpers):
     def test_user_email_doesnt_match(self):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
         self.client.login(username=user_profile.user.email, password='1234')
-        email_verification, code = self.create_email_verification("different@em.ail")
+        email_verification = self.create_email_verification_link_code("different@em.ail")
 
-        response = self.client.post(email_verification.get_url(code))
+        response = self.client.post(email_verification.get_url())
         self.assertIn('error', response.context)
-        self.assertEqual(1, EmailVerification.objects.filter(pk=email_verification.pk).count())
+        self.assertEqual(1, EmailVerificationLinkCode.objects.filter(pk=email_verification.pk).count())
         user_profile.refresh_from_db()
         self.assertFalse(user_profile.email_is_verified)
 
@@ -305,13 +306,13 @@ class ResendEmailVerificationTests(TestCaseHelpers):
     def test_success_existing_verification(self):
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
         self.client.login(username=user_profile.user.email, password='1234')
-        self.create_email_verification(user_profile.user.email)
+        self.create_email_verification_link_code(user_profile.user.email)
 
         response = self.client.post(reverse('resend_email_verification'))
 
         self.assert_emails_sent(1)
         self.assertIn(reverse('verify_email'), mail.outbox[0].body)
-        self.assertEqual(1, EmailVerification.objects.count())
+        self.assertEqual(1, EmailVerificationLinkCode.objects.count())
         self.assertTrue(response.context['success'])
 
 
@@ -323,7 +324,7 @@ class ResendEmailVerificationTests(TestCaseHelpers):
 
         self.assert_emails_sent(1)
         self.assertIn(reverse('verify_email'), mail.outbox[0].body)
-        self.assertEqual(1, EmailVerification.objects.count())
+        self.assertEqual(1, EmailVerificationLinkCode.objects.count())
         self.assertTrue(response.context['success'])
 
 
@@ -343,12 +344,12 @@ class ResendEmailVerificationTests(TestCaseHelpers):
         mock_send_mail.side_effect = SMTPException()
         user_profile = self.create_user_profile(email_is_verified=False, password='1234')
         self.client.login(username=user_profile.user.email, password='1234')
-        self.create_email_verification(user_profile.user.email)
+        self.create_email_verification_link_code(user_profile.user.email)
 
         response = self.client.post(reverse('resend_email_verification'))
 
         self.assert_emails_sent(0)
         mock_logger.warning.assert_called_once()
-        self.assertEqual(0, EmailVerification.objects.count())
+        self.assertEqual(0, EmailVerificationLinkCode.objects.count())
         self.assertIn("Unable to send email", response.context['errorlist'][0])
         self.assertFalse(response.context['success'])

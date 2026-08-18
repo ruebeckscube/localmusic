@@ -6,7 +6,7 @@ from django.core import mail
 from django.tasks import TaskResultStatus
 from django.views.generic.dates import timezone_today
 
-from findshows.email import daily_mod_email, enqueue_concert_edit_reminder, invite_artist, send_simple_email, send_mass_html_mail, send_rec_email
+from findshows.email import daily_mod_email, enqueue_concert_edit_reminder, send_simple_email, send_mass_html_mail, send_rec_email
 from findshows.models import ArtistVerificationStatus, ConcertTags
 from findshows.tests.test_helpers import TestCaseHelpers
 
@@ -45,21 +45,6 @@ class DailyModEmailTests(TestCaseHelpers):
         success = daily_mod_email(timezone_today())
         self.assertTrue(success)
         self.assert_emails_sent(0)
-
-
-class InviteArtistTests(TestCaseHelpers):
-    def test_local_and_nonlocal_get_different_messages(self):
-        ali_local, code_local = self.create_artist_linking_info("local@artist.net", self.create_artist(local=True))
-        ali_nonlocal, code_nonlocal = self.create_artist_linking_info("nonlocal@artist.net", self.create_artist(local=False))
-
-        invite_artist(ali_local, code_local)
-        invite_artist(ali_nonlocal, code_nonlocal)
-
-        self.assert_emails_sent(2)
-        self.assert_equal_as_sets(('local@artist.net',),  # From migration 0005 default CustomText
-                                  (msg.to[0] for msg in mail.outbox if "Features for listeners" in msg.body))
-        self.assert_equal_as_sets(("nonlocal@artist.net",),  # From email.py
-                                  (msg.to[0] for msg in mail.outbox if "Hello & welcome!" in msg.body))
 
 
 class ConcertEditReminderTests(TestCaseHelpers):

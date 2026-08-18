@@ -14,20 +14,11 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.tasks import task, default_task_backend
 
-from findshows.models import Artist, ArtistLinkingInfo, ArtistVerificationStatus, Concert, Contact, CustomText, CustomTextTypes, EmailVerification, UserProfile, Venue
+from findshows.utilities import local_url_to_email
+from findshows.models import Artist, ArtistVerificationStatus, Concert, Contact, CustomText, CustomTextTypes, UserProfile, Venue
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
-
-
-PROTOCOL = "http" if settings.IS_DEV else "https"
-PORT = ":8000" if settings.IS_DEV else ""
-
-def local_url_to_email(local_url, display=""):
-    if display:
-        return f"[{display}]({PROTOCOL}://{settings.HOST_NAME}{PORT}{local_url})"
-    else:
-        return f"{PROTOCOL}://{settings.HOST_NAME}{PORT}{local_url}"
 
 
 def render_email_to_string(template_name, context={}, **kwargs):
@@ -82,54 +73,26 @@ def send_simple_email(subject, message_blocks, recipient_list, form=None, from_e
     return 0
 
 
-def send_verify_email(email_verification: EmailVerification, invite_code, form=None, errorlist=None):
+def send_verify_email(email_verification_link_code, form=None, errorlist=None):
     subject = "Confirm your email address"
     message_blocks = [f"""
 Welcome to {settings.SITE_TITLE}!
 
-{local_url_to_email(email_verification.get_url(invite_code), "Please click here to verify your email address")}.
+{local_url_to_email(email_verification_link_code.get_url(), "Please click here to verify your email address")}.
     """]
     logger.info("Sending verification email")
-    return send_simple_email(subject, message_blocks, [email_verification.invited_email], form, errorlist=errorlist)
+    return send_simple_email(subject, message_blocks, [email_verification_link_code.email], form, errorlist=errorlist)
 
 
-def invite_artist(link_info: ArtistLinkingInfo, invite_code, form=None, errorlist=None):
-    subject = "Artist profile invite"
-    message_blocks = [f"""
-{link_info.created_by.user.email} has invited you to create an artist profile for **{link_info.artist.name}**
-on {settings.SITE_TITLE}.
-{local_url_to_email(link_info.get_url(invite_code), "Make an account and fill out your profile here")}.
-\n\nIf they've added you to a show, it will not be publically visible until you make a profile.
-    This link expires in {settings.INVITE_CODE_EXPIRATION_DAYS} days.
-    """]
-    if link_info.artist.local:
-        message_blocks.append(CustomText.get_text(CustomTextTypes.ARTIST_INVITE_EMAIL))
-    else:
-        message_blocks.append(f"""
-Hello & welcome! This site is an instance of the [localmusic](https://github.com/ruebeckscube/localmusic)
-project, an online media-rich bulletin board for your local music scene. It's a free & open source
-project, and if you like the idea you can set it up for your city by
-following [these instructions](https://github.com/ruebeckscube/localmusic/blob/master/docs/self-hosting.md).
-It's still under development, so you need to have some technical know-how (or know somebody), but we'll
-be making it easier & improving documentation in the near future so please
-{local_url_to_email(reverse("findshows:contact"), "contact us")} if you'd like to stay up to date
-on that front.
-        """)
-
-    logger.info("Sending artist invite email")
-    return send_simple_email(subject, message_blocks, [link_info.invited_email], form, errorlist=errorlist)
-
-
-def invite_user_to_artist(link_info: ArtistLinkingInfo, invite_code, form):
+def invite_user_to_artist(link_code, form=None, errorlist=None):
     subject = "Artist profile invite"
     message_blocks = [f"""
 You've been invited to manage an artist profile on {settings.SITE_TITLE}.
-{local_url_to_email(link_info.get_url(invite_code), "Click here")}
-to claim access. This link expires in {settings.INVITE_CODE_EXPIRATION_DAYS} days.
+{local_url_to_email(link_code.get_url(), "Click here")}
+to claim access. This link expires in {settings.LINK_CODE_EXPIRATION_DAYS} days.
     """]
-    message_blocks.append(CustomText.get_text(CustomTextTypes.ARTIST_INVITE_EMAIL))
     logger.info("Sending user_to_artist invite email")
-    return send_simple_email(subject, message_blocks, [link_info.invited_email], form)
+    return send_simple_email(subject, message_blocks, [link_code.email], form, errorlist=errorlist)
 
 
 def notify_artist_verified(userprofile):

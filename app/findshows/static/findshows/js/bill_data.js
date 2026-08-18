@@ -31,10 +31,11 @@ function bill_data() {
       artist.show_search = false;
     },
 
-    select_artist(idx, selected_name, selected_id) {
+    select_artist(idx, selected_name, selected_id, num_users) {
       this.bill_order[idx].search_text = selected_name;
       this.bill_order[idx].name = selected_name;
       this.bill_order[idx].id = selected_id;
+      this.bill_order[idx].num_users = num_users;
     },
 
     move_artist(idx, incr) {

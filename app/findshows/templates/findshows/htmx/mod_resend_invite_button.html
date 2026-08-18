@@ -1,3 +1,4 @@
+{% if link_code.email %} {# ArtistManagementInviteCode #}
 <div class="mod-invite-button flex flex-col items-center"
      hx-on::after-settle="event.detail.elt.getElementsByTagName('p')[0].focus()">
     {% if success %}
@@ -10,7 +11,7 @@
             <input class="btn"
                    type="button"
                    name="resend-invite"
-                   hx-post="{% url 'findshows:resend_invite' ali.id %}"
+                   hx-post="{% url 'findshows:resend_invite' link_code.id %}"
                    hx-trigger="click"
                    value="Resend invite"
                    hx-target="closest .mod-invite-button"
@@ -24,3 +25,15 @@
         {% endif %}
     {% endif %}
 </div>
+{% else %} {# ArtistInviteLinkCode #}
+<div x-data="{'artist': {
+               'id': '{{ link_code.artist.pk }}',
+               'num_users': {{ link_code.artist.managing_users.count }},
+               'invite_link': '{{ link_code.artist.invite_link }}',
+             }}">
+    <form>
+        {% csrf_token %}
+        {% include 'findshows/widgets/bill_widget.html#copy-invite-link' %}
+    </form>
+</div>
+{% endif %}

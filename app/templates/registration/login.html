@@ -20,8 +20,7 @@
             <p class="p-3">
                 Please log in or
                 <a class="link" href="{% url 'create_account' %}?next={{ next | urlencode}}">create an account</a>
-                to edit your artist profile. Your account
-                email should match the one that the invite link was sent to.
+                to edit your artist profile.
             </p>
         {% elif user.is_authenticated %}
             <p class="errorlist">Your account doesn't have access to this page. To proceed,

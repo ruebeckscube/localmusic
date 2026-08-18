@@ -23,6 +23,8 @@ urlpatterns = [
     path("artist/create", views.edit_artist, name="create_artist"),
     path("artist_dashboard", views.artist_dashboard, name="artist_dashboard"),
     path("link_artist", views.link_artist, name="link_artist"),
+    path("link_artist_management", partial(views.link_artist, management=True), name="link_artist_management"),
+    path("artist/get_invite_link", views.get_invite_link, name="get_invite_link"),
 
     path("concert/<int:pk>", views.view_concert, name="view_concert"),
     path("concert/<int:pk>/edit", views.edit_concert, name="edit_concert"),

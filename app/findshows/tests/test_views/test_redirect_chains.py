@@ -40,9 +40,9 @@ class LoginRedirectTests(SeleniumTestCaseHelpers):
     def test_link_new_artist(self):
         artist = self.create_artist(is_temp_artist=True)
         userprofile = self.get_static_instance(self.StaticUsers.NON_ARTIST)
-        ali, code = self.create_artist_linking_info(email=userprofile.user.email, artist=artist)
+        link_code = self.create_artist_invite_link_code(artist=artist)
 
-        self.selenium.get(f"{self.live_server_url}{ali.get_url(code)}")
+        self.selenium.get(f"{self.live_server_url}{link_code.get_url()}")
         self.assert_current_url("login", disregard_query=True)
         self.fill_out_login(userprofile.user.email)
         self.wait_for_page_load()
@@ -95,9 +95,9 @@ class CreateAccountRedirectTests(SeleniumTestCaseHelpers):
 
     def test_link_new_artist(self):
         artist = self.create_artist(is_temp_artist=True)
-        ali, code = self.create_artist_linking_info(email=self.email, artist=artist)
+        link_code = self.create_artist_invite_link_code(artist=artist)
 
-        self.selenium.get(f"{self.live_server_url}{ali.get_url(code)}")
+        self.selenium.get(f"{self.live_server_url}{link_code.get_url()}")
         self.login_thru_create_account()
 
         self.assert_current_url("findshows:user_settings", disregard_query=True)

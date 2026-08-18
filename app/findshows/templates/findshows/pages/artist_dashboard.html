@@ -115,10 +115,14 @@
                 <th>Artist</th><th>Email</th><th>Actions</th>
             </tr>
 
-            {% for ali in outstanding_invites %}
+            {% for link_code in outstanding_invites %}
             <tr class="odd:bg-background even:bg-sub-background">
-                <td class="m-1 max-sm:block">{{ ali.artist }}</td>
-                <td class="m-1 max-sm:block"><a class="link" href="mailto:{{ ali.invited_email }}">{{ ali.invited_email }}</a></td>
+                <td class="m-1 max-sm:block">{{ link_code.artist }}</td>
+                <td class="m-1 max-sm:block">
+                    {% if link_code.email %}
+                        <a class="link" href="mailto:{{ link_code.email }}">{{ link_code.email }}</a>
+                    {% endif %}
+                </td>
                 <td class="m-1 max-sm:block">{% include "findshows/htmx/mod_resend_invite_button.html" %}</td>
             </tr>
             {% endfor %}

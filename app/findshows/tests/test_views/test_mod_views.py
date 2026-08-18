@@ -1,3 +1,5 @@
+from itertools import chain
+import json
 from smtplib import SMTPException
 from unittest.mock import patch
 from datetime import timedelta
@@ -8,7 +10,7 @@ from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 
 from findshows.forms import CustomTextFormSet
-from findshows.models import ArtistVerificationStatus, Contact, CustomText, CustomTextTypes
+from findshows.models import ArtistInviteLinkCode, ArtistManagementLinkCode, ArtistVerificationStatus, Contact, CustomText, CustomTextTypes
 from findshows.tests.test_helpers import TestCaseHelpers
 
 
@@ -57,10 +59,10 @@ class ModQueueTests(ModTestCaseHelpers):
 
 class ModOutstandingInviteTests(ModTestCaseHelpers):
     def test_filters_records(self):
-        ali = self.create_artist_linking_info()[0]
+        link_code = self.create_artist_invite_link_code()
         response = self.client.get(reverse("findshows:mod_outstanding_invites"))
-        self.assert_equal_as_sets(response.context['artist_linking_infos'],
-                                  [ali])
+        self.assert_equal_as_sets(response.context['link_codes'],
+                                  [link_code])
 
 
 class TextCustomizationTests(ModTestCaseHelpers):
@@ -153,9 +155,6 @@ class ArtistVerificationButtonsTests(ModTestCaseHelpers):
         mod_profile = self.get_static_instance(self.StaticUsers.MOD_USER)
         user_profile = self.create_user_profile(artist_verification_status=ArtistVerificationStatus.UNVERIFIED,
                                                 email="user_being_verified@notified.com")
-        ali1 = self.create_artist_linking_info(email='thisshouldntmatch@anyone.com', created_by=user_profile)
-        ali2 = self.create_artist_linking_info(email='thisshouldntmatch@either.com', created_by=user_profile)
-        ali3 = self.create_artist_linking_info(email='', created_by=user_profile) # blank email causes error
 
         response = self.client.post(reverse("findshows:artist_verification_buttons", args=(user_profile.pk,)), {
             'action': 'verify'
@@ -164,12 +163,6 @@ class ArtistVerificationButtonsTests(ModTestCaseHelpers):
         user_profile.refresh_from_db()
         self.assertEqual(user_profile.artist_verification_status, ArtistVerificationStatus.VERIFIED)
         self.assertEqual(user_profile.given_artist_access_by, mod_profile)
-        self.assert_equal_as_sets(('thisshouldntmatch@anyone.com', 'thisshouldntmatch@either.com'),
-                                  (msg.to[0] for msg in mail.outbox if msg.subject=="Artist profile invite"))
-        self.assert_equal_as_sets(("user_being_verified@notified.com",),
-                                  (msg.to[0] for msg in mail.outbox if msg.subject=="Artist profile verified"))
-        self.assertIn('Internal error; admins have been notified, please try again later.',
-                      response.context['invite_errors'][''])
 
     def test_deverify(self):
         user_profile = self.create_user_profile(artist_verification_status=ArtistVerificationStatus.UNVERIFIED)
@@ -190,16 +183,15 @@ class ArtistVerificationButtonsTests(ModTestCaseHelpers):
         self.assertFalse(user_profile.given_artist_access_by)
 
 
-
 class ResendInviteTests(ModTestCaseHelpers):
     def test_invite_doesnt_exist(self):
         response = self.client.post(reverse("findshows:resend_invite", args=(100,)))
         self.assertEqual(response.status_code, 404)
 
     def test_recent_regen(self):
-        ali = self.create_artist_linking_info()[0]
+        link_code = self.create_artist_management_link_code()
 
-        response = self.client.post(reverse("findshows:resend_invite", args=(ali.pk,)))
+        response = self.client.post(reverse("findshows:resend_invite", args=(link_code.pk,)))
 
         self.assertFalse(response.context['success'])
         self.assertIn("Please wait at least five minutes before sending again.", response.context['errors'])
@@ -207,10 +199,10 @@ class ResendInviteTests(ModTestCaseHelpers):
     @patch('findshows.email.logger')
     @patch("findshows.email.EmailMultiAlternatives.send")
     def test_email_failure(self, mock_send_mail, mock_logger):
-        ali = self.create_artist_linking_info(email="invited@em.ail", generated_datetime=now()-timedelta(1))[0]
+        link_code = self.create_artist_management_link_code(email="invited@em.ail", generated_datetime=now()-timedelta(1))
         mock_send_mail.side_effect = SMTPException()
 
-        response = self.client.post(reverse("findshows:resend_invite", args=(ali.pk,)))
+        response = self.client.post(reverse("findshows:resend_invite", args=(link_code.pk,)))
 
         self.assertFalse(response.context['success'])
         self.assertIn(f"Unable to send email to invited@em.ail",
@@ -219,9 +211,9 @@ class ResendInviteTests(ModTestCaseHelpers):
         mock_logger.warning.assert_called_once()
 
     def test_success(self):
-        ali = self.create_artist_linking_info(generated_datetime=now()-timedelta(1))[0]
+        link_code = self.create_artist_management_link_code(generated_datetime=now()-timedelta(1))
 
-        response = self.client.post(reverse("findshows:resend_invite", args=(ali.pk,)))
+        response = self.client.post(reverse("findshows:resend_invite", args=(link_code.pk,)))
 
         self.assertTrue(response.context['success'])
         self.assertFalse(response.context['errors'])

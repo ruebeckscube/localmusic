@@ -18,15 +18,9 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% if artist.artistlinkinginfo_set.all %}
-                        {% for ali in artist.artistlinkinginfo_set.all %}
-                            <a class="link" href="mailto:{{ ali.invited_email }}">{{ ali.invited_email }}</a>
-                        {% endfor %}
-                    {% else %}
-                        {% for userprofile in artist.managing_users.all %}
-                            <a class="link" href="mailto:{{ userprofile.user.email }}">{{ userprofile.user.email }}</a>
-                        {% endfor %}                        
-                    {% endif %}
+                    {% for userprofile in artist.managing_users.all %}
+                        <a class="link" href="mailto:{{ userprofile.user.email }}">{{ userprofile.user.email }}</a>
+                    {% endfor %}
                 </td>
                 {% if user.is_staff %}
                     <td>

@@ -41,7 +41,7 @@ class ConcertFormTestHelpers(TestCaseHelpers):
         return form
 
     def bill_json_from_artist_list(self, artists):
-        return json.dumps([{'id': a.id, 'name': a.name} for a in artists])
+        return json.dumps([{'id': a.id, 'name': a.name, 'num_users': a.managing_users.count()} for a in artists])
 
 
 class InitTests(ConcertFormTestHelpers):

@@ -8,7 +8,7 @@ from django.utils.timezone import timedelta
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.email import local_url_to_email
+from findshows.utilities import local_url_to_email
 from findshows.models import Concert, CustomText
 
 register = template.Library()

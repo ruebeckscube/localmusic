@@ -4,7 +4,7 @@ import json
 from django.core.validators import URLValidator
 from django.forms import ClearableFileInput, Field, ValidationError
 from django.forms.fields import DateField
-
+from django.conf import settings
 from django.forms.widgets import Input, Select
 
 from findshows.models import MusicBrainzArtist, Venue
@@ -93,6 +93,11 @@ class BillWidget(Input):
     input_type="hidden"
     use_fieldset=True
 
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['expiration_days'] = settings.LINK_CODE_EXPIRATION_DAYS
+        return context
+
 
 class ArtistAccessWidget(Input):
     template_name="findshows/widgets/artist_access_widget.html"
@@ -101,7 +106,7 @@ class ArtistAccessWidget(Input):
     class Types(Enum):
         NEW = 'NEW'             # the email was added in this widget right now
         LINKED = 'LINKED'       # the artist is listed in the user's managed_artists
-        UNLINKED = 'UNLINKED'   # an ArtistLinkingInfo exists for this artist + email
+        UNLINKED = 'UNLINKED'   # an ArtistManagementLinkCode exists for this artist + email
         REMOVED = 'REMOVED'     # this artist should be removed from user with email on submit
         RESEND = 'RESEND'       # the invite for this artist should be re-sent to the email
 

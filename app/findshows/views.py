@@ -1,4 +1,5 @@
 from datetime import timedelta
+from itertools import chain
 from operator import and_, or_
 from functools import reduce
 import json
@@ -13,15 +14,16 @@ from django.http import HttpResponse, QueryDict
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.postgres.search import TrigramSimilarity
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.utils import timezone
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.email import enqueue_concert_edit_reminder, invite_artist, invite_user_to_artist, notify_artist_verified, send_verify_email
+from findshows.utilities import local_url_to_email
+from findshows.email import enqueue_concert_edit_reminder, invite_user_to_artist, notify_artist_verified, send_verify_email
 from findshows.widgets import ArtistAccessWidget
 
-from .models import Artist, ArtistLinkingInfo, ArtistVerificationStatus, Concert, ConcertTags, Contact, EmailCodeError, EmailVerification, JPEGImageException, MusicBrainzArtist, User, UserProfile, Venue
+from .models import Artist, ArtistInviteLinkCode, ArtistManagementLinkCode, ArtistVerificationStatus, Concert, ConcertTags, Contact, EmailVerificationLinkCode, JPEGImageException, LinkCodeError, MusicBrainzArtist, User, UserProfile, Venue
 from .forms import ArtistAccessForm, ArtistEditForm, ConcertForm, ContactForm, CustomTextFormSet, ModDailyDigestForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
 
 
@@ -106,11 +108,11 @@ def create_account(request):
             user = user_form.save()
             UserProfile.objects.create(user=user)
 
-            email_verification, invite_code = EmailVerification.create_and_get_invite_code(user.email)
-            if not send_verify_email(email_verification, invite_code, user_form):
+            link_code = EmailVerificationLinkCode.create_and_generate(user.email)
+            if not send_verify_email(link_code, user_form):
                 # Info about verification (failure or otherwise) will be shown
                 # to the user in a banner on the home search page
-                email_verification.delete()
+                link_code.delete()
 
             login(request, user)
             return redirect(url_with_next(next, next=reverse('findshows:user_settings',
@@ -125,14 +127,14 @@ def create_account(request):
 @login_required
 def verify_email(request):
     try:
-        email_verification = EmailVerification.check_url(request.GET, request.user.email)
-    except EmailCodeError as e:
+        link_code = EmailVerificationLinkCode.check_url(request)
+    except LinkCodeError as e:
         return render(request, "findshows/pages/email_verification.html",
                       {'error': e.message})
 
     request.user.userprofile.email_is_verified = True
     request.user.userprofile.save()
-    email_verification.delete()
+    link_code.delete()
 
     return render(request, "findshows/pages/email_verification.html")
 
@@ -144,13 +146,13 @@ def resend_email_verification(request):
         errorlist.append("Email already verified.")
     else:
         try:
-            email_verification = EmailVerification.objects.get(invited_email=request.user.email)
-            invite_code = email_verification.regenerate_invite_code()
-        except EmailVerification.DoesNotExist:
-            email_verification, invite_code = EmailVerification.create_and_get_invite_code(request.user.email)
+            link_code = EmailVerificationLinkCode.objects.get(email=request.user.email)
+            link_code.regenerate_code()
+        except EmailVerificationLinkCode.DoesNotExist:
+            link_code = EmailVerificationLinkCode.create_and_generate(request.user.email)
 
-        if not send_verify_email(email_verification, invite_code, errorlist=errorlist):
-            email_verification.delete()
+        if not send_verify_email(link_code, errorlist=errorlist):
+            link_code.delete()
 
     success = not errorlist
 
@@ -169,12 +171,12 @@ def artist_dashboard(request):
     # Remove duplicates in case user manages multiple artists on same bill
     concerts = set(c for a in artists for c in a.concert_set.filter(date__gte=timezone_today()))
     concerts = sorted(concerts, key = lambda c: c.date)
-    outstanding_invites = ArtistLinkingInfo.objects.filter(created_by=request.user.userprofile)
 
     return render(request, "findshows/pages/artist_dashboard.html", context = {
         "artists": artists,
         "concerts": concerts,
-        "outstanding_invites": outstanding_invites,
+        "outstanding_invites": list(chain(ArtistInviteLinkCode.objects.filter(created_by=request.user.userprofile),
+                                          ArtistManagementLinkCode.objects.filter(created_by=request.user.userprofile))),
         "show_conflicts": True,
     })
 
@@ -236,15 +238,9 @@ def edit_artist(request, pk=None):
         # Only status that categorically shouldn't see this page
         raise PermissionDenied
 
-    link_infos = None
     if pk is None: # don't modify pk; we're using it later to check we're in the same flow
-        # Check for existing invites (to a new artist) for this user before creating new record
-        link_infos = ArtistLinkingInfo.objects.filter(invited_email=request.user.email, artist__is_temp_artist=True)
-        if link_infos:
-            artist = link_infos[0].artist
-        else:
-            artist = Artist(local=True)
-        artist.created_by = profile # This is also necessary for the invite situation because it was previously set to the person who rceated the invite.
+        artist = Artist(local=True)
+        artist.created_by = profile
     else:
         artist = get_object_or_404(Artist, pk=pk)
         if artist not in profile.managed_artists.all() and not request.user.is_staff:
@@ -263,11 +259,7 @@ def edit_artist(request, pk=None):
                 if not pk:
                     profile.managed_artists.add(saved_artist)
                 if not profile.artist_verification_status:
-                    if link_infos:
-                        profile.given_artist_access_by = link_infos[0].created_by
-                        profile.artist_verification_status = ArtistVerificationStatus.INVITED
-                    else:
-                        profile.artist_verification_status = ArtistVerificationStatus.UNVERIFIED
+                    profile.artist_verification_status = ArtistVerificationStatus.UNVERIFIED
                     profile.save()
                 return redirect(reverse('findshows:view_artist', args=[saved_artist.pk]))
             except JPEGImageException as e:
@@ -285,17 +277,18 @@ def edit_artist(request, pk=None):
 def artist_search_results(request):
     # there are multiple artist search fields on the bill widget; idx is the index of the search field
     if not (request.GET and request.GET.get("artist-search") and request.GET.get("idx")):
-        return HttpResponse("")
+        return HttpResponse(b"")
 
     keywords = request.GET["artist-search"].split()
     try:
         idx = int(request.GET["idx"])
     except ValueError:
-        return HttpResponse("")
+        return HttpResponse(b"")
 
-    search_results = Artist.objects.filter(reduce(and_, (Q(name__icontains=k) for k in keywords))
-    ).exclude(created_by__artist_verification_status=ArtistVerificationStatus.DEVERIFIED
-    )[:5]
+    search_results = Artist.objects.filter(
+        reduce(and_, (Q(name__icontains=k) for k in keywords))).annotate(
+            num_users=Count("managing_users")
+        )[:5]
     return render(request, "findshows/widgets/bill_widget.html#artist-search-results", {
         "artists": search_results,
         "idx": idx
@@ -304,15 +297,14 @@ def artist_search_results(request):
 
 @login_required
 def create_temp_artist(request):
-    permissions_msg = ""
+    if not request.user.userprofile.email_is_verified:
+        return render(request, 'findshows/htmx/modal_error_msg.html', {
+            'message': "Please verify your email before creating artist listings."
+        })
     if not (request.user.is_local_artist_account() or request.user.is_mod or request.user.is_staff):
-        permissions_msg = "You must have a local artist account to invite an artist to the platform."
-    elif not request.user.userprofile.email_is_verified:
-        permissions_msg = "Please verify your email before inviting artists."
-    elif request.user.has_exceeded_daily_invites():
-        permissions_msg = "You've hit the daily limit for inviting artists; please try again in 24 hours."
-    if permissions_msg:
-        return render(request, 'findshows/htmx/modal_error_msg.html', {'message': permissions_msg})
+        return render(request, 'findshows/htmx/modal_error_msg.html', {
+            'message': "You must have a local artist account to create artist listings."
+        })
 
     # The latter condition is a slightly hacky way of telling whether this HTMX
     # request is being triggered by page load (we should provide blank form) or
@@ -322,34 +314,20 @@ def create_temp_artist(request):
     else:
         form = TempArtistForm()
 
-    success_text = "Invite sent successfully!"
     valid = form.is_valid()
     if valid:
         artist = form.save(commit=False)
         artist.created_by = request.user.userprofile
         artist.save()
-        link_info, invite_code = ArtistLinkingInfo.create_and_get_invite_code(artist, form.cleaned_data['email'], request.user.userprofile)
+        form = TempArtistForm()
 
-        if request.user.userprofile.artist_verification_status == ArtistVerificationStatus.UNVERIFIED:
-            success_text = "Invite has been registered and will be sent once your profile is verified by mods."
-        elif invite_artist(link_info, invite_code, form): # this sends invite and returns success
-            form = TempArtistForm()
-        else:
-            link_info.delete()
-            artist.delete()
-            valid = False
-
-    if request.user.has_exceeded_daily_invites():
-        response = render(request, 'findshows/htmx/modal_error_msg.html')
-    else:
-        response = render(request, "findshows/widgets/bill_widget.html#temp-artist-form", {
-            "temp_artist_form": form,
-        })
+    response = render(request, "findshows/widgets/bill_widget.html#temp-artist-form", {
+        "temp_artist_form": form,
+    })
 
     if valid:
         response.headers['HX-Trigger'] = json.dumps({
             "modal-form-success": {
-                "success_text": success_text,
                 "created_record_name": artist.name,
                 "created_record_id": artist.id}})
 
@@ -382,30 +360,30 @@ def manage_artist_access(request, pk):
                         form.add_error(None, "You have reached your max invites for the day; please try again tomorrow")
                         continue
                     try:
-                        link_info, invite_code = ArtistLinkingInfo.create_and_get_invite_code(artist, user_json['email'], request.user.userprofile)
+                        link_code = ArtistManagementLinkCode.create_and_generate(artist, user_json['email'], request.user.userprofile)
                     except IntegrityError:
                         form.add_error(None, f"The user {user_json['email']} already has an invite to this artist; please use the re-send button instead.")
                         continue
                     if request.user.userprofile.artist_verification_status == ArtistVerificationStatus.UNVERIFIED:
                         success_text = "Artist access saved! Invite emails will be sent once your artist profile is verified by mods."
-                    elif not invite_user_to_artist(link_info, invite_code, form):
+                    elif not invite_user_to_artist(link_code, form):
                         # invite_user_to_artist adds error to form
-                        link_info.delete()
+                        link_code.delete()
                 case ArtistAccessWidget.Types.REMOVED.value:
                     user_profiles = artist.managing_users.filter(user__email=user_json['email'])
                     for u in user_profiles: # Should only be one, but may as well
                         u.managed_artists.remove(artist)
-                    link_infos = ArtistLinkingInfo.objects.filter(invited_email=user_json['email'], artist=artist)
-                    for ali in link_infos:
-                        ali.delete()
+                    link_codes = ArtistManagementLinkCode.objects.filter(email=user_json['email'], artist=artist)
+                    for link_code in link_codes:
+                        link_code.delete()
                 case ArtistAccessWidget.Types.RESEND.value:
                     # NOT deleting it on email failure even though it's now out of date
                     if request.user.userprofile.artist_verification_status == ArtistVerificationStatus.UNVERIFIED:
                         success_text = "Artist access saved! Invite emails will be sent once your artist profile is verified by mods."
                     else:
-                        link_info = ArtistLinkingInfo.objects.get(invited_email=user_json['email'], artist=artist)
-                        invite_code = link_info.regenerate_invite_code()
-                        invite_user_to_artist(link_info, invite_code, form)
+                        link_code = ArtistManagementLinkCode.objects.get(email=user_json['email'], artist=artist)
+                        link_code.regenerate_code()
+                        invite_user_to_artist(link_code, form)
 
         partial_errors = form.non_field_errors  # added explicitly here or by the email functions
         all_success = not partial_errors()
@@ -429,37 +407,54 @@ def manage_artist_access(request, pk):
 
 
 @login_required
-def link_artist(request):
+def link_artist(request, management=False):
+    LinkCodeClass = ArtistManagementLinkCode if management else ArtistInviteLinkCode
     try:
-        artist_linking_info = ArtistLinkingInfo.check_url(request.GET, request.user.email)
-    except EmailCodeError as e:
+        link_code = LinkCodeClass.check_url(request)
+    except LinkCodeError as e:
         return render(request, "findshows/pages/artist_link_failure.html",
                       {'error': e.message})
 
-    artist = artist_linking_info.artist
+    artist = link_code.artist
     up = request.user.userprofile
     if not up.artist_verification_status:
-        if artist_linking_info.created_by.user.is_mod_or_admin():
-            up.artist_verification_status = ArtistVerificationStatus.VERIFIED
-        else:
-            up.artist_verification_status = ArtistVerificationStatus.INVITED
+        inviter_verified = link_code.created_by.artist_verification_status in (ArtistVerificationStatus.INVITED, ArtistVerificationStatus.VERIFIED)
+        up.artist_verification_status = (ArtistVerificationStatus.INVITED if inviter_verified
+                                          else ArtistVerificationStatus.UNVERIFIED)
     if not up.given_artist_access_by:
-        up.given_artist_access_by = artist_linking_info.created_by
+        up.given_artist_access_by = link_code.created_by
         up.given_artist_access_datetime = timezone.now()
     up.save()
     up.managed_artists.add(artist)
-    artist_linking_info.delete()
-
     if artist.is_temp_artist:
         artist.created_by = up
         artist.save()
 
-    return redirect(url_with_next(
-        request.GET.get('next') if request.GET else None,
-        next=reverse('findshows:edit_artist' if artist.is_temp_artist else 'findshows:view_artist',
-                     args=(artist.pk,),
-                     query={'from': 'link_artist'})
-    ))
+    if management:
+        link_code.delete()
+        next = reverse('findshows:artist_dashboard')
+    else:
+        LinkCodeClass.objects.filter(artist=artist).delete()
+        next = reverse('findshows:edit_artist' if artist.is_temp_artist else 'findshows:view_artist',
+                       args=(artist.pk,),
+                       query={'from': 'link_artist'})
+
+    return redirect(url_with_next(request.GET.get('next') if request.GET else None, next=next))
+
+
+@user_passes_test(User.is_local_artist_or_mod_or_admin)
+def get_invite_link(request):
+    if not request.user.userprofile.email_is_verified:
+        return HttpResponse(b"Please verify your email before inviting artists.")
+    elif request.user.has_exceeded_daily_invites():
+        return HttpResponse(b"You have reached your maximum daily invites; please try again tomorrow.")
+    artist = get_object_or_404(Artist, pk=request.POST.get('artist_id'))
+    link_code = ArtistInviteLinkCode.create_and_generate(artist, request.user.userprofile)
+    return HttpResponse(b"", headers={
+        'HX-Trigger': json.dumps({"invite-link-loaded": {
+            "invite_link": local_url_to_email(link_code.get_url())
+        }})
+    })
 
 
 def follow_artist(request, pk, unfollow=False, htmx=False):
@@ -772,7 +767,8 @@ def mod_queue(request):
 @user_passes_test(User.is_mod_or_admin)
 def mod_outstanding_invites(request):
     return render(request, "findshows/htmx/mod_outstanding_invites.html", context={
-        'artist_linking_infos': ArtistLinkingInfo.objects.all(),
+        'expiration_days': settings.LINK_CODE_EXPIRATION_DAYS,
+        'link_codes': list(chain(ArtistInviteLinkCode.objects.all(), ArtistManagementLinkCode.objects.all())),
     })
 
 
@@ -823,11 +819,6 @@ def artist_verification_buttons(request, pk):
             userprofile.artist_verification_status = ArtistVerificationStatus.VERIFIED
             userprofile.given_artist_access_by = request.user.userprofile
             userprofile.given_artist_access_datetime = timezone.now()
-            for link_info in ArtistLinkingInfo.objects.filter(created_by=userprofile):
-                invite_code = link_info.regenerate_invite_code()
-                errors = []
-                if not invite_artist(link_info, invite_code, errorlist=errors):
-                    invite_errors[link_info.invited_email] = errors
             notify_artist_verified(userprofile)
 
         case 'deverify':
@@ -844,18 +835,18 @@ def artist_verification_buttons(request, pk):
 
 @user_passes_test(User.is_local_artist_or_mod_or_admin)
 def resend_invite(request, pk):
-    ali = get_object_or_404(ArtistLinkingInfo, pk=pk)
-    if (not request.user.is_mod_or_admin()) and (ali.created_by != request.user.userprofile):
+    link_code = get_object_or_404(ArtistManagementLinkCode, pk=pk)
+    if (not request.user.is_mod_or_admin()) and (link_code.created_by != request.user.userprofile):
         raise PermissionDenied
-    if ali.generated_datetime > timezone.now() - timedelta(minutes=5):
+    if link_code.generated_datetime > timezone.now() - timedelta(minutes=5):
         success = False
         errorlist = ["Please wait at least five minutes before sending again."]
     else:
-        invite_code = ali.regenerate_invite_code()
+        link_code.regenerate_code()
         errorlist = []
-        success = invite_artist(ali, invite_code, errorlist=errorlist)
+        success = invite_user_to_artist(link_code, errorlist=errorlist)
     return render(request, "findshows/htmx/mod_resend_invite_button.html", context={
-        'ali': ali,
+        'link_code': link_code,
         'success': success,
         'errors': " ".join(errorlist),
     })

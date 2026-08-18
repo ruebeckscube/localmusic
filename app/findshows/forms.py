@@ -227,7 +227,7 @@ class ConcertForm(DefaultStylingModelForm):
         self.fields['ages'].choices = age_choices
 
         if self.instance.id:
-            self.fields['bill'].initial = [{'id': a.pk, 'name': a.name}
+            self.fields['bill'].initial = [{'id': a.pk, 'name': a.name, 'num_users': a.managing_users.count()}
                                            for a in self.instance.sorted_artists]
         else:
             self.fields['bill'].initial = []
@@ -346,8 +346,8 @@ class ArtistAccessForm(forms.Form):
             if user_profile != current_user_profile
         ]
         form.fields['users'].initial.extend(
-            {'email': ali.invited_email, 'type': ArtistAccessWidget.Types.UNLINKED.value}
-            for ali in artist.artistlinkinginfo_set.all()
+            {'email': link_code.email, 'type': ArtistAccessWidget.Types.UNLINKED.value}
+            for link_code in artist.artistmanagementlinkcode_set.all()
         )
         return form
 
@@ -373,7 +373,6 @@ class ArtistAccessForm(forms.Form):
 class TempArtistForm(DefaultStylingModelForm):
     prefix = "temp_artist"
     use_required_attribute = False
-    email=forms.EmailField(required=True)
 
     class Meta:
         model=Artist

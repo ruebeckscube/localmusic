@@ -19,8 +19,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 
-from findshows.email import local_url_to_email
-from findshows.models import Ages, Artist, ArtistLinkingInfo, Concert, ConcertTags, Contact, EmailVerification, ListenLink, MusicBrainzArtist, SetOrder, UserProfile, Venue, YoutubeLink
+from findshows.utilities import local_url_to_email
+from findshows.models import Ages, Artist, ArtistInviteLinkCode, ArtistManagementLinkCode, Concert, ConcertTags, Contact, EmailVerificationLinkCode, ListenLink, MusicBrainzArtist, SetOrder, UserProfile, Venue, YoutubeLink
 
 User = get_user_model()
 
@@ -94,7 +94,7 @@ class MixinForAllTestCases():
         self.assertEqual(len(mail.outbox), number)
 
 
-    def assert_records_created(self, model_class, number):
+    def _existing_records(self, model_class):
         existing = model_class.objects.all().count()
         # we have some static records in the database we don't want to worry about (from migration 0019)
         if model_class is Artist:
@@ -103,7 +103,14 @@ class MixinForAllTestCases():
             existing -= len(self.StaticUsers)
         if model_class is Venue:
             existing -= len(self.StaticVenues)
-        self.assertEqual(existing, number)
+        return existing
+
+    def assert_records_created(self, model_class, number):
+        self.assertEqual(self._existing_records(model_class), number)
+
+    def assert_records_created_multiclass(self, model_classes, number):
+        total_existing = sum(self._existing_records(mc) for mc in model_classes)
+        self.assertEqual(total_existing, number)
 
 
     def assert_equal_as_sets(self, iterable1, iterable2):
@@ -305,37 +312,45 @@ class MixinForAllTestCases():
                                                 similar_artists=similar_artists or {},
                                                 similar_artists_cache_datetime=tomorrow)
 
-    @classmethod
-    def create_artist_linking_info(cls, email=None, artist=None, created_by=None, generated_datetime=None, pk=None):
-        while email is None:
-            email = str(uuid4())
-            if ArtistLinkingInfo.objects.filter(invited_email=email).exists():
-                email = None
-        artist = artist or cls.get_static_instance(cls.StaticArtists.LOCAL_ARTIST)
-        created_by = created_by or cls.get_static_instance(cls.StaticUsers.DEFAULT_CREATOR)
-
-        ali = ArtistLinkingInfo(pk=pk, artist=artist, invited_email=email)
-        invite_code = ali._generate_invite_code()
-        ali.created_by = created_by
-        if generated_datetime is not None:
-            ali.generated_datetime = generated_datetime
-        ali.save()
-
-        return ali, invite_code
-
 
     @classmethod
-    def create_email_verification(cls, email=None, generated_datetime=None):
+    def _default_unique_email(cls, LinkCodeClass, email=None):
         while email is None:
             email = str(uuid4())
-            if EmailVerification.objects.filter(invited_email=email).exists():
+            if LinkCodeClass.objects.filter(email=email).exists():
                 email = None
-        email_verification, invite_code = EmailVerification.create_and_get_invite_code(email=email)
-        if generated_datetime is not None:
-            email_verification.generated_datetime = generated_datetime
-            email_verification.save()
+        return email
 
-        return email_verification, invite_code
+    @classmethod
+    def _final_code_steps(cls, link_code, generated_datetime=None):
+        link_code._generate_code()
+        if generated_datetime is not None:
+            link_code.generated_datetime = generated_datetime
+        link_code.save()
+
+    @classmethod
+    def create_artist_invite_link_code(cls, artist=None, created_by=None, generated_datetime=None, pk=None):
+        artist=artist or cls.get_static_instance(cls.StaticArtists.LOCAL_ARTIST)
+        link_code = ArtistInviteLinkCode(pk=pk, artist=artist)
+        link_code.created_by = created_by or cls.get_static_instance(cls.StaticUsers.DEFAULT_CREATOR)
+        cls._final_code_steps(link_code, generated_datetime)
+        return link_code
+
+    @classmethod
+    def create_artist_management_link_code(cls, email=None, artist=None, created_by=None, generated_datetime=None, pk=None):
+        email = cls._default_unique_email(ArtistManagementLinkCode, email)
+        artist=artist or cls.get_static_instance(cls.StaticArtists.LOCAL_ARTIST)
+        link_code = ArtistManagementLinkCode(pk=pk, artist=artist, email=email)
+        link_code.created_by = created_by or cls.get_static_instance(cls.StaticUsers.DEFAULT_CREATOR)
+        cls._final_code_steps(link_code, generated_datetime)
+        return link_code
+
+    @classmethod
+    def create_email_verification_link_code(cls, email=None, generated_datetime=None):
+        email = cls._default_unique_email(EmailVerificationLinkCode, email)
+        link_code = EmailVerificationLinkCode(email=email)
+        cls._final_code_steps(link_code, generated_datetime)
+        return link_code
 
 
     @classmethod

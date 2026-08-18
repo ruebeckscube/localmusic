@@ -12,8 +12,9 @@
 
         <ol id="bill-editor" class="w-full">
             <template x-for="(artist, idx) in bill_order" :key="idx">
-                <li class="flex my-2"
+                <li class="flex flex-col my-2"
                     x-init="$nextTick(() => htmx.process($el))"> {# necessary for any HTMX in an x-for #}
+                  <div class="flex">
                     <div class="w-full max-w-md dropdown-container"
                          @focusin="open_dropdown(artist)"
                          @click.outside="close_dropdown(artist)"
@@ -44,9 +45,9 @@
                                 {% for artist in artists %}
                                     <li class="menuitem hover:text-clickable-h"
                                         tabindex="-1"
-                                        @click="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}')"
-                                        @keydown.enter="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}')"
-                                        @keydown.space="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}')">
+                                        @click="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}', {{artist.num_users|escapejs}})"
+                                        @keydown.enter="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}', {{artist.num_users|escapejs}})"
+                                        @keydown.space="select_artist({{idx|escapejs}}, '{{artist.name|escapejs}}', '{{artist.id|escapejs}}', {{artist.num_users|escapejs}})">
                                         {{artist.name}}
                                     </li>
                                 {% endfor %}
@@ -95,6 +96,28 @@
                             </svg>
                         </button>
                     </div>
+                  </div>
+                 {% partialdef copy-invite-link inline %}
+                  <button x-show="artist.id && !artist.num_users && !artist.invite_link"
+                          type="button"
+                          class="w-fit max-w-md m-1 ml-3 text-xs link text-left"
+                          hx-post="{% url 'findshows:get_invite_link' %}"
+                          hx-params="csrfmiddlewaretoken,artist_id"
+                          :hx-vals="JSON.stringify({'artist_id': artist.id})"
+                          hx-swap="innerHTML"
+                          hx-target="next .htmx-err-msg"
+                          @invite-link-loaded="artist.invite_link=$event.detail.invite_link;navigator.clipboard.writeText(artist.invite_link)"
+                  >
+                      Copy invite link
+                  </button>
+                  <button x-show="artist.id && !artist.num_users && artist.invite_link"
+                          type="button"
+                          class="w-fit max-w-md m-1 ml-3 text-xs link text-left"
+                          @click="navigator.clipboard.writeText(artist.invite_link)">
+                      Invite link copied! Valid for {{ expiration_days }} days.
+                  </button>
+                  <div class="htmx-err-msg errorlist text-xs pl-3 max-w-md"></div>
+                 {% endpartialdef copy-invite-link %}
                 </li>
             </template>
         </ol>
@@ -105,6 +128,11 @@
                     @click="add_artist()">
                 + Add set
             </button>
+            <div class="helptext" x-show="bill_order.some((a) => a.id && !a.num_users);">
+                At least one artist hasn't filled out a profile&mdash;please consider
+                sending them an invite link. It adds details to the concert and helps the
+                site grow. Thanks!
+            </div>
         </div>
 
     </div>
@@ -117,9 +145,6 @@
                 </div>
                 <div class="fieldgroup">
                     {{ temp_artist_form.local.as_field_group }}
-                </div>
-                <div class="flex flex-col fieldgroup">
-                    {{ temp_artist_form.email.as_field_group }}
                 </div>
             {% endpartialdef temp-artist-form %}
         {% endmodal_form %}
