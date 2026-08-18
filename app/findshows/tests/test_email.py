@@ -81,20 +81,15 @@ class SendMassHtmlMailTests(TestCaseHelpers):
 
 
 class SendRecEmailTests(TestCaseHelpers):
-    def test_temp_artist_filtering(self):
+    def test_temp_artist_included(self):
         non_temp_artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
         temp_artist = self.get_static_instance(self.StaticArtists.TEMP_ARTIST)
-
-        # at least one temp artist
         concert1 = self.create_concert(timezone_today() + timedelta(1), artists=[temp_artist, non_temp_artist])
-        # no temp artists
-        concert2 = self.create_concert(timezone_today() + timedelta(1))
 
         self.create_user_profile(email="user1@em.ail")
         send_rec_email()
         self.assert_emails_sent(1)
-        self.assert_concert_link_in_message_html(concert2, mail.outbox[0])
-        self.assert_concert_link_in_message_html(concert1, mail.outbox[0], True)
+        self.assert_concert_link_in_message_html(concert1, mail.outbox[0])
 
 
     def test_artist_verification_status_filtering(self):

@@ -442,6 +442,9 @@
   .h-60 {
     height: calc(var(--spacing) * 60);
   }
+  .h-\[32px\] {
+    height: 32px;
+  }
   .h-fit {
     height: fit-content;
   }

@@ -1,28 +1,22 @@
 {% if concert.cancelled %}
     <div class="banner text-2xl my-4"> This concert is cancelled! </div>
-    {% endif %}
+{% endif %}
 
-{% if not concert.venue.is_verified %}
+{% if concert.created_by.artist_verification_status != "VE" and concert.created_by.artist_verification_status != "IN" %}
     <div class="errorlist banner mt-3">
-        This concert will not be publically visible until the venue is
-        verified.
-    </div>
-{% elif concert.venue.declined_listing %}
-    <div class="errorlist banner mt-3">
-        This venue declined listing and the concert will not
-        be publicially visible.
+        This concert will be publically visible once the creator's profile is verified.
     </div>
 {% endif %}
 
-{% for artist in concert.sorted_artists %}
-    {% if artist.is_temp_artist %}
+{% if not concert.venue.is_verified %}
     <div class="errorlist banner mt-3">
-        {{ artist.name }} has not yet filled out their
-        profile; the concert will not be publically
-        visible until they do.
+        This concert will be publically visible once the venue is verified.
     </div>
-    {% endif %}
-{% endfor %}
+{% elif concert.venue.declined_listing %}
+    <div class="errorlist banner mt-3">
+        This venue declined listing and the concert will not be publicially visible.
+    </div>
+{% endif %}
 
 {% if show_conflicts and concert.conflicts %}
     <div class="errorlist banner mt-3">

@@ -34,7 +34,7 @@
                         <div class="text-center pb-2 @md:text-right @md:mr-4">
                             <div class="flex justify-center @md:justify-between">
                                 {# Only show star if we're in a context that's providing followed_artists (incl. empty list) #}
-                                {% if followed_artists is None %}
+                                {% if followed_artists is None or artist.is_temp_artist %}
                                     <div></div>
                                 {% else %}
                                     {% if artist in followed_artists %}
@@ -44,10 +44,16 @@
                                     {% endif %}
                                 {% endif %}
 
-                                <a href="{% url 'findshows:view_artist' artist.pk %}"
-                                    class="text-[6vw] @md:text-xl link @max-md:pl-1 w-fit">
-                                {{artist.name}}
-                                </a>
+                                {% if artist.is_temp_artist %}
+                                    <div class="text-[6vw] @md:text-xl @max-md:pl-1 w-fit">
+                                        {{ artist.name }}
+                                    </div>
+                                {% else %}
+                                    <a href="{% url 'findshows:view_artist' artist.pk %}"
+                                       class="text-[6vw] @md:text-xl link @max-md:pl-1 w-fit">
+                                        {{ artist.name }}
+                                    </a>
+                                {% endif %}
                             </div>
                             <div aria-label="Sounds like">
                                 {% for similar_musicbrainz_artist in artist.similar_musicbrainz_artists.all %}

@@ -845,7 +845,6 @@ class Concert(CreationTrackingMixin):
     @classmethod
     def publically_visible(cls):
         query = cls.objects.exclude(
-            Q(artists__is_temp_artist=True) |
             Q(venue__is_verified=False) |
             Q(venue__declined_listing=True) |
             Q(cancelled=True)

@@ -5,15 +5,7 @@
     <p class="helptext pl-6">Fields marked <span class="text-highlight-text">*</span> are required.</p>
     {% if query.from == "link_artist" %}
         <div class="banner my-0">
-            Artist linked successfully! You can now fill out your profile;
-            any concerts that include this artist will be listed publically
-            once your profile is complete.
-        </div>
-    {% elif is_temp_artist %}
-        <div class="banner my-0">
-            NOTE: This artist listing has not been filled out; Any concerts
-            that include this artist will not be displayed publically
-            until this form is completed.
+            Artist linked successfully! You can now fill out your profile.
         </div>
     {% endif %}
     {% if not user.userprofile.email_is_verified %}

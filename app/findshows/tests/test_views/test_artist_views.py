@@ -100,7 +100,7 @@ class ViewArtistTests(TestCaseHelpers):
 
         response = self.client.get(reverse("findshows:view_artist", args=(artist1.pk,)))
 
-        self.assert_equal_as_sets(response.context['upcoming_concerts'], [concert12today, concert12future])
+        self.assert_equal_as_sets(response.context['upcoming_concerts'], [concert12today, concert12future, concert_with_temp])
 
 
     def test_temp_artist_can_only_be_viewed_by_artist(self):

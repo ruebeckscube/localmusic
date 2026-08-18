@@ -111,18 +111,16 @@ class ConcertSearchResultsTests(TestCaseHelpers):
         self.assert_equal_as_sets(response.context['concerts'], [concert1, concert2, concert3, concert4])
 
 
-    def test_temp_artist_filtering(self):
+    def test_temp_artist_included(self):
         non_temp_artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
         temp_artist = self.get_static_instance(self.StaticArtists.TEMP_ARTIST)
-        # at least one temp artist
+
         concert1 = self.create_concert(timezone_today() + timedelta(1), artists=[temp_artist, non_temp_artist])
-        # no temp artists
-        concert2 = self.create_concert(timezone_today() + timedelta(1))
 
         get_params = concert_GET_params(timezone_today() + timedelta(1))
 
         response = self.client.get(reverse('findshows:concert_search'), get_params)
-        self.assert_equal_as_sets(response.context['concerts'], [concert2])
+        self.assert_equal_as_sets(response.context['concerts'], [concert1])
 
 
     def test_venue_filtering(self):
