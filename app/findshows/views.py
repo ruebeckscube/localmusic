@@ -279,18 +279,20 @@ def artist_search_results(request):
     if not (request.GET and request.GET.get("artist-search") and request.GET.get("idx")):
         return HttpResponse(b"")
 
-    keywords = request.GET["artist-search"].split()
+    q = request.GET["artist-search"]
     try:
         idx = int(request.GET["idx"])
     except ValueError:
         return HttpResponse(b"")
 
-    search_results = Artist.objects.filter(
-        reduce(and_, (Q(name__icontains=k) for k in keywords))).annotate(
-            num_users=Count("managing_users")
-        )[:5]
+    artists = Artist.objects.annotate(similarity=TrigramSimilarity('name', q),
+                                      num_users=Count('managing_users'))
+    contains_filter = reduce(and_, (Q(name__icontains=k) for k in q.split()))
+    artists = artists.filter(reduce(or_, (Q(name__fuzzy_index=q), contains_filter)))
+    artists = artists.order_by('-similarity')
+
     return render(request, "findshows/widgets/bill_widget.html#artist-search-results", {
-        "artists": search_results,
+        "artists": artists[:5],
         "idx": idx
     })
 

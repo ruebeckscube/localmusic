@@ -231,6 +231,11 @@ class Artist(CreationTrackingMixin):
     similar_musicbrainz_artists=models.ManyToManyField(MusicBrainzArtist, verbose_name="Sounds like",
                                                        help_text="Select 3 well-known artists whose fans might like your music.")
 
+    class Meta:
+        indexes = [
+            GinIndex(name="artist_gin_trgrm", fields=["name"], opclasses=["gin_trgm_ops"], fastupdate=False),
+        ]
+
 
     def similarity_score(self, searched_mbids):
         similar_mb_artists = self.similar_musicbrainz_artists.all()

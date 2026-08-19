@@ -305,7 +305,7 @@ class ArtistSearchResultsTests(TestCaseHelpers):
         response = self.client.get(reverse("findshows:artist_search_results"), data={'notaparam':'haha'})
         self.assertEqual(response.content, b'')
 
-    def test_search(self):
+    def test_short_contains_search(self):
         pete = self.create_artist(name="Pete Seeger")
         bob = self.create_artist(name="Bob Seger")
         seekers = self.create_artist(name="The Seekers")
@@ -320,9 +320,27 @@ class ArtistSearchResultsTests(TestCaseHelpers):
                                    data={'artist-search': query,'idx': 1})
         self.assert_equal_as_sets(response.context['artists'], [pete, bob])
 
+
+    def test_fuzzy_search(self):
+        pete = self.create_artist(name="Pete Seeger")
+        bob = self.create_artist(name="Bob Seger")
+        seekers = self.create_artist(name="The Seekers")
+        carly = self.create_artist(name="Carly Rae Jepsen")
+
+        query = "Seeger"
+        response = self.client.get(reverse("findshows:artist_search_results"),
+                                   data={'artist-search': query,'idx': 1})
+        self.assert_equal_as_sets(response.context['artists'], [pete, bob])
+
+        query = "Seegers"
+        response = self.client.get(reverse("findshows:artist_search_results"),
+                                   data={'artist-search': query,'idx': 1})
+        self.assert_equal_as_sets(response.context['artists'], [pete, seekers])
+
+
     def test_constant_num_queries(self):
-        self.create_artist(name="Pete Seeger")
-        self.create_artist(name="Bob Seger")
+        pete = self.create_artist(name="Pete Seeger")
+        bob = self.create_artist(name="Bob Seger")
         query = 'se'
         expected_queries = 1
 
@@ -330,12 +348,13 @@ class ArtistSearchResultsTests(TestCaseHelpers):
             self.client.get(reverse("findshows:artist_search_results"),
                             data={'artist-search': query,'idx': 1})
 
-        self.create_artist(name="The Seekers")
-        self.create_artist(name="Carly Rae Jepsen")
+        seekers = self.create_artist(name="The Seekers")
+        carly = self.create_artist(name="Carly Rae Jepsen")
 
         with self.assertNumQueries(expected_queries):
-            self.client.get(reverse("findshows:artist_search_results"),
+            response = self.client.get(reverse("findshows:artist_search_results"),
                             data={'artist-search': query,'idx': 1})
+        self.assert_equal_as_sets(response.context['artists'], [pete, bob, seekers, carly])
 
 
 def temp_artist_post_data(name=None):
