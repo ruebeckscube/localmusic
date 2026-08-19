@@ -278,7 +278,7 @@ class EditArtistTests(ArtistViewTestHelpers):
     def test_temp_artist_shows_banner(self, *args):
         self.login_static_user(self.StaticUsers.TEMP_ARTIST)
         response = self.client.get(reverse("findshows:edit_artist", args=(self.StaticArtists.TEMP_ARTIST.value,)))
-        self.assertIn('This artist listing has not been filled out', str(response.content))
+        self.assertIn('This artist listing will be publically visible', str(response.content))
 
 
     def test_cancel_link_bad_inputs(self, *args):

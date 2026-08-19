@@ -7,6 +7,11 @@
         <div class="banner my-0">
             Artist linked successfully! You can now fill out your profile.
         </div>
+    {% elif is_temp_artist %}
+        <div class="banner my-0">
+            This artist listing will be publically visible and hyperlinked
+            from shows after it has been filled out.
+        </div>
     {% endif %}
     {% if not user.userprofile.email_is_verified %}
         <div class="banner my-0">

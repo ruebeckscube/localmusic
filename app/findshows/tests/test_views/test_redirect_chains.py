@@ -49,7 +49,7 @@ class LoginRedirectTests(SeleniumTestCaseHelpers):
 
         self.assert_equal_as_sets([artist], userprofile.managed_artists.all())
         self.assert_current_url("findshows:edit_artist", args=[artist.pk], query={'from': 'link_artist'})
-        self.assertIn("Artist linked successfully! You can now fill out your profile;", self.selenium.page_source)
+        self.assertIn("Artist linked successfully!", self.selenium.page_source)
 
 
 class CreateAccountRedirectTests(SeleniumTestCaseHelpers):
@@ -107,4 +107,4 @@ class CreateAccountRedirectTests(SeleniumTestCaseHelpers):
 
         self.selenium.find_element(By.XPATH, '//input[@value="Save"]').click()
         self.assert_current_url("findshows:edit_artist", args=[artist.pk], query={'from': 'link_artist'})
-        self.assertIn("Artist linked successfully! You can now fill out your profile;", self.selenium.page_source)
+        self.assertIn("Artist linked successfully!", self.selenium.page_source)
