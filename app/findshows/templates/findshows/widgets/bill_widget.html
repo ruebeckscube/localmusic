@@ -146,6 +146,7 @@
                 <div class="fieldgroup">
                     {{ temp_artist_form.local.as_field_group }}
                 </div>
+                {% include "findshows/pages/edit_concert.html#confirmation-field" with field=temp_artist_form.artist_dup_confirmation %}
             {% endpartialdef temp-artist-form %}
         {% endmodal_form %}
     </div>

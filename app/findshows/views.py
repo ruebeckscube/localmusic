@@ -316,11 +316,17 @@ def create_temp_artist(request):
     else:
         form = TempArtistForm()
 
+    # TODO: test new behavior
     valid = form.is_valid()
     if valid:
-        artist = form.save(commit=False)
-        artist.created_by = request.user.userprofile
-        artist.save()
+        artist_dup = form.cleaned_data['artist_dup_confirmation']
+        if artist_dup:
+            artist = Artist.objects.annotate(num_users=Count('managing_users')).get(pk=artist_dup)
+        else:
+            artist = form.save(commit=False)
+            artist.created_by = request.user.userprofile
+            artist.save()
+            artist.num_users = 0
         form = TempArtistForm()
 
     response = render(request, "findshows/widgets/bill_widget.html#temp-artist-form", {
@@ -331,7 +337,9 @@ def create_temp_artist(request):
         response.headers['HX-Trigger'] = json.dumps({
             "modal-form-success": {
                 "created_record_name": artist.name,
-                "created_record_id": artist.id}})
+                "created_record_id": artist.id,
+                "created_record_num_users": artist.num_users,
+            }})
 
     return response
 

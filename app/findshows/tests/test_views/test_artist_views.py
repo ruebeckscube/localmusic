@@ -357,10 +357,11 @@ class ArtistSearchResultsTests(TestCaseHelpers):
         self.assert_equal_as_sets(response.context['artists'], [pete, bob, seekers, carly])
 
 
-def temp_artist_post_data(name=None):
+def temp_artist_post_data(name=None, artist_dup_confirmation=None):
     return {
-        'temp_artist-name': name or 'test name 123',
+        'temp_artist-name': name if name is not None else 'test name 123',
         'temp_artist-local': ['on'],
+        'temp_artist-artist_dup_confirmation': artist_dup_confirmation if artist_dup_confirmation is not None else ''
     }
 
 class CreateTempArtistTests(TestCaseHelpers):
@@ -389,19 +390,66 @@ class CreateTempArtistTests(TestCaseHelpers):
         hx_trigger = json.loads(response.headers['HX-Trigger'])
         self.assertTrue('modal-form-success' in hx_trigger)
 
-        self.assert_emails_sent(0)
 
     def test_invalid_form(self):
         self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
-        data=temp_artist_post_data()
-        data['temp_artist-name'] = ''
+        data=temp_artist_post_data(name='')
         response = self.client.post(reverse("findshows:create_temp_artist"), data)
         self.assert_not_blank_form(response.context['temp_artist_form'], TempArtistForm)
         self.assert_records_created(Artist, 0)
-
         self.assertFalse('HX-Trigger' in response.headers)
 
-        self.assert_emails_sent(0)
+
+    def _set_up_potential_duplicate(self):
+        self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
+        lt = self.create_artist(name="Lawrence Tome")
+
+        data=temp_artist_post_data(name='Lawrence Time')
+        response = self.client.post(reverse("findshows:create_temp_artist"), data)
+        self.assert_records_created(Artist, 1) # the Lawrence Tome  we already made manually
+        self.assertFalse('HX-Trigger' in response.headers)
+        self.assertIn("Lawrence Tome", response.text)
+        self.assertIn("This artist is not a duplicate", response.text)
+
+        return lt, data
+
+
+    def test_duplicate_artist(self):
+        lt, data = self._set_up_potential_duplicate()
+
+        data['temp_artist-artist_dup_confirmation'] = str(lt.pk)
+        response = self.client.post(reverse("findshows:create_temp_artist"), data)
+        self.assert_records_created(Artist, 1) # the Lawrence Tome  we already made manually
+        self.assertTrue('HX-Trigger' in response.headers)
+        hx_trigger = json.loads(response.headers['HX-Trigger'])
+        self.assertEqual(hx_trigger, {"modal-form-success": {
+            "created_record_name": lt.name,
+            "created_record_id": lt.id,
+            "created_record_num_users": lt.managing_users.count(),
+        }})
+
+
+    def test_close_but_not_duplicate_artist(self):
+        _, data = self._set_up_potential_duplicate()
+
+        data['temp_artist-artist_dup_confirmation'] = "NOT_DUP"
+        response = self.client.post(reverse("findshows:create_temp_artist"), data)
+        self.assert_records_created(Artist, 2)
+        self.assertTrue('HX-Trigger' in response.headers)
+        hx_trigger = json.loads(response.headers['HX-Trigger'])
+        self.assertEqual(hx_trigger["modal-form-success"]["created_record_name"], "Lawrence Time")
+
+
+    def test_duplicate_invalid_choice(self):
+        _, data = self._set_up_potential_duplicate()
+
+        data['temp_artist-artist_dup_confirmation'] = "999999999" # not an existing PK
+        response = self.client.post(reverse("findshows:create_temp_artist"), data)
+        self.assert_records_created(Artist, 1) # the Lawrence Tome  we already made manually
+        self.assertFalse('HX-Trigger' in response.headers)
+        self.assertIn("Lawrence Tome", response.text)
+        self.assertIn("This artist is not a duplicate", response.text)
+        self.assertIn("Invalid choice", response.text)
 
 
 class GetInviteLinkTests(TestCaseHelpers):

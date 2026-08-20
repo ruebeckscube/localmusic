@@ -43,11 +43,12 @@ function bill_data() {
       [this.bill_order[idx], this.bill_order[idx + incr]] = [this.bill_order[idx + incr], this.bill_order[idx]];
     },
 
-    artist_from_args(name, id) {
+    artist_from_args(name, id, num_users = 0) {
       return {
         'search_text': name,
         'name': name,
         'id': id,
+        'num_users': num_users,
         'show_search': false
       }
     },
@@ -68,14 +69,17 @@ function bill_data() {
     },
 
     on_temp_artist_create(event) {
-      new_artist = this.artist_from_args(event.detail.created_record_name,
-                                         event.detail.created_record_id)
+      new_artist = this.artist_from_args(
+          event.detail.created_record_name,
+          event.detail.created_record_id,
+          event.detail.created_record_num_users,
+      );
 
       if (this.creating_artist_idx === -1) {
         this.add_artist(new_artist);
       }
       else {
-          this.bill_order[this.creating_artist_idx] = new_artist
+          this.bill_order[this.creating_artist_idx] = new_artist;
       }
 
     },

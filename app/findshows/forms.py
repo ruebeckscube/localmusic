@@ -11,6 +11,8 @@ from django.forms.widgets import TimeInput
 from django.template.loader import render_to_string
 from django.views.generic.dates import timezone_today
 from django.conf import settings
+from django.utils.safestring import mark_safe
+from django.urls import reverse
 from multiselectfield.forms.fields import MultiSelectFormField
 from captcha.fields import CaptchaField
 
@@ -374,12 +376,42 @@ class TempArtistForm(DefaultStylingModelForm):
     prefix = "temp_artist"
     use_required_attribute = False
 
+    artist_dup_confirmation = forms.Field(required=False, widget=forms.RadioSelect())
+
     class Meta:
         model=Artist
         fields=("name", "local")
         field_classes={
             "local": functools.partial(forms.BooleanField, template_name="findshows/widgets/checkbox_field_group.html")
         }
+
+    def _check_artist_dup(self, cleaned_data):
+        "When valid, returns pk of selected duplicate artist; otherwise blank for new record"
+        name = cleaned_data.get("name")
+        if not name:
+            return
+        artists = Artist.objects.filter(name__fuzzy_index=name)
+        val = cleaned_data.get("artist_dup_confirmation")
+        if val: # In case name field changes, just accept any existing artist PK
+            if val == "NOT_DUP":
+                cleaned_data["artist_dup_confirmation"] = ""
+                return
+            elif Artist.objects.filter(pk=val).exists():
+                return
+            else:
+                self.add_error('artist_dup_confirmation', "Invalid choice")
+        if artists:
+            choices = [(artist.pk, mark_safe(f'<a class="link" target="_blank" href="{reverse("findshows:view_artist", args=(artist.pk,))}">{artist.name}</a>')) for artist in artists]
+            choices.append(('NOT_DUP', "This artist is not a duplicate"))
+            self.fields['artist_dup_confirmation'].widget.choices = choices
+            self.add_error('artist_dup_confirmation',
+                           "There are artists in the database with a similar name. Please select a match or confirm not a duplicate.")
+
+
+    def clean(self):
+        cleaned_data = super().clean() or {}
+        self._check_artist_dup(cleaned_data)
+        return cleaned_data
 
 
     def save(self, commit = True):
