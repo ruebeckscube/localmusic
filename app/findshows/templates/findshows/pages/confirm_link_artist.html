@@ -1,0 +1,26 @@
+{% extends "localmusic/small_page.html" %}
+
+{% block small_content %}
+
+    <h1 class="text-center">Confirm artist link</h1>
+
+    <form method="get"
+          {% if link_code.email %}
+          action="{% url 'findshows:link_artist_management' %}"
+          {% else %}
+          action="{% url 'findshows:link_artist' %}"
+          {% endif %}
+    >
+        <p class="p-2 text-center">
+            You are about to link your account to <span class="font-semibold">{{ link_code.artist.name }}</span>.
+        </p>
+        <button type="submit" class="btn block mx-auto">Confirm &amp; link</button>
+        <input type="hidden" name="confirm">
+        <input type="hidden" name="id" value="{{ query.id }}">
+        <input type="hidden" name="code" value="{{ query.code }}">
+        {% if query.next %}
+            <input type="hidden" name="next" value="{{ query.next }}">
+        {% endif %}
+    </form>
+
+{% endblock %}

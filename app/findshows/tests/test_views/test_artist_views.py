@@ -526,12 +526,25 @@ def request_artist_post_data():
 
 
 class LinkArtistTests(TestCaseHelpers):
-    def test_successful_link_temp_artist(self):
+    def initial_confirmation_screen(self):
         artist = self.create_artist(is_temp_artist=True)
         user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
         link_code = self.create_artist_invite_link_code(artist, created_by=self.get_static_instance(self.StaticUsers.LOCAL_ARTIST))
 
         response = self.client.get(link_code.get_url())
+
+        self.assertIn("Confirm artist link", response.text)
+
+
+    def confirmed_url(self, link_code):
+        return f'{link_code.get_url()}&confirm='
+
+    def test_successful_link_temp_artist(self):
+        artist = self.create_artist(is_temp_artist=True)
+        user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
+        link_code = self.create_artist_invite_link_code(artist, created_by=self.get_static_instance(self.StaticUsers.LOCAL_ARTIST))
+
+        response = self.client.get(self.confirmed_url(link_code))
 
         user_profile.refresh_from_db()
         artist.refresh_from_db()
@@ -550,7 +563,7 @@ class LinkArtistTests(TestCaseHelpers):
         inviter_profile = self.create_user_profile(artist_verification_status=ArtistVerificationStatus.UNVERIFIED)
         link_code = self.create_artist_invite_link_code(artist, created_by=inviter_profile)
 
-        response = self.client.get(link_code.get_url())
+        response = self.client.get(self.confirmed_url(link_code))
 
         user_profile.refresh_from_db()
         artist.refresh_from_db()
@@ -570,7 +583,7 @@ class LinkArtistTests(TestCaseHelpers):
         link_code = self.create_artist_management_link_code(user_profile.user.email, artist,
                                                                created_by=local_user)
 
-        response = self.client.get(link_code.get_url())
+        response = self.client.get(self.confirmed_url(link_code))
 
         user_profile.refresh_from_db()
         artist.refresh_from_db()
@@ -620,7 +633,7 @@ class LinkArtistTests(TestCaseHelpers):
         user = self.login_static_user(self.StaticUsers.NON_ARTIST)
         link_code = self.create_artist_invite_link_code(artist)
         mock_timezone.now.return_value = timezone.now() + datetime.timedelta(settings.LINK_CODE_EXPIRATION_DAYS + 2)
-        response = self.client.get(link_code.get_url())
+        response = self.client.get(self.confirmed_url(link_code))
         self.assertTemplateUsed(response, 'findshows/pages/artist_link_failure.html')
         self.assertIn('error', response.context)
         self.assertIn('Invalid link', response.context['error'])
@@ -631,7 +644,7 @@ class LinkArtistTests(TestCaseHelpers):
         artist = self.get_static_instance(self.StaticArtists.TEMP_ARTIST)
         user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
         link_code = self.create_artist_management_link_code("different@em.ail", artist)
-        response = self.client.get(link_code.get_url())
+        response = self.client.get(self.confirmed_url(link_code))
         self.assertTemplateUsed(response, 'findshows/pages/artist_link_failure.html')
         self.assertIn('error', response.context)
         self.assertIn("User's email does not match", response.context['error'])
@@ -642,7 +655,7 @@ class LinkArtistTests(TestCaseHelpers):
         artist = self.create_artist(is_temp_artist=True)
         user_profile = self.login_static_user(self.StaticUsers.NON_ARTIST)
         link_code = self.create_artist_management_link_code(user_profile.user.email.upper(), artist)
-        response = self.client.get(link_code.get_url())
+        response = self.client.get(self.confirmed_url(link_code))
         self.assertRedirects(response, reverse('findshows:artist_dashboard'))
         user_profile.refresh_from_db()
         self.assertIn(artist, user_profile.managed_artists.all())

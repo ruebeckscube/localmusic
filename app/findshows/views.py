@@ -419,6 +419,12 @@ def link_artist(request, management=False):
         return render(request, "findshows/pages/artist_link_failure.html",
                       {'error': e.message})
 
+    if request.GET and 'confirm' not in request.GET:
+        return render(request, "findshows/pages/confirm_link_artist.html", {
+            'link_code': link_code,
+            'query': request.GET,
+        })
+
     artist = link_code.artist
     up = request.user.userprofile
     if not up.artist_verification_status:

@@ -20,7 +20,9 @@
             <p class="p-3">
                 Please log in or
                 <a class="link" href="{% url 'create_account' %}?next={{ next | urlencode}}">create an account</a>
-                to edit your artist profile.
+                to edit your artist profile. (Check out the
+                <a class="link" target="_blank" href="{% url 'findshows:features' %}">site features</a>
+                here)
             </p>
         {% elif user.is_authenticated %}
             <p class="errorlist">Your account doesn't have access to this page. To proceed,

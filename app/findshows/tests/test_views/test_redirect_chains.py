@@ -47,6 +47,11 @@ class LoginRedirectTests(SeleniumTestCaseHelpers):
         self.fill_out_login(userprofile.user.email)
         self.wait_for_page_load()
 
+        self.assert_current_url("findshows:link_artist", disregard_query=True)
+        self.assertIn("Confirm artist link", self.selenium.page_source)
+        self.selenium.find_element(By.XPATH, '//button[contains(text(), "Confirm")]').click()
+        self.wait_for_page_load()
+
         self.assert_equal_as_sets([artist], userprofile.managed_artists.all())
         self.assert_current_url("findshows:edit_artist", args=[artist.pk], query={'from': 'link_artist'})
         self.assertIn("Artist linked successfully!", self.selenium.page_source)
@@ -99,6 +104,11 @@ class CreateAccountRedirectTests(SeleniumTestCaseHelpers):
 
         self.selenium.get(f"{self.live_server_url}{link_code.get_url()}")
         self.login_thru_create_account()
+
+        self.assert_current_url("findshows:link_artist", disregard_query=True)
+        self.assertIn("Confirm artist link", self.selenium.page_source)
+        self.selenium.find_element(By.XPATH, '//button[contains(text(), "Confirm")]').click()
+        self.wait_for_page_load()
 
         self.assert_current_url("findshows:user_settings", disregard_query=True)
         self.assertIn("Account created successfully!", self.selenium.page_source)
