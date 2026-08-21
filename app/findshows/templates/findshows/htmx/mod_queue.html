@@ -22,7 +22,7 @@
             </td>
             <td>
                 {% for artist in userprofile.managed_artists.all %}
-                <a class="link block w-fit" href="{% url 'findshows:view_artist' artist.pk %}" target="_blank">{{ artist.name }}</a>
+                <a class="link block w-fit mx-auto" href="{% url 'findshows:view_artist' artist.pk %}" target="_blank">{{ artist.name }}</a>
                 {% empty %}
                 No artist pages linked
                 {% endfor %}

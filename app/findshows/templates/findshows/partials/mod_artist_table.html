@@ -1,8 +1,12 @@
+{% load findshows_tags %}
+{% load static %}
+
 {% if artists %}
     <table class="w-full text-center max-w-5xl fieldgroup p-5">
         <tr class="bg-highlight-item-light text-lg">
             <th> Artist name </th>
             <th> Email </th>
+            <th> Duplicates? </th>
             {% if user.is_staff %}
                 <th> Admin </th>
             {% endif %}
@@ -21,6 +25,39 @@
                     {% for userprofile in artist.managing_users.all %}
                         <a class="link" href="mailto:{{ userprofile.user.email }}">{{ userprofile.user.email }}</a>
                     {% endfor %}
+                </td>
+                <td>
+                  {% if artist.has_potential_duplicates %}
+                    <button type="button" class="btn"
+                            x-data="" @click="$dispatch('open-modal-popup', {modal_id: '{{ artist.pk }}-artist-duplicate-modal'})">
+                        Examine
+                    </button>
+                    <form>
+                      {% csrf_token %}
+                      {% with artist.pk|stringformat:"d"|add:"-artist-duplicate-modal" as id_with_prefix %}
+                          {% modal_form title="Examine potential duplicates"  htmx_url="findshows:mod_artist_deduplication" htmx_param=artist.pk id=id_with_prefix %}
+                          <input type="hidden" name="initial-load">
+                          {% partialdef artist-duplicate-form %}
+                             <h3>Dedup for {{ artist.name }} ({{artist.pk}})</h3>
+                             <div class="errorlist">
+                                 Be careful! This cannot be undone.
+                             </div>
+                             <div class="helptext">
+                                 All concerts pointing to merged records will now point at chosen record.
+                                 All followers (if existing) will be moved.
+                                 Managing users will NOT be moved.
+                             </div>
+                             <div class="errorlist ml-3">{{ form.non_field_errors }}</div>
+                             <div class="flex">
+                               {% for field in form %}
+                                  <div class="fieldgroup grow">{{ field.as_field_group }}</div>
+                               {% endfor %}
+                             </div>
+                          {% endpartialdef artist-duplicate-form %}
+                        {% endmodal_form %}
+                      {% endwith %}
+                    </form>
+                  {% endif %}
                 </td>
                 {% if user.is_staff %}
                     <td>

@@ -41,6 +41,7 @@ urlpatterns = [
     path("htmx/artist_verification/<int:pk>", views.artist_verification_buttons, name="artist_verification_buttons"),
     path("htmx/resend_invite/<int:pk>", views.resend_invite, name="resend_invite"),
     path("htmx/delete_contact/<int:pk>", views.delete_contact, name="delete_contact"),
+    path("htmx/mod_artist_deduplication/<int:pk>", views.mod_artist_deduplication, name="mod_artist_deduplication"),
 
     path("htmx/concert_search/", views.concert_search, name="concert_search"),
 

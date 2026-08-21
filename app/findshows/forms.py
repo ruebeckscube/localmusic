@@ -1,3 +1,4 @@
+from django.forms import ModelChoiceField, ModelMultipleChoiceField
 from datetime import timedelta
 import functools
 from itertools import zip_longest
@@ -390,7 +391,6 @@ class TempArtistForm(DefaultStylingModelForm):
         name = cleaned_data.get("name")
         if not name:
             return
-        artists = Artist.objects.filter(name__fuzzy_index=name)
         val = cleaned_data.get("artist_dup_confirmation")
         if val: # In case name field changes, just accept any existing artist PK
             if val == "NOT_DUP":
@@ -400,6 +400,7 @@ class TempArtistForm(DefaultStylingModelForm):
                 return
             else:
                 self.add_error('artist_dup_confirmation', "Invalid choice")
+        artists = Artist.objects.filter(name__fuzzy_index=name)
         if artists:
             choices = [(artist.pk, mark_safe(f'<a class="link" target="_blank" href="{reverse("findshows:view_artist", args=(artist.pk,))}">{artist.name}</a>')) for artist in artists]
             choices.append(('NOT_DUP', "This artist is not a duplicate"))
@@ -491,6 +492,40 @@ class ModDailyDigestForm(forms.Form):
                 "No data for future dates."
                 )
         return date
+
+
+class ModArtistDeduplicationForm(DefaultStylingForm):
+    use_this = ModelChoiceField(Artist.objects.none(), widget=forms.RadioSelect, required=True)
+    merge_these = ModelMultipleChoiceField(Artist.objects.none(), widget=forms.CheckboxSelectMultiple, required=True)
+
+    def choice_text(self, artist):
+        display = f'{artist.name} ({artist.pk})'
+        if artist.is_temp_artist:
+            artist_name = display
+        else:
+            url = reverse("findshows:view_artist", args=(artist.pk,))
+            artist_name = f'<a class="link" target="_blank" href="{url}">{display}</a>'
+
+        linked_users = f'<div class="helptext">{",".join(userprofile.user.email for userprofile in artist.managing_users.all())}</div>'
+
+        return mark_safe(f'{artist_name}{linked_users}')
+
+
+    def __init__(self, artist, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        q = Artist.objects.filter(name__fuzzy_index=artist.name)
+        for field in self.fields.values():
+            field.queryset = q
+            field.label_from_instance = self.choice_text
+
+
+    def clean(self):
+        cleaned_data = super().clean() or {}
+        if not cleaned_data.get('use_this') or not cleaned_data.get('merge_these'):
+            raise ValidationError("Please select records to merge")
+        if cleaned_data['use_this'] in cleaned_data['merge_these']:
+            raise ValidationError("Do not select the same artist in both columns")
+        return cleaned_data
 
 
 CustomTextFormSet = forms.modelformset_factory(

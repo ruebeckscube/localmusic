@@ -15,6 +15,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models import Q, Count
+from django.db.models.expressions import OuterRef, Exists
 from django.utils import timezone
 from django.views.generic.dates import timezone_today
 from django.conf import settings
@@ -24,7 +25,7 @@ from findshows.email import enqueue_concert_edit_reminder, invite_user_to_artist
 from findshows.widgets import ArtistAccessWidget
 
 from .models import Artist, ArtistInviteLinkCode, ArtistManagementLinkCode, ArtistVerificationStatus, Concert, ConcertTags, Contact, EmailVerificationLinkCode, JPEGImageException, LinkCodeError, MusicBrainzArtist, User, UserProfile, Venue
-from .forms import ArtistAccessForm, ArtistEditForm, ConcertForm, ContactForm, CustomTextFormSet, ModDailyDigestForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm
+from .forms import ArtistAccessForm, ArtistEditForm, ConcertForm, ContactForm, CustomTextFormSet, ModDailyDigestForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm, ModArtistDeduplicationForm
 
 
 #################
@@ -316,7 +317,6 @@ def create_temp_artist(request):
     else:
         form = TempArtistForm()
 
-    # TODO: test new behavior
     valid = form.is_valid()
     if valid:
         artist_dup = form.cleaned_data['artist_dup_confirmation']
@@ -755,14 +755,55 @@ def mod_daily_digest(request):
         form = ModDailyDigestForm(initial={'date': timezone_today})
 
     date = form.cleaned_data['date'] if form.is_valid() else timezone_today()
+    subquery = Artist.objects.filter(name__fuzzy_index=OuterRef('name')).exclude(pk=OuterRef('pk'))
 
     return render(request, "findshows/htmx/mod_daily_digest.html", context={
         'form': form,
-        'artists': Artist.objects.filter(created_at=date),
+        'artists': Artist.objects.filter(created_at=date).annotate(has_potential_duplicates=Exists(subquery)),
         'concerts': Concert.objects.filter(created_at=date),
         'venues': Venue.objects.filter(created_at=date),
         'show_conflicts': True,
     })
+
+
+def _merge_artists(artist_use, artists_merge):
+    for artist_merge in artists_merge:
+        for set_order in artist_merge.set_order.all():
+            set_order.artist = artist_use
+            set_order.save()
+        for user_profile in artist_merge.followers.all():
+            user_profile.followed_artists.remove(artist_merge)
+            user_profile.followed_artists.add(artist_use)
+        if not artist_use.managing_users.exists(): # Only update invite links if still unlinked
+            for link_code in artist_merge.artistinvitelinkcode_set.all():
+                link_code.artist = artist_use
+                link_code.save()
+        artist_merge.delete() # Cascades to delete link codes
+
+
+@user_passes_test(User.is_mod_or_admin)
+def mod_artist_deduplication(request, pk):
+    artist = get_object_or_404(Artist, pk=pk)
+
+    headers = {}
+    if request.POST and 'initial-load' in request.POST:
+        form = ModArtistDeduplicationForm(artist)
+    else:
+        form = ModArtistDeduplicationForm(artist, request.POST)
+        if form.is_valid():
+            _merge_artists(form.cleaned_data['use_this'], form.cleaned_data['merge_these'])
+            form = ModArtistDeduplicationForm(artist)
+            headers = { "modal-form-success": {
+                "success_text": "Artists merged!",
+            }}
+    response = render(request, "findshows/partials/mod_artist_table.html#artist-duplicate-form", {
+        'artist': artist,
+        'form': form,
+    })
+    if headers:
+        response.headers['HX-Trigger'] = json.dumps(headers, default=str)
+
+    return response
 
 
 @user_passes_test(User.is_mod_or_admin)

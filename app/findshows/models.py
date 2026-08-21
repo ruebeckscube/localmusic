@@ -900,6 +900,9 @@ class SetOrder(models.Model):
     artist=models.ForeignKey(Artist, on_delete=models.CASCADE, related_name="set_order")
     order_number=models.IntegerField()
 
+    def __str__(self):
+        return f"{self.artist} on {self.concert} (order {self.order_number})"
+
 
 class CustomTextTypes(models.TextChoices):
     BANNER = "BR", "Announcement banner"

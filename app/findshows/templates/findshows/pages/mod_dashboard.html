@@ -1,4 +1,5 @@
 {% extends "localmusic/base.html" %}
+{% load static %}
 
 {% block content %}
     <div class="p-3">
@@ -26,11 +27,12 @@
                     {{ tab.label }}
                 </button>
             {% endfor %}
-
         </div>
 
         <div class="p-3" id="mod-content"></div>
 
     </div>
+
+    <script src='{% static "findshows/js/modal_popup_data.js" %}'></script>
 
 {% endblock %}

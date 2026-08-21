@@ -60,6 +60,7 @@ MOD_URLS_WITH_PK = (
     "venue_verification",
     "artist_verification_buttons",
     "delete_contact",
+    "mod_artist_deduplication",
 )
 
 #################

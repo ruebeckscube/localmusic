@@ -10,7 +10,7 @@ from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 
 from findshows.forms import CustomTextFormSet
-from findshows.models import ArtistInviteLinkCode, ArtistManagementLinkCode, ArtistVerificationStatus, Contact, CustomText, CustomTextTypes
+from findshows.models import ArtistInviteLinkCode, ArtistManagementLinkCode, ArtistVerificationStatus, Contact, CustomText, CustomTextTypes, Artist
 from findshows.tests.test_helpers import TestCaseHelpers
 
 
@@ -37,6 +37,98 @@ class ModDailyDigestTests(ModTestCaseHelpers):
         artist = self.create_artist(created_at=yesterday)
         response = self.client.get(reverse("findshows:mod_daily_digest"), {'date': yesterday.isoformat()})
         self.assertIn(artist, response.context['artists'])
+
+class ModArtistDeduplication(ModTestCaseHelpers):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.tome = cls.create_artist("Lawrence Tome")
+        cls.time = cls.create_artist("Lawrence Time")
+        cls.unrelated = cls.create_artist("The Fonz")
+
+        cls.link_code = cls.create_artist_invite_link_code(cls.time)
+        cls.concert = cls.create_concert(artists=[cls.time])
+
+
+    def post_data(self, artist_use=None, artists_merge=None):
+        return {
+            'use_this': [str(artist_use.pk) if artist_use else ''],
+            'merge_these': [str(a.pk) for a in artists_merge] if artists_merge else [''],
+        }
+
+    def test_initial_load(self):
+        url = reverse("findshows:mod_artist_deduplication",args=(self.tome.pk,))
+        response = self.client.post(url, {'initial-load': ''})
+        self.assertIn(self.tome.name, response.text)
+        self.assertIn(self.time.name, response.text)
+        self.assertNotIn(self.unrelated.name, response.text)
+        self.assertNotIn('HX-Trigger', response.headers)
+
+    def test_not_enough_selected(self):
+        url = reverse("findshows:mod_artist_deduplication",args=(self.tome.pk,))
+        def check_result(**kwargs):
+            response = self.client.post(url, self.post_data(**kwargs))
+            self.assertIn("Please select records to merge", response.text)
+            self.assertNotIn('HX-Trigger', response.headers)
+        check_result()
+        check_result(artist_use=self.tome)
+        check_result(artists_merge=[self.time])
+
+    def test_selected_same_in_both_columns(self):
+        url = reverse("findshows:mod_artist_deduplication",args=(self.tome.pk,))
+        response = self.client.post(url, self.post_data(
+            artist_use=self.tome, artists_merge=[self.tome, self.time]
+        ))
+        self.assertIn("Do not select the same artist", response.text)
+        self.assertNotIn('HX-Trigger', response.headers)
+
+    def test_try_merging_not_similar_artist(self):
+        url = reverse("findshows:mod_artist_deduplication",args=(self.tome.pk,))
+        response = self.client.post(url, self.post_data(
+            artist_use=self.tome, artists_merge=[self.unrelated]
+        ))
+        self.assertIn("Select a valid choice", response.text)
+        self.assertNotIn('HX-Trigger', response.headers)
+
+
+    def test_both_unlinked(self):
+        url = reverse("findshows:mod_artist_deduplication",args=(self.tome.pk,))
+        response = self.client.post(url, self.post_data(self.tome, [self.time]))
+        self.assertIn('HX-Trigger', response.headers)
+        self.assert_equal_as_sets(self.concert.artists.all(), [self.tome])
+        self.link_code.refresh_from_db()
+        self.assertEqual(self.link_code.artist, self.tome)
+
+
+    def test_both_linked(self):
+        user_profile1 = self.get_static_instance(self.StaticUsers.DEFAULT_CREATOR)
+        user_profile1.managed_artists.add(self.tome)
+        user_profile2 = self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)
+        user_profile2.managed_artists.add(self.time)
+        follower_profile = self.create_user_profile(followed_artists=[self.time])
+        follower_profile.followed_artists.add(self.time)
+
+        url = reverse("findshows:mod_artist_deduplication",args=(self.tome.pk,))
+        response = self.client.post(url, self.post_data(self.tome, [self.time]))
+        self.assertIn('HX-Trigger', response.headers)
+        self.assert_equal_as_sets(self.concert.artists.all(), [self.tome])
+        self.assert_equal_as_sets(follower_profile.followed_artists.all(), [self.tome])
+        self.assertNotIn(self.time, user_profile2.managed_artists.all())
+        with self.assertRaises(Artist.DoesNotExist):
+            Artist.objects.get(pk=self.time.pk)
+
+
+    def test_merge_unlinked_into_linked(self):
+        user_profile1 = self.get_static_instance(self.StaticUsers.DEFAULT_CREATOR)
+        user_profile1.managed_artists.add(self.tome)
+
+        url = reverse("findshows:mod_artist_deduplication",args=(self.tome.pk,))
+        response = self.client.post(url, self.post_data(self.tome, [self.time]))
+        self.assertIn('HX-Trigger', response.headers)
+        self.assert_equal_as_sets(self.concert.artists.all(), [self.tome])
+        with self.assertRaises(ArtistInviteLinkCode.DoesNotExist):
+            ArtistInviteLinkCode.objects.get(pk=self.link_code.pk)
+
 
 
 class ModQueueTests(ModTestCaseHelpers):
