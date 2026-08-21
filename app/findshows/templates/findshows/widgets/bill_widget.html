@@ -139,6 +139,7 @@
 
     <div @modal-form-success="on_temp_artist_create">
         {% modal_form title="New artist"  htmx_url="findshows:create_temp_artist" id="create-artist-modal" %}
+            <input type="hidden" name="initial-load">
             {% partialdef temp-artist-form %}
                 <div class="flex flex-col fieldgroup">
                     {{ temp_artist_form.name.as_field_group }}

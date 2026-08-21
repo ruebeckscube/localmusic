@@ -22,7 +22,8 @@
     {% csrf_token %}
     {% with artist.pk|stringformat:"d"|add:"-artist-management-modal" as id_with_prefix %}
       {% modal_form title="Manage access"  htmx_url="findshows:manage_artist_access" htmx_param=artist.pk id=id_with_prefix %}
-        {% partialdef artist-access-form inline %}
+        <input type="hidden" name="initial-load">
+        {% partialdef artist-access-form %}
             {% if partial_errors %}
                 {{ partial_errors }}
             {% endif %}

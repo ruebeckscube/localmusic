@@ -63,7 +63,8 @@
 
     <div class="w-32" @modal-form-success="on_venue_create">
         {% modal_form title="New venue" htmx_url="findshows:create_venue" id="create-venue-modal" %}
-            {% partialdef venue-form inline %}
+            <input type="hidden" name="initial-load">
+            {% partialdef venue-form %}
                 {% for field in venue_form %}
                     <div class="flex flex-col fieldgroup">
                         {{ field.as_field_group }}

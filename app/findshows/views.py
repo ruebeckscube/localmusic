@@ -309,13 +309,10 @@ def create_temp_artist(request):
             'message': "You must have a local artist account to create artist listings."
         })
 
-    # The latter condition is a slightly hacky way of telling whether this HTMX
-    # request is being triggered by page load (we should provide blank form) or
-    # click (we should process form and display errors if they exist)
-    if request.POST and 'temp_artist-name' in request.POST:
-        form = TempArtistForm(request.POST)
-    else:
+    if request.POST and 'initial-load' in request.POST:
         form = TempArtistForm()
+    else:
+        form = TempArtistForm(request.POST)
 
     valid = form.is_valid()
     if valid:
@@ -350,13 +347,10 @@ def manage_artist_access(request, pk):
     if (artist not in request.user.userprofile.managed_artists.all()) and not request.user.is_staff:
         raise PermissionDenied
 
-    # The latter condition is a slightly hacky way of telling whether this HTMX
-    # request is being triggered by page load (we should provide blank form) or
-    # click (we should process form and display errors if they exist)
-    if request.POST and 'artist_access-users' in request.POST:
-        form = ArtistAccessForm(request.POST)
-    else:
+    if request.POST and 'initial-load' in request.POST:
         form = ArtistAccessForm.populate_intial(request.user.userprofile, artist)
+    else:
+        form = ArtistAccessForm(request.POST)
 
     success_text = "Artist access saved!"
     if form.is_valid():
@@ -599,13 +593,10 @@ def create_venue(request):
     if permissions_msg:
         return render(request, 'findshows/htmx/modal_error_msg.html', {'message': permissions_msg})
 
-    # The latter condition is a slightly hacky way of telling whether this HTMX
-    # request is being triggered by page load (we should provide blank form) or
-    # click (we should process form and display errors if they exist)
-    if request.POST and 'venue-name' in request.POST:
-        venue_form = VenueForm(request.POST)
-    else:
+    if request.POST and 'initial-load' in request.POST:
         venue_form = VenueForm()
+    else:
+        venue_form = VenueForm(request.POST)
 
     valid = venue_form.is_valid()
     if valid:
