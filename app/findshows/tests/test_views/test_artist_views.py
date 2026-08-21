@@ -671,7 +671,7 @@ class ManageArtistAccessTests(TestCaseHelpers):
         nonlocal_artist_up.managed_artists.add(artist)
         self.create_artist_management_link_code('temp@em.ail', artist)
 
-        response = self.client.post(reverse("findshows:manage_artist_access", args=(artist.pk,))) # No post populates initial
+        response = self.client.post(reverse("findshows:manage_artist_access", args=(artist.pk,)), {'initial-load': ''})
         initial_data = response.context['artist_access_form'].fields['users'].initial
 
         self.assertIn({'email': 'temp@em.ail', 'type': ArtistAccessWidget.Types.UNLINKED.value},

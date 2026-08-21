@@ -354,7 +354,7 @@ def manage_artist_access(request, pk):
 
     success_text = "Artist access saved!"
     if form.is_valid():
-        for user_json in form.cleaned_data['users']:
+        for user_json in form.cleaned_data['users'] or []:
             match user_json['type']:
                 case ArtistAccessWidget.Types.NEW.value:
                     if user_json['email'] in [up.user.email for up in artist.managing_users.all()]:

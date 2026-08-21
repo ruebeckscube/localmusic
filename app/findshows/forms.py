@@ -365,7 +365,7 @@ class ArtistAccessForm(forms.Form):
 
     def clean_users(self):
         invalid_emails = ','.join(u['email']
-                                  for u in self.cleaned_data['users']
+                                  for u in (self.cleaned_data['users'] or [])
                                   if not self.user_json_has_valid_email(u))
         if invalid_emails:
             self.add_error(None,
