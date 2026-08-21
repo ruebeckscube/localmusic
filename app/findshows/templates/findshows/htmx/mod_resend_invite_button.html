@@ -30,6 +30,7 @@
                'id': '{{ link_code.artist.pk }}',
                'num_users': {{ link_code.artist.managing_users.count }},
                'invite_link': '{{ link_code.artist.invite_link }}',
+               'name': '{{ link_code.artist.name }}',
              }}">
     <form>
         {% csrf_token %}
