@@ -106,14 +106,14 @@
                           :hx-vals="JSON.stringify({'artist_id': artist.id})"
                           hx-swap="innerHTML"
                           hx-target="next .htmx-err-msg"
-                          @invite-link-loaded="artist.invite_link=$event.detail.invite_link;navigator.clipboard.writeText(artist.invite_link)"
+                          @invite-link-loaded="artist.invite_link=$event.detail.invite_link;navigator.clipboard.writeText(`Artist invite link for ${artist.name}: ${artist.invite_link}`)"
+                          x-text="`Copy invite link for ${artist.name}`"
                   >
-                      Copy invite link
                   </button>
                   <button x-show="artist.id && !artist.num_users && artist.invite_link"
                           type="button"
                           class="w-fit max-w-md m-1 ml-3 text-xs link text-left"
-                          @click="navigator.clipboard.writeText(artist.invite_link)">
+                          @click="navigator.clipboard.writeText(`Artist invite link for ${artist.name}: ${artist.invite_link}`)">
                       Invite link copied! Valid for {{ expiration_days }} days.
                   </button>
                   <div class="htmx-err-msg errorlist text-xs pl-3 max-w-md"></div>
