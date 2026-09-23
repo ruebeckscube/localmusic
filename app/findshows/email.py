@@ -231,6 +231,8 @@ def _one_rec_email(user_profile, search_params, subject, email_header, next_week
     search_url = local_url_to_email(reverse('findshows:home', query=search_params))
 
     followed_artist_concerts, rec_concerts, random_concerts, concerts_to_announce = _get_concerts_for_email(user_profile, search_params, next_week_concerts, unannounced_concerts)
+    if all((not cs) for cs in (followed_artist_concerts, rec_concerts, random_concerts, concerts_to_announce)):
+        return None
 
     html_message = render_email_to_string("findshows/emails/rec_email.html", {
         'followed_artist_concerts': followed_artist_concerts,
@@ -259,12 +261,12 @@ def send_rec_email():
         logger.info(f"There are no concerts listed this week--not sending recommendation emails.")
         return None
 
-    sent = send_mass_html_mail(_one_rec_email(user_profile, search_params, subject, email_header, next_week_concerts, unannounced_concerts)
-                               for user_profile in user_profiles.iterator(chunk_size=1000))
+    emails = (_one_rec_email(user_profile, search_params, subject, email_header, next_week_concerts, unannounced_concerts)
+              for user_profile in user_profiles.iterator(chunk_size=1000))
+    sent = send_mass_html_mail(e for e in emails if e is not None)
 
-    if sent:
-        _update_share_date(unannounced_concerts, 'announced')
-        _update_share_date(next_week_concerts, 'shared')
+    _update_share_date(unannounced_concerts, 'announced') # Don't worry about email failure? need to mark announced even if not emailed (no followers)
+    _update_share_date(next_week_concerts, 'shared')
 
     logger.info(f"Sent {sent} recommendation emails")
     return sent

@@ -144,3 +144,11 @@ class SendRecEmailTests(TestCaseHelpers):
         self.create_user_profile(email="user1@em.ail")
         send_rec_email()
         self.assert_emails_sent(0)
+
+    def test_no_relevant_content_no_email(self):
+        unannounced_far_future = self.create_concert(date=timezone_today() + timedelta(20))
+        self.assertFalse(unannounced_far_future.announced)
+        self.create_user_profile(email="user1@em.ail")
+        send_rec_email()
+        self.assert_emails_sent(0)
+        self.assertTrue(unannounced_far_future.announced)
