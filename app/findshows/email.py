@@ -191,7 +191,9 @@ def _load_general_recommendation_data():
     week_later = today + datetime.timedelta(6)
     search_params = {'date': today,
                       'end_date': week_later,
-                      'is_date_range': True}
+                      'is_date_range': True,
+                      'sort_followed_to_top': True,
+                     }
     concerts = Concert.publically_visible().select_related('venue').prefetch_related('artists__similar_musicbrainz_artists')
     next_week_concerts = tuple(concerts.filter(date__gte=today, date__lte=week_later))
     unannounced_concerts = tuple(concerts.filter(date__gt=week_later, announced=None))
