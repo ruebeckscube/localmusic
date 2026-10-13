@@ -79,6 +79,8 @@ def send_verify_email(email_verification_link_code, form=None, errorlist=None):
 Welcome to {settings.SITE_TITLE}!
 
 {local_url_to_email(email_verification_link_code.get_url(), "Please click here to verify your email address")}.
+
+This link will expire in {settings.LINK_CODE_EXPIRATION_DAYS}.
     """]
     logger.info("Sending verification email")
     return send_simple_email(subject, message_blocks, [email_verification_link_code.email], form, errorlist=errorlist)

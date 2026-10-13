@@ -23,10 +23,6 @@
                 to see all of the artists you manage.
             </div>
         {% endif %}
-
-        {% if user.is_authenticated and not user.userprofile.email_is_verified %}
-            {% include "findshows/htmx/email_verification_banner.html" %}
-        {% endif %}
     {% endif %}
 
     {% if can_edit %}

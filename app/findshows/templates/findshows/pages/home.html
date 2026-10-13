@@ -2,19 +2,9 @@
 {% load static %}
 
 {% block content %}
-    {% if not user.is_authenticated %}
-        <div class="banner">
-            <a class="link" href="{% url 'create_account' %}">Create an account</a>
-            to follow artists, sign up for a weekly email, or post shows!
-        </div>
-    {% elif not user.userprofile.email_is_verified %}
-        {% include "findshows/htmx/email_verification_banner.html" %}
-    {% endif %}
-
     {# pre-load the follow icons to prevent potential flicker on click #}
     <img hidden src="{% static 'findshows/follow-star-empty.svg' %}">
     <img hidden src="{% static 'findshows/follow-star-filled.svg' %}">
 
     {% include "findshows/partials/concert_search.html" %}
-
 {% endblock %}
