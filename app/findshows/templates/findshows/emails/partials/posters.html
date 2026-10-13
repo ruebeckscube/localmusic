@@ -12,7 +12,7 @@
                       href="{% email_url 'findshows:view_concert' concert.pk %}"/>
             <mj-text font-size="12px">
                 <a href="{% email_url 'findshows:view_concert' concert.pk %}" style="font-weight:normal">
-                    {{ concert.display_str }} {% if concert.description %} | {{ concert.description }} {% endif %}
+                    {{ concert.display_str }} {% if concert.description %} | {{ concert.description|upper }} {% endif %}
                 </a>
             </mj-text>
         </mj-column>
