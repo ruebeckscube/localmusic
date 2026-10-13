@@ -1,6 +1,6 @@
 {% load findshows_tags %}
 
-<button type="button" class="{{ class }}" onclick="location.href='{% url 'findshows:edit_artist' artist.pk %}?from=artist_dashboard'">
+<button type="button" class="{{ class }}" onclick="location.href='{% url 'findshows:edit_artist' artist.pk %}?from={{ from }}'">
     Edit
 </button>
 

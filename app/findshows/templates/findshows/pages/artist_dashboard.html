@@ -63,7 +63,7 @@
                     {% endif %}
                 </div>
                 <div class="flex justify-center flex-wrap w-60">
-                    {% include "findshows/partials/artist_buttons.html" with class="btn block" %}
+                    {% include "findshows/partials/artist_buttons.html" with class="btn block" from="artist_dashboard"%}
                 </div>
                 <div class="mt-3">
                     {{ artist.followers.count }} followers

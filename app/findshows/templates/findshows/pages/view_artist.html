@@ -27,7 +27,7 @@
 
     {% if can_edit %}
         <div class="flex flex-wrap justify-center w-fit mx-auto">
-            {% include "findshows/partials/artist_buttons.html" with class="block btn px-5 m-2"%}
+            {% include "findshows/partials/artist_buttons.html" with class="block btn px-5 m-2" from="view_artist"%}
             <a class="block btn px-5 m-2" href="{% url 'findshows:artist_dashboard' %}"> Artist dashboard </a>
         </div>
     {% endif %}
