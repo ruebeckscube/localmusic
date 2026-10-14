@@ -396,6 +396,8 @@ class EmbedLink(models.Model):
 
 
     def _get_bandcamp_iframe_url(self):
+        if 'track' not in self.resource_url and 'album' not in self.resource_url:
+            raise ValidationError("Invalid link. Make sure you're linking directly to an album or track.")
         try:
             r = requests.get(self.resource_url)
         except SSLError:
