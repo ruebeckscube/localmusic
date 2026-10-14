@@ -1,8 +1,9 @@
 <div class="flex">
     {% if widget.is_initial %}
         <div class="flex flex-col">
-            <div> {{ widget.initial_text }}: </div>
-            <img class="max-h-36 max-w-36 m-2" src="{{ widget.value.url }}"/>
+            <label for="{{ widget.attrs.id }}">
+                <img class="max-h-36 max-w-36 p-2 hover:bg-highlight-item-light cursor-pointer" src="{{ widget.value.url }}"/>
+            </label>
             {% if not widget.required %}
                 <input type="checkbox" name="{{ widget.checkbox_name }}" id="{{ widget.checkbox_id }}"
                        {% if widget.attrs.disabled %} disabled{% endif %}
@@ -10,17 +11,18 @@
                 <label for="{{ widget.checkbox_id }}">{{ widget.clear_checkbox_label }}</label>
             {% endif %}
         </div>
+    {% else %}
+        <label class="btn block m-0 w-50" for="{{ widget.attrs.id }}">
+            Select file
+        </label>
     {% endif %}
     <div class="flex flex-col w-full ml-2">
-        <div> {{ widget.input_text }}: </div>
         <div class="relative m-2"
              x-data="{'new_file_name': ''}">
             <input class="opacity-0 h-0.5 w-0.5 absolute" type="{{ widget.type }}" name="{{ widget.name }}"
                    {% include "django/forms/widgets/attrs.html" %}
                    @change="new_file_name=$event.target.files[0].name">
-            <label class="btn block m-0" for="{{ widget.attrs.id }}">
-                Select file
-            </label>
+            <p x-show="new_file_name">Selected file: </p>
             <p x-text="new_file_name"></p>
         </div>
     </div>
