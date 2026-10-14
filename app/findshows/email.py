@@ -101,9 +101,11 @@ def notify_artist_verified(userprofile):
     subject = "Artist profile verified"
     message_blocks = [f"""
 Your artist profile has been verified! Any concerts you've listed will now
-be publically visible, and any artist invites have been sent.
+be publically visible.
+
+Check out the {local_url_to_email(reverse('findshows:features'), 'site features')}
+to get the most out of your artist profile.
     """]
-    message_blocks.append(CustomText.get_text(CustomTextTypes.ARTIST_INVITE_EMAIL))
     logger.info("Sending artist verification confirmation email")
     return send_simple_email(subject, message_blocks, [userprofile.user.email])
 

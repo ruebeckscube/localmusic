@@ -911,7 +911,6 @@ class CustomTextTypes(models.TextChoices):
     ABOUT = "AB", "About page"
     WEEKLY_EMAIL_SUBJECT = "ES", "Subject for weekly recommendation email"
     WEEKLY_EMAIL_HEADER = "EH", "Header message for weekly recommendation email"
-    ARTIST_INVITE_EMAIL = "AI", "Artist invite email"
     TERMS_OF_SERVICE = "TS", "Terms of service"
     DONATE = "DN", "Donation texts"
 

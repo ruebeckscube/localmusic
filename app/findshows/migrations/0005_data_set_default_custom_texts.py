@@ -21,34 +21,6 @@ def create_default_custom_texts(apps, schema_editor):
         CustomTextTypes.ABOUT: "Ask your local mods to fill out this page and tell you who they are! Or read below for information on the software running this site.",
         CustomTextTypes.WEEKLY_EMAIL_SUBJECT: "Your weekly local music recs",
         CustomTextTypes.WEEKLY_EMAIL_HEADER: "Thanks for subscribing to the email list and supporting local music!",
-        CustomTextTypes.ARTIST_INVITE_EMAIL: f"""
-**{settings.SITE_TITLE}** is an online, media-rich bulletin board for our
-local music scene.
-
-**Features for listeners**
-
-- A single weekly email: all the shows from bands you follow, a few from bands you don't!
-- Shows searchable anytime on the site.
-- Embedded audio players for easy show browsing.
-
-**Features for artists**
-
-- Every show goes into every follower's inbox, and is recommended to some other users.
-- Profile doubles as a simple EPK for booking.
-- Profile information populates automatically to concert listings.
-- One-click follow link (for social media etc) and QR code (for your merch table).
-- Future features: release announcements, artist discovery search, RSS, and more!
-
-Check out the {local_url_to_email(reverse("findshows:artist_faq"), "Artist FAQ")} for more details.
-
-Instagram and other big social media are filling our feeds with irrelevant content and otherwise
-[enshittifying](https://en.wikipedia.org/wiki/Enshittification) the internet.
-This site aims to be more of what we want and less of what we don't. More irl
-connection, more relevant information; less distraction, less stimulation, less
-scrolling.
-
-All offered in the DIY ethos; libre/open source forever and as gratis as we can sustainably make it.
-        """,
     }
 
     for type in CustomTextTypes.values:

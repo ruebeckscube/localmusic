@@ -75,15 +75,15 @@
     }
 
     h1 {
-      @apply my-4;
+      @apply text-3xl my-4;
     }
 
     h2 {
-      @apply my-2;
+      @apply text-2xl my-2;
     }
 
     h3 {
-      @apply my-1;
+      @apply text-xl my-1;
     }
 
     p {

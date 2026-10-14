@@ -10,17 +10,40 @@
 {% endif %}
 
 <div class="p-3">
-    <h1> Features </h1>
-{% custom_text 'AI' as features_text %}
-{% if features_text %}
+    <h1>Features</h1>
     <div class="fieldgroup markdown text-left w-11/12 max-w-3xl p-6 mx-auto">
-        {{ features_text }}
+        <p>
+            <span class="font-bold">{{ SITE_TITLE }}</span> is an online, media-rich bulletin board for
+            the local music scene.
+        </p>
+        <p class="font-bold">Features for listeners:</p>
+        <ul>
+            <li>A single weekly email: all the shows from bands you follow, a few from bands you don't!</li>
+            <li>Shows searchable anytime on the site.</li>
+            <li>Embedded audio players for easy show browsing.</li>
+        </ul>
+        <p class="font-bold">Features for artists:</p>
+        <ul>
+            <li>Every show goes into every follower's weekly email, and is recommended to some other users.</li>
+            <li>Profile doubles as a simple EPK for booking.</li>
+            <li>Profile information populates automatically to concert listings.</li>
+            <li>One-click follow link (for social media etc) and QR code (for your merch table).</li>
+            <li>Future features: release announcements, artist discovery search, RSS, and more!</li>
+        </ul>
+        <p>
+            Check out the <a href="{% url 'findshows:artist_faq' %}">Artist FAQ</a> for more details.
+        </p>
+        <p>
+            Instagram and other big social media are filling our feeds with irrelevant content and otherwise
+            <a href="https://en.wikipedia.org/wiki/Enshittification">enshittifying</a> the internet.
+            This site aims to be more of what we want and less of what we don't. More irl
+            connection, more relevant information; less distraction, less stimulation, less
+            scrolling.
+        </p>
+        <p>
+            All offered in the DIY ethos; libre/open source forever and as gratis as we can sustainably make it.
+        </p>
     </div>
-{% else %}
-    <div class="fieldgroup markdown text-left w-11/12 max-w-3xl p-6 mx-auto">
-        This page has not been configured.
-    </div>
-{% endif %}
 </div>
 
 {% endblock %}
