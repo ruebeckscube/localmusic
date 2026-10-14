@@ -650,8 +650,8 @@ def musicbrainz_artist_search_results(request):
 
 def get_concert_search_defaults(request):
     defaults = {'date': timezone_today,
-                'end_date': timezone_today,
-                'is_date_range': False,
+                'end_date': timezone_today() + timedelta(max(settings.DEFAULT_CONCERT_SEARCH_DATE_RANGE - 1, 0)),
+                'is_date_range': settings.DEFAULT_CONCERT_SEARCH_DATE_RANGE > 1,
                 'concert_tags': [t.value for t in ConcertTags]}
     if request.user and hasattr(request.user, 'userprofile'):
         defaults['musicbrainz_artists'] = request.user.userprofile.favorite_musicbrainz_artists.all()
