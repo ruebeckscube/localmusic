@@ -29,20 +29,11 @@ class ConcertViewTestHelpers(TestCaseHelpers):
 
 
 class ViewConcertTests(ConcertViewTestHelpers):
-    def test_concert_with_temp_artist_is_only_viewable_by_artists_on_bill(self):
+    def test_concert_with_temp_artist_is_publically_viewable(self):
         concert = self.create_concert(artists=[self.get_static_instance(self.StaticArtists.LOCAL_ARTIST),
                                             self.get_static_instance(self.StaticArtists.TEMP_ARTIST)])
         response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
-        self.assertTemplateUsed(response, 'findshows/pages/view_concert_hidden.html')
-
-        self.login_static_user(self.StaticUsers.TEMP_ARTIST)
-        response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
         self.assertTemplateUsed(response, 'findshows/pages/view_concert.html')
-
-        self.client.logout()
-        self.login_static_user(self.StaticUsers.NON_ARTIST)
-        response = self.client.get(reverse("findshows:view_concert", args=(concert.pk,)))
-        self.assertTemplateUsed(response, 'findshows/pages/view_concert_hidden.html')
 
 
     def test_concert_made_by_unverified_user_is_only_viewable_by_artists_on_bill(self):
