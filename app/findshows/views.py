@@ -503,7 +503,7 @@ def view_concert(request, pk=None):
     concert = get_object_or_404(Concert, pk=pk)
 
     artists = concert.artists.all()
-    if (not concert.created_by.user.listings_are_public()) or any(a.is_temp_artist for a in artists):
+    if (not concert.created_by.user.listings_are_public()):
         if request.user.is_anonymous:
             return render(request, "findshows/pages/view_concert_hidden.html")
         elif request.user.is_mod_or_admin():
