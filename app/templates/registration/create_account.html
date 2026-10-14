@@ -3,6 +3,7 @@
 {% block small_content %}
     <div class="p-3">
         <h1>Create an account</h1>
+        <p class="helptext">One account for everything; follow bands &amp; manage multiple artist profiles.</p>
         <form method="post" action="{% url 'create_account' %}"
               x-data="generic_form_data()"
               x-bind="props">
