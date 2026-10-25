@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.views.generic.dates import timezone_today
 from django.conf import settings
 
-from findshows.forms import ArtistAccessForm, ArtistEditForm, TempArtistForm
+from findshows.forms import ArtistAccessForm, ArtistForm, TempArtistForm
 from findshows.models import Artist, ArtistInviteLinkCode, ArtistManagementLinkCode, ArtistVerificationStatus
 from findshows.tests.test_helpers import TestCaseHelpers
 from findshows.widgets import ArtistAccessWidget
@@ -166,7 +166,7 @@ class CreateArtistTests(ArtistViewTestHelpers):
         response = self.client.get(reverse("findshows:create_artist"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'findshows/pages/edit_artist.html')
-        self.assert_blank_form(response.context['form'], ArtistEditForm)
+        self.assert_blank_form(response.context['form'], ArtistForm)
 
         response = self.client.post(reverse("findshows:create_artist"), data=self.artist_post_request())
         self.assertEqual(response.status_code, 200)

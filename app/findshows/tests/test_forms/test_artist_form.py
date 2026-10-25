@@ -3,7 +3,7 @@ from unittest.mock import patch
 from django.forms import ValidationError
 from django.http import QueryDict
 from findshows.models import EmbedLink, ListenLink, YoutubeLink
-from findshows.forms import ArtistEditForm
+from findshows.forms import ArtistForm
 from findshows.tests.test_helpers import TestCaseHelpers
 
 
@@ -44,12 +44,12 @@ class InitTests(ArtistFormTestHelpers):
                       'https://soundcloud.com/measuringmarigolds/becky-bought-a-bong-demo']
         youtube_links=['https://www.youtube.com/watch?v=IC1ZuNDTiz8']
         artist = self.create_artist('chappell roan', listen_links=listen_links, youtube_links=youtube_links)
-        form = ArtistEditForm(instance=artist)
+        form = ArtistForm(instance=artist)
         self.assertEqual(form['listen_links'].value(), listen_links)
         self.assertEqual(form['youtube_links'].value(), youtube_links)
 
     def test_new(self):
-        form = ArtistEditForm()
+        form = ArtistForm()
         self.assertEqual(form['listen_links'].value(), [])
         self.assertEqual(form['youtube_links'].value(), [])
 
@@ -61,12 +61,12 @@ def mock_iframe(embed_link: EmbedLink):
 @patch("findshows.forms.MusicBrainzArtist.get_similar_artists", return_value={"abc"})
 class SimilarMusicbrainzArtistsTests(ArtistFormTestHelpers):
     def test_too_few_mb_artists(self, *_):
-        form = ArtistEditForm(self.form_data(num_mb_artists=2), self.file_data())
+        form = ArtistForm(self.form_data(num_mb_artists=2), self.file_data())
         self.assertFalse(form.is_valid())
         self.assertIn("Please enter three", form.errors['similar_musicbrainz_artists'][0])
 
     def test_too_many_mb_artists(self, *_):
-        form = ArtistEditForm(self.form_data(num_mb_artists=4), self.file_data())
+        form = ArtistForm(self.form_data(num_mb_artists=4), self.file_data())
         self.assertFalse(form.is_valid())
         self.assertIn("Please enter three", form.errors['similar_musicbrainz_artists'][0])
 
@@ -75,11 +75,11 @@ class SimilarMusicbrainzArtistsTests(ArtistFormTestHelpers):
 @patch("findshows.forms.MusicBrainzArtist.get_similar_artists", return_value={"abc"})
 class EmbedTests(ArtistFormTestHelpers):
     def test_valid_links(self, *_):
-        form = ArtistEditForm(self.form_data(), self.file_data())
+        form = ArtistForm(self.form_data(), self.file_data())
         self.assertTrue(form.is_valid())
 
     def test_empty_links(self, *_):
-        form = ArtistEditForm(self.form_data(listen_links=[]), self.file_data())
+        form = ArtistForm(self.form_data(listen_links=[]), self.file_data())
         self.assertFalse(form.is_valid())
         self.assertIn("Please enter at least one", form.errors['listen_links'][0])
 
@@ -88,7 +88,7 @@ class EmbedTests(ArtistFormTestHelpers):
     def test_multiple_album_links(self, *_):
         listen_links = ["https://open.spotify.com/album/52UVPYpWJtkadiJeIq6OSz?si=eEUWYO3BR8y7ivSbUi0G5A",
                         "https://measuringmarigolds.bandcamp.com/album/measuring-marigolds"]
-        form = ArtistEditForm(self.form_data(listen_links=listen_links), self.file_data())
+        form = ArtistForm(self.form_data(listen_links=listen_links), self.file_data())
         self.assertFalse(form.is_valid())
         self.assertIn("Please enter links to either (a) one album", form.errors['listen_links'][0])
 
@@ -97,7 +97,7 @@ class EmbedTests(ArtistFormTestHelpers):
         listen_links = ["https://open.spotify.com/album/52UVPYpWJtkadiJeIq6OSz?si=eEUWYO3BR8y7ivSbUi0G5A",
                         "https://measuringmarigolds.bandcamp.com/album/measuring-marigolds"]
         youtube_links = ["https://youtu.be/dQw4w9WgXcQ?si=qTRRfXlOMaGVdx1N"]
-        form = ArtistEditForm(self.form_data(listen_links=listen_links, youtube_links=youtube_links), self.file_data())
+        form = ArtistForm(self.form_data(listen_links=listen_links, youtube_links=youtube_links), self.file_data())
         self.assertFalse(form.is_valid())
         self.assertIn("test error", form.errors['listen_links'][0])
         self.assertIn("test error", form.errors['youtube_links'][0])
@@ -115,7 +115,7 @@ class EmbedTests(ArtistFormTestHelpers):
         new_listen_links=["https://open.spotify.com/track/29BrlEPb8MaNYwBSovTpE4"]
         new_youtube_links=['https://www.youtube.com/watch?v=IC1ZuNDTiz8',
                            "https://www.youtube.com/watch?v=kC1bSJELPaQ"]
-        form = ArtistEditForm(self.form_data(listen_links=new_listen_links,
+        form = ArtistForm(self.form_data(listen_links=new_listen_links,
                                              youtube_links=new_youtube_links),
                               self.file_data(),
                               instance=artist)

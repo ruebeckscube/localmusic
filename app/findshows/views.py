@@ -25,7 +25,7 @@ from findshows.email import enqueue_concert_edit_reminder, invite_user_to_artist
 from findshows.widgets import ArtistAccessWidget
 
 from .models import Artist, ArtistInviteLinkCode, ArtistManagementLinkCode, ArtistVerificationStatus, Concert, ConcertTags, Contact, EmailVerificationLinkCode, JPEGImageException, LinkCodeError, MusicBrainzArtist, User, UserProfile, Venue
-from .forms import ArtistAccessForm, ArtistEditForm, ConcertForm, ContactForm, CustomTextFormSet, ModDailyDigestForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm, ModArtistDeduplicationForm
+from .forms import ArtistAccessForm, ArtistForm, ConcertForm, ContactForm, CustomTextFormSet, ModDailyDigestForm, ShowFinderForm, TempArtistForm, UserCreationFormE, UserProfileForm, VenueForm, ModArtistDeduplicationForm
 
 
 #################
@@ -248,9 +248,9 @@ def edit_artist(request, pk=None):
             raise PermissionDenied
 
     if request.method != 'POST':
-        form = ArtistEditForm(instance=artist)
+        form = ArtistForm(instance=artist)
     else:
-        form = ArtistEditForm(request.POST, request.FILES, instance=artist)
+        form = ArtistForm(request.POST, request.FILES, instance=artist)
         if not profile.email_is_verified:
             form.add_error(None, "Please verify your email before submitting. Click the link in the email you've received; if it's not in your inbox, please check spam.")
         elif form.is_valid():

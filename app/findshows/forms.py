@@ -91,7 +91,7 @@ player will be displayed on your artist profile and concert listings. Supports
 Bandcamp, SoundCloud, and Spotify links."""
 
 
-class ArtistEditForm(DefaultStylingModelForm):
+class ArtistForm(DefaultStylingModelForm):
     listen_links=EmbedLinkField(num_links=3, help_text=LISTEN_LINK_HELP,
                                 placeholder="https://artist.bandcamp.com/track/track-title")
     youtube_links=EmbedLinkField(num_links=2, required=False,
