@@ -6,7 +6,7 @@ TEMPLATE_HOST_NAME, www.TEMPLATE_HOST_NAME {
     @php path *.php
     respond @php 404
 
-    handle_path /static/* {
+    handle_path /static/* /robots.txt {
         root * /static/
         file_server
     }
