@@ -114,7 +114,7 @@ backup() {
     dump_data "$TODAY_DIR/database.json"
     echo
     echo "Copying media files"
-    invoke_docker_compose cp web:/app/media "$TODAY_DIR/"
+    invoke_docker_compose cp web:/app/media - | zstd > "$TODAY_DIR/media.tar.zst"
     echo
     DELETE_DATE=$(date --date="${BACKUP_DAYS_TO_KEEP} days ago" +"%F")
     echo "Deleting backups from $DELETE_DATE and older"
@@ -144,7 +144,7 @@ load_backup() {
     load_data "$DATE_DIR/database.json"
     echo
     echo "Restoring media files"
-    invoke_docker_compose cp "$DATE_DIR/media" web:/app/
+    "$DATE_DIR/media.tar.zst" < zstd | invoke_docker_compose cp - web:/app/
     echo
     echo "Successfully restored from backup"
 
