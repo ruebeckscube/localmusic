@@ -174,7 +174,7 @@ class CreateConcertTests(ConcertViewTestHelpers):
         self.assert_records_created(Concert, settings.MAX_DAILY_CONCERT_CREATES)
 
 
-    def test_single_artist_(self):
+    def test_single_artist(self):
         artist = self.get_static_instance(self.StaticArtists.LOCAL_ARTIST)
         user_profile = self.login_static_user(self.StaticUsers.LOCAL_ARTIST)
 
@@ -182,9 +182,8 @@ class CreateConcertTests(ConcertViewTestHelpers):
         self.assertTrue(response.context['show_confirmation_popup'])
         self.assertEqual(Concert.objects.count(), 0)
 
-        response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request([artist], single_artist_confirmation='RML'))
+        response = self.client.post(reverse("findshows:create_concert"), data=self.concert_post_request([artist], single_artist_confirmation='CSA'))
         self.assertEqual(Concert.objects.count(), 1)
-        self.assert_emails_sent(1)
 
 
     def test_create_concert_successful_POST(self):

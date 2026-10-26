@@ -6,7 +6,7 @@ from django.core import mail
 from django.tasks import TaskResultStatus
 from django.views.generic.dates import timezone_today
 
-from findshows.email import daily_mod_email, enqueue_concert_edit_reminder, send_simple_email, send_mass_html_mail, send_rec_email
+from findshows.email import daily_mod_email, send_simple_email, send_mass_html_mail, send_rec_email
 from findshows.models import ArtistVerificationStatus, ConcertTags
 from findshows.tests.test_helpers import TestCaseHelpers
 
@@ -45,18 +45,6 @@ class DailyModEmailTests(TestCaseHelpers):
         success = daily_mod_email(timezone_today())
         self.assertTrue(success)
         self.assert_emails_sent(0)
-
-
-class ConcertEditReminderTests(TestCaseHelpers):
-    def test_task_execution(self):
-        userprofile = self.get_static_instance(self.StaticUsers.LOCAL_ARTIST)
-        concert = self.create_concert(created_by=userprofile)
-
-        result = enqueue_concert_edit_reminder(concert)
-
-        self.assertEqual(result.status, TaskResultStatus.SUCCESSFUL)
-        self.assert_emails_sent(1)
-        self.assertEqual(mail.outbox[0].to, [userprofile.user.email])
 
 
 class SendMassHtmlMailTests(TestCaseHelpers):

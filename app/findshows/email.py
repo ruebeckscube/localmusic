@@ -136,23 +136,6 @@ def daily_mod_email(date):
                             message_blocks, recipient_list)
 
 
-def enqueue_concert_edit_reminder(concert):
-    run_after = timezone.now() + timezone.timedelta(3) if default_task_backend.supports_defer else None
-    return concert_edit_reminder.using(run_after=run_after).enqueue(concert.pk, str(concert), concert.created_by.user.email)
-
-
-@task(priority=50, queue_name="emails")
-def concert_edit_reminder(pk, name, email):
-    subject = "Concert posting reminder"
-    message_blocks = [f"""
-This is your requested reminder to add more artists to your concert listing
-{local_url_to_email(reverse("findshows:edit_concert", args=(pk,)), name)}.
-    """]
-    logger.info("Sending concert edit reminder email")
-    return send_simple_email(subject, message_blocks, [email])
-
-
-
 # from https://stackoverflow.com/questions/7583801/send-mass-emails-with-emailmultialternatives/10215091#10215091
 def send_mass_html_mail(datatuples):
     """

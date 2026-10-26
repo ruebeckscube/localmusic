@@ -21,7 +21,7 @@ from django.views.generic.dates import timezone_today
 from django.conf import settings
 
 from findshows.utilities import local_url_to_email
-from findshows.email import enqueue_concert_edit_reminder, invite_user_to_artist, notify_artist_verified, send_verify_email
+from findshows.email import invite_user_to_artist, notify_artist_verified, send_verify_email
 from findshows.widgets import ArtistAccessWidget
 
 from .models import Artist, ArtistInviteLinkCode, ArtistManagementLinkCode, ArtistVerificationStatus, Concert, ConcertTags, Contact, EmailVerificationLinkCode, JPEGImageException, LinkCodeError, MusicBrainzArtist, User, UserProfile, Venue
@@ -536,9 +536,6 @@ def edit_concert(request, pk=None):
         elif form.is_valid():
             try:
                 concert = form.save()
-                if form.cleaned_data['single_artist_confirmation'] == 'RML':
-                    enqueue_concert_edit_reminder(concert)
-
                 return redirect(reverse('findshows:view_concert', args=[concert.pk]))
             except JPEGImageException as e:
                 form.add_error('poster', e.message)

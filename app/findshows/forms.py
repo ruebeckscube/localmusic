@@ -197,9 +197,9 @@ class ConcertForm(DefaultStylingModelForm):
                            help_text="List artists in set order; bottom=first and top=last.")
 
     single_artist_confirmation = forms.ChoiceField(
+        help_text="If this is correct, confirm below. Otherwise, please add the other artists to the bill.",
         required=False, widget=forms.RadioSelect(), choices=(
             ('CSA', "There is only one artist playing this show."),
-            ('RML', "I need more time to gather contact info; remind me later by email.")
         ),
     )
     venue_date_confirmation = forms.ChoiceField(
