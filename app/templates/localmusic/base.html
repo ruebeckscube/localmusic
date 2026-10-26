@@ -30,6 +30,16 @@
              display: none;
          }
         </style>
+
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="{{ SITE_TITLE }}" />
+        {% block headers %}
+            <meta property="og:title" content="{{ SITE_TITLE }}" />
+            <meta property="og:description" content="Discover and follow local music." />
+            <meta property="og:url" content="{% email_raw_url '' %}" />
+            <meta property="og:image" content="{% static 'findshows/icons/icon.svg' %}" />
+        {% endblock %}
+
     </head>
     <body>
         <div class="font-body font-stretch-90% flex flex-col min-h-screen bg-background">

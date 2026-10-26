@@ -1,6 +1,13 @@
 {% extends "localmusic/base.html" %}
 {% load findshows_tags %}
 
+{% block headers %}
+    <meta property="og:title" content="{{ concert }}" />
+    <meta property="og:description" content="{{ concert.description }}" />
+    <meta property="og:url" content="{% email_url 'findshows:view_concert' concert.pk %}" />
+    <meta property="og:image" content="{% email_raw_url concert.poster.url %}" />
+{% endblock %}
+
 {% block content %}
 
 {% include "findshows/partials/concert_status.html" %}
