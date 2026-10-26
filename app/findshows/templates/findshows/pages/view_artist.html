@@ -6,7 +6,9 @@
     <meta property="og:title" content="{{ artist.name }}" />
     <meta property="og:description" content="{{ artist.bio|truncatechars:60 }}" />
     <meta property="og:url" content="{% email_url 'findshows:view_artist' artist.pk %}" />
+    {% if artist.profile_picture %}
     <meta property="og:image" content="{% email_raw_url artist.profile_picture.url %}" />
+    {% endif %}
 {% endblock %}
 
 

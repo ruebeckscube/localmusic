@@ -5,7 +5,9 @@
     <meta property="og:title" content="{{ concert }}" />
     <meta property="og:description" content="{{ concert.description }}" />
     <meta property="og:url" content="{% email_url 'findshows:view_concert' concert.pk %}" />
+    {% if concert.poster %}
     <meta property="og:image" content="{% email_raw_url concert.poster.url %}" />
+    {% endif %}
 {% endblock %}
 
 {% block content %}
